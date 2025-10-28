@@ -12,12 +12,13 @@ The Exam assignment clearly state that the documentation has to be in Swedish. I
 clo24-nikhal78-examwork/
 ├─ docs/                      # All dokumentation
 │  ├─ README.md               # Projektöversikt för dokumentationen (länkar vidare?)
-│  ├─ architecture/           # Arkitektur & diagram
 │  ├─ adr/                    # Architecture Decision Records (ADR-00x.md)
-│  ├─ operations/             # Driftmanual, runbooks, incident checklist
-│  ├─ telemetry/              # App Insights & KQL-exempel, dashboard/workbook-notes
+│  ├─ architecture/           # Arkitektur & diagram
+│  ├─ glossary.md             # Begrepp (zon, trip, booking, etc.)
+│  ├─ initial_outtakes/       # Utkast och ursprungsidéer
 │  ├─ journal/                # Timeline/logg per vecka (markdown)
-│  └─ glossary.md             # Begrepp (zon, trip, booking, etc.)
+│  ├─ operations/             # Driftmanual, runbooks, incident checklist
+│  └─ telemetry/              # App Insights & KQL-exempel, dashboard/workbook-notes
 │
 ├─ src/                       # Produktionskod
 │  ├─ web/                    # Blazor Server (UI)
