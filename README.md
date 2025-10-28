@@ -1,4 +1,4 @@
-### Readme for an Exam project for the CLO24 "Cloud Developer" Program 2025
+### Readme for my Exam project for the CLO24 "Cloud Developer" Program 2025
   
 Author: Niklas Häll - https://github.com/mymh13
   
@@ -9,7 +9,7 @@ The Exam assignment clearly state that the documentation has to be in Swedish. I
 ### Grundläggande struktur för repot, OBS! Detta är ett utkast, kan justeras!
 
 ```bash
-ticketing-mvp/
+clo24-nikhal78-examwork/
 ├─ docs/                      # All dokumentation
 │  ├─ README.md               # Projektöversikt för dokumentationen (länkar vidare?)
 │  ├─ architecture/           # Arkitektur & diagram

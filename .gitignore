@@ -1,0 +1,72 @@
+# --- .NET build artifacts
+bin/
+obj/
+out/
+publish/
+TestResults/
+*.coverage
+*.coveragexml
+*.codecoverage
+coverage/
+
+# --- IDEs
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# --- Logs & temp
+*.log
+logs/
+*.tlog
+*.svclog
+*.tmp
+*.bak
+*.orig
+
+# --- Env & secrets (local only)
+.env
+.env.*
+*.secret
+secrets.json
+appsettings.*.local.json
+local.settings.json       # Azure Functions local config
+
+# --- Packages
+packages/
+.nuget/
+*.nupkg
+*.snupkg
+
+# --- OS cruft
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# --- Infra / IaC outputs
+infra/**/*.output.json
+infra/**/temp/
+*.tfstate
+*.tfstate.backup
+
+# --- Containers / Docker (local)
+.docker/
+docker-data/
+docker-volumes/
+docker-compose.override.yml
+*.tar
+*.tar.gz
+
+# --- Node (only if you add a toolchain for Blazor assets)
+node_modules/
+wwwroot/dist/
+
+# --- Databases (local dev)
+*.db
+*.db-shm
+*.db-wal
+sqlite/*.db
+data/**
+!data/.gitkeep
