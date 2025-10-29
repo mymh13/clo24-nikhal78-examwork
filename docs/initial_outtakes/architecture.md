@@ -7,7 +7,7 @@ Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser 
 ```java
 [ Kund ] 
    │
-   │ 1. Loggar in via Entra ID (Azure AD)
+   │ 1. Loggar in med kundkonto (ASP.NET Identity) (Admin/Inspektör loggar in via Entra ID)
    │
    ▼
 [ Blazor Server UI ]
@@ -21,7 +21,9 @@ Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser 
    │
    ▼
 [ Cosmos DB (Serverless) ]
-   │ 6. Lagrar bokning, resa, zon och användaruppgifter (OID)
+   │ 6. Lagrar bokning, resa, zon och referens till användare:
+            - kund: userAccountId (GUID)
+            - admin/inspektör: oid (Entra ID)
    │
    ▼
 [ Application Insights ]
@@ -31,7 +33,7 @@ Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser 
 [ Blazor Server UI ]
    │ 8. Visar bekräftelse och "Mina bokningar"
 ```
-
+ 
 2. Tekniskt flöde (intern arkitektur)
 ```java
                       ┌─────────────────────────────────────┐
@@ -39,6 +41,7 @@ Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser 
                       │─────────────────────────────────────│
                       │  Blazor Server (.NET 8)             │
                       │  Hanterar UI, inloggning och session│
+                      │  Auth: ASP.NET Identity + Entra ID  │
                       └─────────────────────────────────────┘
                                       │
                                       ▼
@@ -62,7 +65,7 @@ Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser 
                                       │
                                       ▼
            ┌────────────────────────────────────────────────────────┐
-           │       Händelse- och integrationslager (påslagsbart)   │
+           │       Händelse- och integrationslager (påslagsbart)    │
            │────────────────────────────────────────────────────────│
            │  • Azure Service Bus  – mellanlagrar händelser         │
            │  • Azure Function     – behandlar t.ex. BookingCreated │
@@ -137,4 +140,4 @@ Fördelarna med detta tillvägagångssätt är:
 Detta gör arkitekturen framtidssäker och redo för en mer distribuerad, händelsedriven infrastruktur när behovet uppstår. Det innebär även att vi kan simulera en miljö där ett befintligt system, byggt på kedjade API-anrop (API chaining), kan refaktoreras och ersättas med en modernare och mer händelsedriven arkitektur.
  
 ### Disclaimer
-Det är min design, min struktur, men jag har bett en LLM att rita ASCII-flödena utefter min beskrivning 
+Jag har bett en LLM att rita ASCII-flödena utefter min beskrivning. 
