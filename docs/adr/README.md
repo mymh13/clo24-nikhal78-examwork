@@ -1,0 +1,36 @@
+# Architecture Decision Records (ADR)
+ 
+Denna katalog innehåller dokumentation av viktiga tekniska beslut i projektet.  
+Syftet är att skapa spårbarhet mellan beslut, motiv och eventuella framtida ändringar. 
+ 
+Varje ADR beskriver **ett beslut**, dess **bakgrund (context)**, **alternativ** och **konsekvenser**.  
+Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Rejected` eller `Superseded`. 
+ 
+---
+ 
+## Index över ADR:er 
+ 
+#### OBS! Nedanstående är ett exempel tills dess jag fyllt den med korrekt innehåll!
+ 
+|    Nr   |                       Titel                       | Status   | Datum      | Kommentar  |
+|---------|---------------------------------------------------|----------|------------|------------|
+| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)      | Accepted | 2025-XX-XX | Kostnads- och driftoptimering
+| ADR-002 | Autentisering: ASP.NET Identity + Entra ID        | Proposed | 2025-XX-XX | Delad modell för kund/admin
+| ADR-003 | Infrastruktur som kod (IaC) – verktygsval         | Proposed | 2025-XX-XX | Bicep, ARM eller Terraform
+| ADR-004 | Eventdriven arkitektur via Service Bus + Function | Planned  | 2025-XX-XX | Aktiveras efter MVP
+ 
+---
+ 
+### Namngivning och format
+- Filnamn: `ADR-###-example.md` (stigande nummer, tre siffror).  
+- Rubriker: `Context`, `Decision`, `Consequences`, `Status`, `Alternatives`, `References`.  
+- Statusvärden: `Proposed`, `Accepted`, `Rejected`, `Superseded`.  
+- När ett beslut ersätts flyttas den gamla ADR:n till `_archive/`.
+ 
+---
+ 
+### Syfte
+ADR:erna fungerar som en **beslutslogg** för systemarkitekturen.  
+De hjälper framtida utvecklare att förstå **varför** ett beslut togs, inte bara **vad** som gjordes.
+ 
+ 
