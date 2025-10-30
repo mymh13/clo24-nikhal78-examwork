@@ -33,4 +33,10 @@ Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Re
 ADR:erna fungerar som en **beslutslogg** för systemarkitekturen.  
 De hjälper framtida utvecklare att förstå **varför** ett beslut togs, inte bara **vad** som gjordes.
  
+---
  
+### Disclaimer
+ 
+ADR-000-template.md har tagits fram av en LLM-modell. 
+Jag har beskrivit syftet och vad jag vill ha, den har genererat en template som jag sedan reviewat och justerat. 
+Alla följande ADR-dokument har jag bett den fylla i efter mallen och efter vad jag vill bygga. Jag har reviewat varje modell och justerat där det känns relevant.
