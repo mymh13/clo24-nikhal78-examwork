@@ -29,6 +29,7 @@ logs/
 # --- Env & secrets (local only)
 .env
 .env.*
+/docs/.env
 *.secret
 secrets.json
 appsettings.*.local.json
