@@ -25,4 +25,8 @@ Målet har varit att etablera en tydlig arkitektonisk bas innan utveckling påb�
 ---
 
 ## Nästa steg
-- 
+- Sammanställa översikt över dokumentationen och bekräfta struktur i `docs/`.
+- Förbereda grund för **infrastruktur**: skapa katalog `infra/` och planera Bicep-struktur.
+- Identifiera vilka **Azure-resurser** som krävs för MVP (App Service, Cosmos DB, Key Vault, App Config).
+- Påbörja utkast till **CI/CD-upplägg** (YAML-pipeline för bygg och deploy).
+- Definiera mål för vecka 2: etablera fungerande infrastruktur i utvecklingsmiljö (dev).
