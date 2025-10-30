@@ -15,8 +15,8 @@ Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Re
 |    Nr   |                       Titel                       | Status   | Datum      | Kommentar  |
 |---------|---------------------------------------------------|----------|------------|------------|
 | ADR-001 | Val av databas: Azure Cosmos DB (Serverless)      | Accepted | 2025-10-30 | Kostnads- och driftoptimering
-| ADR-002 | Autentisering: ASP.NET Identity + Entra ID        | Proposed | 2025-XX-XX | Delad modell för kund/admin
-| ADR-003 | Infrastruktur som kod (IaC) – verktygsval         | Proposed | 2025-XX-XX | Bicep, ARM eller Terraform
+| ADR-002 | Autentisering: ASP.NET Identity + Entra ID        | Proposed | 2025-10-30 | Delad modell för kund/admin
+| ADR-003 | Infrastruktur som kod (IaC) – verktygsval         | Proposed | 2025-10-30 | Bicep, ARM eller Terraform
 | ADR-004 | Eventdriven arkitektur via Service Bus + Function | Planned  | 2025-XX-XX | Aktiveras efter MVP
  
 ---
@@ -39,4 +39,5 @@ De hjälper framtida utvecklare att förstå **varför** ett beslut togs, inte b
  
 ADR-000-template.md har tagits fram av en LLM-modell. 
 Jag har beskrivit syftet och vad jag vill ha, den har genererat en template som jag sedan reviewat och justerat. 
+ 
 Alla följande ADR-dokument har jag bett den fylla i efter mallen och efter vad jag vill bygga. Jag har reviewat varje modell och justerat där det känns relevant.
