@@ -10,14 +10,16 @@ Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Re
  
 ## Index över ADR:er 
  
-#### OBS! Nedanstående är ett exempel tills dess jag fyllt den med korrekt innehåll!
+Senast uppdaterad: 2025-10-30  
  
-|    Nr   |                       Titel                       | Status   | Datum      | Kommentar  |
-|---------|---------------------------------------------------|----------|------------|------------|
-| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)      | Accepted | 2025-10-30 | Kostnads- och driftoptimering
-| ADR-002 | Autentisering: ASP.NET Identity + Entra ID        | Proposed | 2025-10-30 | Delad modell för kund/admin
-| ADR-003 | Infrastruktur som kod (IaC) – verktygsval         | Proposed | 2025-10-30 | Bicep, ARM eller Terraform
-| ADR-004 | Eventdriven arkitektur via Service Bus + Function | Planned  | 2025-XX-XX | Aktiveras efter MVP
+|    Nr   |                       Titel                                     | Status   | Datum      | Kommentar  |
+|---------|-----------------------------------------------------------------|----------|------------|------------|
+| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)                    | Accepted | 2025-10-30 | Kostnads- och driftoptimering |
+| ADR-002 | Autentisering: ASP.NET Identity + Entra ID                      | Accepted | 2025-10-30 | Delad modell för kund/admin |
+| ADR-003 | Infrastructure as Code (IaC) – verktygsval: Bicep               | Accepted | 2025-10-30 | Enkel integration i Azure DevOps |
+| ADR-004 | Val av frontend: .NET 8 Blazor Server                           | Accepted | 2025-10-30 | Hel .NET-stack och enkel hosting |
+| ADR-005 | Val av molntjänster: App Service, App Config, Key Vault, App Insights och APIM | Accepted | 2025-10-30 | Centrala Azure-komponenter för drift |
+| ADR-006 | Eventdriven arkitektur: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Aktiveras efter MVP |
  
 ---
  
