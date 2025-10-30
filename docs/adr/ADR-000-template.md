@@ -25,6 +25,19 @@ Lista de huvudsakliga följderna av beslutet, både positiva och eventuella nack
  
 ---
  
+## Risker / Åtgärder 
+Identifiera eventuella risker kopplade till beslutet och hur de kan hanteras.  
+- Risk:  
+- Åtgärd:  
+ 
+Exempel:  
+- **Risk:** Databasen kan exponeras externt vid felaktig konfiguration.  
+  **Åtgärd:** Begränsa åtkomst till privata nätverk och använd Managed Identity för autentisering.  
+- **Risk:** För hög kostnad vid belastningstoppar.  
+  **Åtgärd:** Inför requestbegränsning (rate limiting) och telemetriövervakning. 
+ 
+---
+ 
 ## Alternativ (Alternatives)
 Ange vilka alternativ som övervägdes men avfärdades, och varför.  
 - Alternativ 1 – kort kommentar  

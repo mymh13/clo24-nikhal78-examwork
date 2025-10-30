@@ -14,7 +14,7 @@ Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Re
  
 |    Nr   |                       Titel                       | Status   | Datum      | Kommentar  |
 |---------|---------------------------------------------------|----------|------------|------------|
-| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)      | Accepted | 2025-XX-XX | Kostnads- och driftoptimering
+| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)      | Accepted | 2025-10-30 | Kostnads- och driftoptimering
 | ADR-002 | Autentisering: ASP.NET Identity + Entra ID        | Proposed | 2025-XX-XX | Delad modell för kund/admin
 | ADR-003 | Infrastruktur som kod (IaC) – verktygsval         | Proposed | 2025-XX-XX | Bicep, ARM eller Terraform
 | ADR-004 | Eventdriven arkitektur via Service Bus + Function | Planned  | 2025-XX-XX | Aktiveras efter MVP
