@@ -1,0 +1,21 @@
+@page "/"
+@namespace Ticketing.Web.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8" />
+    <title>Ticketing</title>
+    <base href="~/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+    <div id="app">
+        <component type="typeof(Ticketing.Web.App)" render-mode="ServerPrerendered" />
+    </div>
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>
