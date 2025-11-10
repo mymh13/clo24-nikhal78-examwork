@@ -5,7 +5,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # krävs för OIDC-login
+  id-token: write
 
 jobs:
   login-test:
@@ -20,8 +20,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify Azure context
+      - name: Verify Azure login (no IDs in logs)
+        shell: bash
         run: |
-          az account show -o table
-          echo "Tenant: $(az account show --query tenantId -o tsv)"
-          echo "Sub:    $(az account show --query id -o tsv)"
+          set -e
+          # Bekräfta att CLI har en giltig kontext, men skriv inget till loggen
+          az account show > /dev/null
+
+          # Validera tyst att vi är i rätt subscription (ingen echo av värden)
+          sub_now="$(az account show --query id -o tsv)"
+          if [ "$sub_now" != "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "Azure login OK men subscription-kontekst matchar inte förväntat."
+            exit 1
+          fi
+
+          echo "Azure OIDC login verifierad."
