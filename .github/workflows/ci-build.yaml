@@ -32,10 +32,6 @@ jobs:
       - name: Publish Ticketing.Web
         run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web
 
-      # (Optional) Publish API now or later; leaving here for when we add a controller
-      # - name: Publish Ticketing.Api
-      #   run: dotnet publish src/api/Ticketing.Api/Ticketing.Api.csproj -c Release -o out/api
-
       - name: Upload Web artifact
         uses: actions/upload-artifact@v4
         with:

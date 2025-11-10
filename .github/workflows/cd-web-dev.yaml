@@ -1,0 +1,61 @@
+name: CD - Deploy Web (dev)
+
+on:
+  workflow_run:
+    workflows: [ "CI - Build solution" ]
+    types: [ "completed" ]
+
+permissions:
+  contents: read
+  id-token: write    # required for OIDC login to Azure
+
+env:
+  ARTIFACT_NAME: web-publish
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Download build artifact from CI
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: web-publish
+
+      - name: Set up Azure CLI
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify target Web App exists (skip deploy if missing)
+        id: probe
+        shell: bash
+        run: |
+          set -e
+          if ! az webapp show -n "${WEBAPP_NAME}" -g "${WEBAPP_RG}" >/dev/null 2>&1; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          WEBAPP_NAME: ${{ vars.WEBAPP_NAME }}
+          WEBAPP_RG:   ${{ vars.WEBAPP_RG }}
+
+      - name: Skip (no Web App yet)
+        if: steps.probe.outputs.exists == 'false'
+        run: |
+          echo "No Web App named '${{ vars.WEBAPP_NAME }}' in resource group '${{ vars.WEBAPP_RG }}'. Skipping deployment."
+          exit 0
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.WEBAPP_NAME }}
+          package: web-publish
