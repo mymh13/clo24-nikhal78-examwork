@@ -1,71 +1,71 @@
-# ADR-005 – Val av molntjänster: Azure App Service, App Configuration, Key Vault, Application Insights och API Management
+# ADR-005 – Cloud services choice: Azure App Service, App Configuration, Key Vault, Application Insights and API Management
 
 **Status:** Accepted  
-**Datum:** 2025-10-30  
-**Författare:** Niklas Häll
+**Date:** 2025-10-30  
+**Author:** Niklas Häll
 
 ---
 
-## Sammanhang (Context)
-Systemet byggs på Azure-plattformen och behöver flera kompletterande tjänster för att hantera drift, säkerhet, konfiguration och övervakning.  
-Målet är att skapa en lösning som:
-- är **billig att köra** under utveckling (Free eller Serverless-planer),
-- **enkel att skala upp** inför demonstration eller produktion, och
-- **förberedd för CI/CD** och framtida DevOps-integration.
+## Context
+The system is built on the Azure platform and needs several complementary services to handle operations, security, configuration, and monitoring.  
+The goal is to create a solution that:
+- is **cheap to run** during development (Free or Serverless plans),
+- **easy to scale up** for demonstration or production, and
+- **prepared for CI/CD** and future DevOps integration.
 
-Eftersom organisationen redan använder Azure som huvudplattform är det naturligt att även nyttja Microsofts egna molntjänster för infrastruktur, konfiguration och loggning.
+Since the organization already uses Azure as the main platform, it is natural to also utilize Microsoft's own cloud services for infrastructure, configuration, and logging.
 
 ---
 
-## Beslut (Decision)
-Följande Azure-tjänster används i MVP och framtida utbyggnad:
+## Decision
+The following Azure services are used in MVP and future expansion:
 
-|          Tjänst           |               Syfte                                                          |
+|          Service           |               Purpose                                                          |
 |---------------------------|------------------------------------------------------------------------------|
-| **App Service**           | Kör Blazor Server och API-applikationen i samma App Service-plan (Free/B1).  |
-| **App Configuration**     | Centraliserad hantering av inställningar och feature-flaggor mellan miljöer. |
-| **Key Vault**             | Säker lagring av secrets och anslutningssträngar.                            |
-| **Application Insights**  | Loggning, övervakning och prestandamätning via KQL.                          |
-| **API Management (APIM)** | Gateway för publika GET-endpoints, caching och rate limiting.                |
+| **App Service**           | Run Blazor Server and API application in the same App Service plan (Free/B1).  |
+| **App Configuration**     | Centralized management of settings and feature flags between environments. |
+| **Key Vault**             | Secure storage of secrets and connection strings.                            |
+| **Application Insights**  | Logging, monitoring, and performance measurement via KQL.                          |
+| **API Management (APIM)** | Gateway for public GET endpoints, caching, and rate limiting.                |
 
 ---
 
-## Konsekvenser (Consequences)
-**Fördelar:**
-- Full integration med övriga Azure-tjänster och DevOps-flöden.  
-- Låg instegskostnad (F1/Serverless).  
-- Centraliserad och säker hantering av konfiguration och secrets.  
-- Enkel övergång till produktion via skalning i App Service-planen.  
-- APIM ger möjlighet att framtidssäkra API:erna med versionering och åtkomstkontroll.
+## Consequences
+**Advantages:**
+- Full integration with other Azure services and DevOps flows.  
+- Low entry cost (F1/Serverless).  
+- Centralized and secure management of configuration and secrets.  
+- Easy transition to production via scaling in the App Service plan.  
+- APIM provides the ability to future-proof the APIs with versioning and access control.
 
-**Nackdelar:**
-- Låst till Azure-ekosystemet.  
-- Begränsade resurser i F1-planer (kan “somna” vid inaktivitet).  
-- APIM i Consumption-läge kan bli långsammare än direkt API-access.  
-
----
-
-## Risker / Åtgärder
-- **Risk:** App Service i F1-läge stängs av vid inaktivitet.  
-  **Åtgärd:** Uppgradera till B1 inför demo eller högre last.  
-
-- **Risk:** Felaktig hantering av secrets kan leda till exponering.  
-  **Åtgärd:** Lagra alla anslutningssträngar i Key Vault och använd Managed Identity för åtkomst.  
-
-- **Risk:** Onödiga kostnader vid test av flera tjänster samtidigt.  
-  **Åtgärd:** Aktivera endast nödvändiga resurser under MVP, stäng av Service Bus/Function tills eventflödet ska demonstreras.  
+**Disadvantages:**
+- Locked into the Azure ecosystem.  
+- Limited resources in F1 plans (can "sleep" during inactivity).  
+- APIM in Consumption mode can become slower than direct API access.  
 
 ---
 
-## Alternativ (Alternatives)
-- **Container-baserad drift (Azure Container Apps eller Azure Kubernetes Service):** Kraftfullt men överdimensionerat för MVP.  
-- **Statisk hosting (t.ex. Blazor WASM + Blob Storage):** Billigt, men saknar stöd för serverbaserad inloggning och realtid. 
-- **Extern loggning (t.ex. Grafana Cloud, Elastic):** Flexibelt men ökar komplexitet och driftkostnad.  
+## Risks / Mitigations
+- **Risk:** App Service in F1 mode shuts down during inactivity.  
+  **Mitigation:** Upgrade to B1 before demo or higher load.  
+
+- **Risk:** Incorrect handling of secrets can lead to exposure.  
+  **Mitigation:** Store all connection strings in Key Vault and use Managed Identity for access.  
+
+- **Risk:** Unnecessary costs when testing multiple services simultaneously.  
+  **Mitigation:** Activate only necessary resources during MVP, turn off Service Bus/Function until the event flow is to be demonstrated.  
 
 ---
 
-## Referenser (References)
-- [Systemöversikt](../system_overview.md)  
+## Alternatives
+- **Container-based operations (Azure Container Apps or Azure Kubernetes Service):** Powerful but overdimensioned for MVP.  
+- **Static hosting (e.g., Blazor WASM + Blob Storage):** Cheap, but lacks support for server-based login and real-time. 
+- **External logging (e.g., Grafana Cloud, Elastic):** Flexible but increases complexity and operational costs.  
+
+---
+
+## References
+- [System overview](../system_overview.md)  
 - [Microsoft Docs – Azure App Service](https://learn.microsoft.com/en-us/azure/app-service/overview)  
 - [Microsoft Docs – Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/overview)  
 - [Microsoft Docs – Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/basic-concepts)  

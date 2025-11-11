@@ -1,45 +1,45 @@
 # Architecture Decision Records (ADR)
  
-Denna katalog innehåller dokumentation av viktiga tekniska beslut i projektet.  
-Syftet är att skapa spårbarhet mellan beslut, motiv och eventuella framtida ändringar. 
+This directory contains documentation of important technical decisions in the project.  
+The purpose is to create traceability between decisions, motivations, and any future changes. 
  
-Varje ADR beskriver **ett beslut**, dess **bakgrund (context)**, **alternativ** och **konsekvenser**.  
-Status anger var i livscykeln beslutet befinner sig: `Proposed`, `Accepted`, `Rejected` eller `Superseded`. 
+Each ADR describes **a decision**, its **background (context)**, **alternatives**, and **consequences**.  
+Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`, `Rejected`, or `Superseded`. 
  
 ---
  
-## Index över ADR:er 
+## ADR Index 
  
-Senast uppdaterad: 2025-10-30  
+Last updated: 2025-10-30  
  
-|    Nr   |                       Titel                                     | Status   | Datum      | Kommentar  |
+|    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
-| ADR-001 | Val av databas: Azure Cosmos DB (Serverless)                    | Accepted | 2025-10-30 | Kostnads- och driftoptimering |
-| ADR-002 | Autentisering: ASP.NET Identity + Entra ID                      | Accepted | 2025-10-30 | Delad modell för kund/admin |
-| ADR-003 | Infrastructure as Code (IaC) – verktygsval: Bicep               | Accepted | 2025-10-30 | Enkel integration i Azure DevOps |
-| ADR-004 | Val av frontend: .NET 8 Blazor Server                           | Accepted | 2025-10-30 | Hel .NET-stack och enkel hosting |
-| ADR-005 | Val av molntjänster: App Service, App Config, Key Vault, App Insights och APIM | Accepted | 2025-10-30 | Centrala Azure-komponenter för drift |
-| ADR-006 | Eventdriven arkitektur: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Aktiveras efter MVP |
+| ADR-001 | Database choice: Azure Cosmos DB (Serverless)                   | Accepted | 2025-10-30 | Cost and operations optimization |
+| ADR-002 | Authentication: ASP.NET Identity + Entra ID                     | Accepted | 2025-10-30 | Shared model for customer/admin |
+| ADR-003 | Infrastructure as Code (IaC) – tool choice: Bicep               | Accepted | 2025-10-30 | Easy integration in Azure DevOps |
+| ADR-004 | Frontend choice: .NET 8 Blazor Server                           | Accepted | 2025-10-30 | Full .NET stack and easy hosting |
+| ADR-005 | Cloud services choice: App Service, App Config, Key Vault, App Insights and APIM | Accepted | 2025-10-30 | Core Azure components for operations |
+| ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Activated after MVP |
  
 ---
  
-### Namngivning och format
-- Filnamn: `ADR-###-example.md` (stigande nummer, tre siffror).  
-- Rubriker: `Context`, `Decision`, `Consequences`, `Status`, `Alternatives`, `References`.  
-- Statusvärden: `Proposed`, `Accepted`, `Rejected`, `Superseded`.  
-- När ett beslut ersätts flyttas den gamla ADR:n till `_archive/`.
+### Naming and format
+- Filename: `ADR-###-example.md` (ascending number, three digits).  
+- Headers: `Context`, `Decision`, `Consequences`, `Status`, `Alternatives`, `References`.  
+- Status values: `Proposed`, `Accepted`, `Rejected`, `Superseded`.  
+- When a decision is replaced, the old ADR is moved to `_archive/`.
  
 ---
  
-### Syfte
-ADR:erna fungerar som en **beslutslogg** för systemarkitekturen.  
-De hjälper framtida utvecklare att förstå **varför** ett beslut togs, inte bara **vad** som gjordes.
+### Purpose
+The ADRs serve as a **decision log** for the system architecture.  
+They help future developers understand **why** a decision was made, not just **what** was done.
  
 ---
  
 ### Disclaimer
  
-ADR-000-template.md har tagits fram av en LLM-modell. 
-Jag har beskrivit syftet och vad jag vill ha, den har genererat en template som jag sedan reviewat och justerat. 
+ADR-000-template.md was created by an LLM model. 
+I described the purpose and what I wanted, it generated a template which I then reviewed and adjusted. 
  
-Alla följande ADR-dokument har jag bett den fylla i efter mallen och efter vad jag vill bygga. Jag har reviewat varje modell och justerat där det känns relevant.
+All following ADR documents I asked it to fill in according to the template and what I want to build. I have reviewed each one and adjusted where it felt relevant.

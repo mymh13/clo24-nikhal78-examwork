@@ -1,51 +1,51 @@
-# ADR-000 – [Kort titel på beslutet]
+# ADR-000 – [Short decision title]
  
 **Status:** Proposed  
-**Datum:** YYYY-MM-DD  
-**Författare:** [Namn eller team]
+**Date:** YYYY-MM-DD  
+**Author:** [Name or team]
  
 ---
  
-## Sammanhang (Context)
-Beskriv kort vilket problem eller behov som ledde fram till detta beslut.  
-Max 3–5 meningar.
+## Context
+Briefly describe what problem or need led to this decision.  
+Max 3–5 sentences.
  
 ---
  
-## Beslut (Decision)
-Sammanfatta vilket beslut som togs och varför detta alternativ valdes.  
-Exempel: “Vi använder Azure Cosmos DB (Serverless) för att minimera kostnader och hantera dynamisk last.”
+## Decision
+Summarize what decision was made and why this option was chosen.  
+Example: "We use Azure Cosmos DB (Serverless) to minimize costs and handle dynamic load."
  
 ---
  
-## Konsekvenser (Consequences)
-Lista de huvudsakliga följderna av beslutet, både positiva och eventuella nackdelar.  
-- Fördel:  
-- Nackdel:  
+## Consequences
+List the main consequences of the decision, both positive and potential drawbacks.  
+- Advantage:  
+- Disadvantage:  
  
 ---
  
-## Risker / Åtgärder 
-Identifiera eventuella risker kopplade till beslutet och hur de kan hanteras.  
+## Risks / Mitigations 
+Identify any risks associated with the decision and how they can be handled.  
 - Risk:  
-- Åtgärd:  
+- Mitigation:  
  
-Exempel:  
-- **Risk:** Databasen kan exponeras externt vid felaktig konfiguration.  
-  **Åtgärd:** Begränsa åtkomst till privata nätverk och använd Managed Identity för autentisering.  
-- **Risk:** För hög kostnad vid belastningstoppar.  
-  **Åtgärd:** Inför requestbegränsning (rate limiting) och telemetriövervakning. 
- 
----
- 
-## Alternativ (Alternatives)
-Ange vilka alternativ som övervägdes men avfärdades, och varför.  
-- Alternativ 1 – kort kommentar  
-- Alternativ 2 – kort kommentar  
+Example:  
+- **Risk:** The database may be exposed externally due to incorrect configuration.  
+  **Mitigation:** Restrict access to private networks and use Managed Identity for authentication.  
+- **Risk:** Too high cost during load peaks.  
+  **Mitigation:** Implement request throttling (rate limiting) and telemetry monitoring. 
  
 ---
  
-## Referenser (References)
-Länka till relaterade dokument, PR:er, diskussioner eller externa källor.  
-Exempel: [System Overview](../system_overview.md)
+## Alternatives
+List which alternatives were considered but rejected, and why.  
+- Alternative 1 – brief comment  
+- Alternative 2 – brief comment  
+ 
+---
+ 
+## References
+Link to related documents, PRs, discussions, or external sources.  
+Example: [System Overview](../system_overview.md)
  

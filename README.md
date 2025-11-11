@@ -1,56 +1,51 @@
-### Readme for my Exam project for the CLO24 "Cloud Developer" Program 2025
+### Readme for my Exam/Thesis project for the CLO24 "Cloud Developer" Program 2025
   
 Author: Niklas Häll - https://github.com/mymh13
   
-### English / Swedish
-  
-The Exam assignment clearly state that the documentation has to be in Swedish. I would argue that English is more suitable in a professional setting, but since this is an education situated in Sweden, it makes somewhat sense. Either case, we follow the rules. Because of this, from this point on all the documentation will be in Swedish. (Obviously, class names, method names et c. will be in English.)
-  
-### Grundläggande struktur för repot, OBS! Detta är ett utkast, kan justeras!
+### Basic repository structure, NOTE: This is a draft and may change!
 
 ```bash
 clo24-nikhal78-examwork/
-├─ docs/                      # All dokumentation
-│  ├─ README.md               # Projektöversikt för dokumentationen (länkar vidare?)
+├─ docs/                      # All documentation
+│  ├─ README.md               # Documentation overview (links onward?)
 │  ├─ adr/                    # Architecture Decision Records (ADR-00x.md)
-│  ├─ architecture/           # Arkitektur & diagram
-│  ├─ glossary.md             # Begrepp (zon, trip, booking, etc.)
-│  ├─ initial_outtakes/       # Utkast och ursprungsidéer
-│  ├─ journal/                # Timeline/logg per vecka (markdown)
-│  ├─ operations/             # Driftmanual, runbooks, incident checklist
-│  └─ telemetry/              # App Insights & KQL-exempel, dashboard/workbook-notes
+│  ├─ glossary.md             # Terms (zone, trip, booking, etc.)
+│  ├─ initial_outtakes/       # Drafts and original ideas
+│  ├─ journal/                # Timeline/log per week (markdown)
+│  ├─ operations/             # Operations manual, runbooks, incident checklist
+│  └─ telemetry/              # App Insights & KQL examples, dashboard/workbook notes
 │
-├─ src/                       # Produktionskod
+├─ src/                       # Production code
 │  ├─ web/                    # Blazor Server (UI)
-│  │  └─ Ticketing.Web/       # .NET 8 projekt
-│  ├─ api/                    # Controller-baserat Web API
+│  │  └─ Ticketing.Web/       # .NET 8 project
+│  ├─ api/                    # Controller-based Web API
 │  │  └─ Ticketing.Api/
-│  ├─ functions/              # Azure Functions (eventpåslag)
+│  ├─ functions/              # Azure Functions (event-driven)
 │  │  └─ Ticketing.Functions/
-│  └─ shared/                 # Delade bibliotek (DTO, Contracts, Domain)
+│  └─ shared/                 # Shared libraries (DTO, Contracts, Domain)
 │     ├─ Ticketing.Domain/    # Entities, ValueObjects, Domain Services
-│     └─ Ticketing.Contracts/ # Request/Response/Events (ex. BookingCreated)
+│     └─ Ticketing.Contracts/ # Request/Response/Events (e.g., BookingCreated)
 │
-├─ tests/                     # Tester (xUnit + NSubstitute)
+├─ tests/                     # Tests (xUnit + NSubstitute)
 │  ├─ Ticketing.Domain.Tests/
 │  ├─ Ticketing.Api.Tests/
 │  └─ Ticketing.Functions.Tests/
 │
-├─ infra/                     # IaC (Bicep/ARM? eller Terraform (helst))
-│  ├─ modules/                # Återanvändbara moduler (appservice, cosmos, apim, insights?)
-│  ├─ env/                    # Miljöspecifika deployment-paket
+├─ infra/                     # IaC (Bicep)
+│  ├─ modules/                # Reusable modules (appservice, cosmos, apim, insights?)
+│  ├─ env/                    # Environment-specific deployment packages
 │  │  ├─ dev/
 │  │  │  ├─ main.bicep
 │  │  │  └─ main.parameters.json
 │  │  └─ prod/
 │  │     ├─ main.bicep
 │  │     └─ main.parameters.json
-│  └─ policies/               # APIM policies (XML) & config (endast GET i MVP)
+│  └─ policies/               # APIM policies (XML) & config (GET-only in MVP)
 │
-├─ pipelines/                 # Pipeline-definitioner (om Azure DevOps)
-│  ├─ build.yaml              # CI: restore/build/test + artefakter
+├─ pipelines/                 # Pipeline definitions (if Azure DevOps)
+│  ├─ build.yaml              # CI: restore/build/test + artifacts
 │  ├─ deploy_infra.yaml       # CD: infra (dev→prod, manual approval)
-│  └─ deploy_app.yaml         # CD: web/api/functions zip deploy (stegvis)
+│  └─ deploy_app.yaml         # CD: web/api/functions zip deploy (staged)
 │
 ├─ .github/
 │  └─ workflows/              # GitHub Actions
@@ -60,5 +55,5 @@ clo24-nikhal78-examwork/
 │
 ├─ .gitignore
 ├─ LICENSE
-└─ README.md                  # Huvud-README: pitch, snabbstart, mappar, länkar
+└─ README.md                  # Main README: pitch, quickstart, folders, links
 ```

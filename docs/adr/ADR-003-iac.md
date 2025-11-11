@@ -1,55 +1,55 @@
-# ADR-003 – Infrastructure as Code (IaC) – verktygsval: Bicep
+# ADR-003 – Infrastructure as Code (IaC) – tool choice: Bicep
 
 **Status:** Accepted  
-**Datum:** 2025-10-30  
-**Författare:** Niklas Häll
+**Date:** 2025-10-30  
+**Author:** Niklas Häll
 
 ---
 
-## Sammanhang (Context)
-Projektet kräver ett verktyg för att definiera och reproducera infrastruktur i Azure på ett kontrollerat och versionshanterat sätt.  
-Valet av IaC-verktyg påverkar både utvecklingshastighet, läsbarhet och hur enkelt lösningen kan integreras i CI/CD-flöden.  
-Alternativen som övervägts är **Bicep**, **ARM-mallar** och **Terraform**.
+## Context
+The project requires a tool to define and reproduce infrastructure in Azure in a controlled and version-managed way.  
+The choice of IaC tool affects both development speed, readability, and how easily the solution can be integrated into CI/CD flows.  
+The alternatives considered are **Bicep**, **ARM templates**, and **Terraform**.
 
 ---
 
-## Beslut (Decision)
-Vi använder **Bicep** som verktyg för Infrastructure as Code.  
-Bicep ger en deklarativ syntax med hög läsbarhet och har **inbyggt stöd i Azure CLI och Azure DevOps**, vilket gör integrationen med befintliga pipelines och resurser smidig.  
-Eftersom projektet redan utnyttjar flera Azure-tjänster (App Service, Cosmos DB, Key Vault, m.fl.) ger Bicep en naturlig passform och kräver ingen extra runtime eller externa beroenden.
+## Decision
+We use **Bicep** as the tool for Infrastructure as Code.  
+Bicep provides a declarative syntax with high readability and has **built-in support in Azure CLI and Azure DevOps**, which makes integration with existing pipelines and resources smooth.  
+Since the project already utilizes several Azure services (App Service, Cosmos DB, Key Vault, etc.), Bicep provides a natural fit and requires no extra runtime or external dependencies.
 
 ---
 
-## Konsekvenser (Consequences)
-**Fördelar:**  
-- Förstklassigt stöd i Azure CLI, utvecklarens IDE och DevOps.  
-- Tydlig och deklarativ syntax som förenklar underhåll och kodgranskning.  
-- Ingen extern konfiguration eller backend krävs (till skillnad från Terraform).  
-- Lätt att bygga vidare på vid framtida drift i Azure.  
+## Consequences
+**Advantages:**  
+- First-class support in Azure CLI, developer IDE, and DevOps.  
+- Clear and declarative syntax that simplifies maintenance and code review.  
+- No external configuration or backend required (unlike Terraform).  
+- Easy to build upon for future operations in Azure.  
 
-**Nackdelar:**  
-- Mindre portabelt – svårt att flytta till andra molnplattformar. 
-- Begränsat stöd för multi-cloud-scenarier.  
-- ARM-mallar genereras i bakgrunden, vilket kan göra felsökning mer teknisk. (Bicep blir en overlay, ett "lager ovanpå")  
-
----
-
-## Risker / Åtgärder
-- **Risk:** Felaktiga Bicep-parametrar kan orsaka oönskade resursändringar.  
-  **Åtgärd:** Inför validering via `what-if` (det görs lokalt via CLI innan deployment) i CI/CD-pipelines.  
-
-- **Risk:** Begränsat stöd för icke-Azure-resurser.  
-  **Åtgärd:** Behåll Terraform som potentiellt verktyg för framtida multi-cloud-expansion. Hade vi inte haft så extensivt användande av Azure-resurser i övrigt så hade vi valt Terraform över Bicep. 
+**Disadvantages:**  
+- Less portable – difficult to move to other cloud platforms. 
+- Limited support for multi-cloud scenarios.  
+- ARM templates are generated in the background, which can make troubleshooting more technical. (Bicep becomes an overlay, a "layer on top")  
 
 ---
 
-## Alternativ (Alternatives)
-- **Terraform:** Portabelt och väletablerat, men kräver backend (state-fil behöver lagras, men blir stor i stora projekt så det brukar hanteras via en remote backend) och extra konfiguration.  
-- **ARM-mallar:** Direktstödda av Azure men svårare att läsa och underhålla.  
-- **Pulumi:** Kraftfullt men onödigt komplext för detta projekt.  
+## Risks / Mitigations
+- **Risk:** Incorrect Bicep parameters can cause unwanted resource changes.  
+  **Mitigation:** Introduce validation via `what-if` (done locally via CLI before deployment) in CI/CD pipelines.  
+
+- **Risk:** Limited support for non-Azure resources.  
+  **Mitigation:** Keep Terraform as a potential tool for future multi-cloud expansion. Had we not had such extensive use of Azure resources otherwise, we would have chosen Terraform over Bicep. 
 
 ---
 
-## Referenser (References)
-- [Systemöversikt](../system_overview.md)  
+## Alternatives
+- **Terraform:** Portable and well-established, but requires a backend (state file needs to be stored, but becomes large in large projects so it's usually handled via a remote backend) and extra configuration.  
+- **ARM templates:** Directly supported by Azure but harder to read and maintain.  
+- **Pulumi:** Powerful but unnecessarily complex for this project.  
+
+---
+
+## References
+- [System overview](../system_overview.md)  
 - [Microsoft Learn – Bicep documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)

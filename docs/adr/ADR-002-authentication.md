@@ -1,60 +1,60 @@
-# ADR-002 – Autentisering: ASP.NET Identity + Entra ID
+# ADR-002 – Authentication: ASP.NET Identity + Entra ID
 
 **Status:** Accepted  
-**Datum:** 2025-10-30  
-**Författare:** Niklas Häll
+**Date:** 2025-10-30  
+**Author:** Niklas Häll
 
 ---
 
-## Sammanhang (Context)
-Systemet behöver stöd för två typer av användare: kunder som bokar biljetter och administratörer/inspektörer som hanterar resor och zoner.  
-Lösningen måste vara kostnadseffektiv, säker och fungera både lokalt och i molnet utan att kräva licenser eller komplex konfiguration.
+## Context
+The system needs to support two types of users: customers who book tickets and administrators/inspectors who manage trips and zones.  
+The solution must be cost-effective, secure, and work both locally and in the cloud without requiring licenses or complex configuration.
 
 ---
 
-## Beslut (Decision)
-Vi använder en **delad autentiseringsmodell**:  
-- **Kunder** loggar in via **ASP.NET Core Identity**, där konton och lösenord hanteras lokalt i systemets databas.  
-- **Administratörer och inspektörer** loggar in via **Azure Entra ID**, vilket möjliggör säker åtkomst till administrationsgränssnittet utan att exponera interna funktioner externt.  
+## Decision
+We use a **shared authentication model**:  
+- **Customers** log in via **ASP.NET Core Identity**, where accounts and passwords are managed locally in the system's database.  
+- **Administrators and inspectors** log in via **Azure Entra ID**, which enables secure access to the administration interface without exposing internal functions externally.  
 
-Modellen kan enkelt utökas till federerad inloggning (t.ex. Entra External ID) vid behov, men hålls enkel i MVP-fasen.
-
----
-
-## Konsekvenser (Consequences)
-**Fördelar:**  
-- Kostnadseffektivt: endast intern personal använder Entra ID.  
-- Enkel för kunder: standardinloggning via e-post och lösenord.  
-- Säker åtkomstkontroll för admin och inspektör.  
-- Lätt att integrera med befintliga Azure-resurser och RBAC.  
-
-**Nackdelar:**  
-- Två autentiseringsvägar kräver tydlig rollhantering i koden.  
-- Lokal Identity-hantering innebär ansvar för lösenordspolicy och säker lagring.  
-- SSO-funktionalitet begränsas i MVP-fasen eftersom kunder autentiseras lokalt (ASP.NET Identity) och inte via en gemensam identitetsleverantör. Full SSO (Single Sign-On) kan införas senare genom att även kundflödet flyttas till Entra ID eller annan extern IdP.
+The model can easily be extended to federated login (e.g., Entra External ID) when needed, but is kept simple in the MVP phase.
 
 ---
 
-## Risker / Åtgärder
-- **Risk:** Felaktig hantering av rollbaserad åtkomst kan exponera adminfunktioner.  
-  **Åtgärd:** Implementera rollkontroll i controllers och Razor-komponenter samt verifiera via testfall.  
+## Consequences
+**Advantages:**  
+- Cost-effective: only internal staff use Entra ID.  
+- Simple for customers: standard login via email and password.  
+- Secure access control for admin and inspector.  
+- Easy to integrate with existing Azure resources and RBAC.  
 
-- **Risk:** Lokala kundkonton kan utsättas för brute force-attacker.  
-  **Åtgärd:** Aktivera inloggningsbegränsning (lockout policy) och kräva starka lösenord.  
-
-- **Risk:** Entra ID-beroende kan skapa problem i offline-miljöer.  
-  **Åtgärd:** Behåll fallback-läge lokalt för utveckling utan molnkoppling.
-
----
-
-## Alternativ (Alternatives)
-- **Endast Entra ID:** Säker men dyr och överkomplicerad för kundkonton.  
-- **Endast lokal Identity:** Enkel men sämre säkerhet för adminfunktioner.  
-- **OAuth2 med extern leverantör (t.ex. Google):** OAuth2/OIDC mot extern IdP (Google/Microsoft) bedöms som överdrivet för MVP eftersom målet främst är att visa arkitekturen, inte identity-federering.  
+**Disadvantages:**  
+- Two authentication paths require clear role management in the code.  
+- Local Identity management entails responsibility for password policy and secure storage.  
+- SSO functionality is limited in the MVP phase since customers authenticate locally (ASP.NET Identity) and not via a common identity provider. Full SSO (Single Sign-On) can be introduced later by also moving the customer flow to Entra ID or another external IdP.
 
 ---
 
-## Referenser (References)
-- [Systemöversikt](../system_overview.md)  
+## Risks / Mitigations
+- **Risk:** Incorrect handling of role-based access can expose admin functions.  
+  **Mitigation:** Implement role control in controllers and Razor components and verify via test cases.  
+
+- **Risk:** Local customer accounts can be exposed to brute force attacks.  
+  **Mitigation:** Enable login throttling (lockout policy) and require strong passwords.  
+
+- **Risk:** Entra ID dependency can create problems in offline environments.  
+  **Mitigation:** Maintain fallback mode locally for development without cloud connectivity.
+
+---
+
+## Alternatives
+- **Entra ID only:** Secure but expensive and overcomplicated for customer accounts.  
+- **Local Identity only:** Simple but poorer security for admin functions.  
+- **OAuth2 with external provider (e.g., Google):** OAuth2/OIDC against external IdP (Google/Microsoft) is considered excessive for MVP since the goal is primarily to demonstrate the architecture, not identity federation.  
+
+---
+
+## References
+- [System overview](../system_overview.md)  
 - [Microsoft Docs – ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)  
 - [Microsoft Docs – Entra ID integration](https://learn.microsoft.com/en-us/azure/active-directory/develop/)

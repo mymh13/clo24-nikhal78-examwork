@@ -1,67 +1,67 @@
-# ADR-006 – Eventdriven arkitektur: Azure Service Bus + Azure Function + Outbox Pattern
+# ADR-006 – Event-driven architecture: Azure Service Bus + Azure Function + Outbox Pattern
 
 **Status:** Planned  
-**Datum:** 2025-10-30  
-**Författare:** Niklas Häll
+**Date:** 2025-10-30  
+**Author:** Niklas Häll
 
 ---
 
-## Sammanhang (Context)
-Det befintliga systemet som projektet inspireras av är uppbyggt med sekventiella och kedjade API-anrop (API chaining).  
-Detta leder till hög koppling mellan tjänster och svårigheter med felhantering och skalning.  
-För att modernisera arkitekturen planeras en övergång till **händelsestyrd kommunikation**, där systemet reagerar på publicerade event snarare än synkrona API-anrop.
+## Context
+The existing system that the project is inspired by is built with sequential and chained API calls (API chaining).  
+This leads to high coupling between services and difficulties with error handling and scaling.  
+To modernize the architecture, a transition to **event-driven communication** is planned, where the system reacts to published events rather than synchronous API calls.
 
 ---
 
-## Beslut (Decision)
-Systemet förbereds för **eventdriven arkitektur** genom att:
-- införa **Outbox Pattern** i API:t (bokningshändelser loggas samtidigt som datan skrivs till databasen),  
-- skapa en **Azure Service Bus** för publicering och prenumeration av händelser,  
-- låta en **Azure Function** reagera på utvalda event (exempelvis `BookingCreated`) och utföra efterbearbetning, notifiering eller audit-loggning.  
+## Decision
+The system is prepared for **event-driven architecture** by:
+- introducing the **Outbox Pattern** in the API (booking events are logged simultaneously as data is written to the database),  
+- creating an **Azure Service Bus** for publishing and subscribing to events,  
+- letting an **Azure Function** react to selected events (e.g., `BookingCreated`) and perform post-processing, notification, or audit logging.  
 
-Hela flödet kan aktiveras eller stängas av via **feature-flaggor** i App Configuration, vilket gör att MVP kan köras helt utan dessa komponenter under utveckling.
-
----
-
-## Konsekvenser (Consequences)
-**Fördelar:**  
-- Lösare koppling mellan komponenter.  
-- Lätt att bygga ut nya funktioner som prenumererar på befintliga händelser.  
-- Förbättrad robusthet och skalbarhet vid hög last.  
-- En realistisk modell för att simulera modernisering av äldre API-baserade system.
-
-**Nackdelar:**  
-- Ökad komplexitet vid felsökning (flödet blir asynkront).  
-- Kräver fler Azure-resurser och kan öka kostnaderna.  
-- Funktionerna måste designas idempotenta för att undvika dubbla händelser.  
+The entire flow can be activated or deactivated via **feature flags** in App Configuration, which allows the MVP to run completely without these components during development.
 
 ---
 
-## Risker / Åtgärder
-- **Risk:** Händelser kan tappas bort vid fel i Service Bus eller Function.  
-  **Åtgärd:** Använd Dead Letter Queue och övervakning via Application Insights.  
+## Consequences
+**Advantages:**  
+- Looser coupling between components.  
+- Easy to build out new features that subscribe to existing events.  
+- Improved robustness and scalability under high load.  
+- A realistic model for simulating modernization of older API-based systems.
 
-- **Risk:** För tidig aktivering av eventflödet kan öka kostnader i MVP-fasen.  
-  **Åtgärd:** Håll Service Bus och Functions provisionerade men inaktiva tills test eller demo.  
-
-- **Risk:** Asynkronitet gör systembeteende svårare att förutsäga.  
-  **Åtgärd:** Behåll kärnflödet synkront och logga event separat i Outbox tills mognad uppnåtts.  
+**Disadvantages:**  
+- Increased complexity in troubleshooting (the flow becomes asynchronous).  
+- Requires more Azure resources and can increase costs.  
+- Functions must be designed idempotent to avoid duplicate events.  
 
 ---
 
-## Alternativ (Alternatives)
-- **Ren API-baserad arkitektur:** Enklare men svår att skala och felhantera.  
-- **Azure Event Grid:** Mer avancerat och bra service i sig, men onödigt för MVP och riskerar att öka kostnaderna när flera händelsetyper införs.   
-- **Service Bus Topics + flera Functions:** Kan införas i senare version för bredare eventdistribution.  
+## Risks / Mitigations
+- **Risk:** Events can be lost in case of errors in Service Bus or Function.  
+  **Mitigation:** Use Dead Letter Queue and monitoring via Application Insights.  
+
+- **Risk:** Too early activation of the event flow can increase costs in the MVP phase.  
+  **Mitigation:** Keep Service Bus and Functions provisioned but inactive until test or demo.  
+
+- **Risk:** Asynchronicity makes system behavior harder to predict.  
+  **Mitigation:** Keep the core flow synchronous and log events separately in Outbox until maturity is reached.  
+
+---
+
+## Alternatives
+- **Pure API-based architecture:** Simpler but difficult to scale and handle errors.  
+- **Azure Event Grid:** More advanced and a good service in itself, but unnecessary for MVP and risks increasing costs when multiple event types are introduced.   
+- **Service Bus Topics + multiple Functions:** Can be introduced in a later version for broader event distribution.  
   
-Notera: varje extra meddelandetjänst (Service Bus, Event Grid, Event Hubs) innebär ytterligare kostnader över tid. Därför hålls MVP:n till Service Bus + Function som minsta eventdrivna kärna.  
+Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) entails additional costs over time. Therefore, the MVP is kept to Service Bus + Function as the minimum event-driven core.  
 
 ---
 
-## Referenser (References)
-- [Arkitekturöversikt](../architecture.md)  
-- [Systemöversikt](../system_overview.md)  
+## References
+- [Architecture overview](../architecture.md)  
+- [System overview](../system_overview.md)  
 - [Microsoft Docs – Azure Service Bus](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview)  
 - [Microsoft Docs – Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-overview)  
-- [Transaktionellt outbox-pattern med Azure Cosmos DB](https://learn.microsoft.com/sv-se/azure/architecture/databases/guide/transactional-outbox-cosmos)  
+- [Transactional outbox pattern with Azure Cosmos DB](https://learn.microsoft.com/sv-se/azure/architecture/databases/guide/transactional-outbox-cosmos)  
   

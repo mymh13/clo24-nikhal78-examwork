@@ -1,69 +1,69 @@
-# ADR-004 – Val av frontend-teknik: .NET 8 Blazor Server
+# ADR-004 – Frontend technology choice: .NET 8 Blazor Server
 
 **Status:** Accepted  
-**Datum:** 2025-10-30  
-**Författare:** Niklas Häll
+**Date:** 2025-10-30  
+**Author:** Niklas Häll
 
 ---
 
-## Sammanhang (Context)
-Projektet ska efterlikna en befintlig lösning där Microsoft-/Azure-stack används fullt ut.  
-Frontend behöver:
-- kunna integrera mot .NET-baserade API:er utan extra lager,
-- stödja inloggning för både interna roller (admin/inspektör via Entra ID) och vanliga användare,
-- kunna köras lokalt för att hålla nere kostnader under utveckling,
-- kunna deployas enkelt till Azure App Service.
+## Context
+The project should mimic an existing solution where the Microsoft/Azure stack is used to its full extent.  
+The frontend needs to:
+- be able to integrate with .NET-based APIs without extra layers,
+- support login for both internal roles (admin/inspector via Entra ID) and regular users,
+- be able to run locally to keep costs down during development,
+- be able to deploy easily to Azure App Service.
 
-Alternativ som React, Angular och Vue skulle fungera tekniskt, men skulle kräva separat byggkedja (npm) och ge onödig komplexitet för ett 8-veckors MVP.  
-HTMX hade däremot kunnat vara ett attraktivt alternativ tack vare sin filosofi kring **Hypermedia-Driven Applications (HDA)**, där interaktionen styrs av servern och inte av en tung frontend.  
-Det hade passat väl för ett biljettbokningssystem där logiken redan finns i backend, och där låg komplexitet, snabb utveckling och tydlig server-state är viktiga mål.  
-HTMX ger ett modernt, responsivt gränssnitt utan att bygga en SPA, men saknar den djupa integration som Blazor erbjuder i en ren .NET-miljö.
-
----
-
-## Beslut (Decision)
-Vi använder **.NET 8 Blazor Server** som frontendramverk för applikationen.  
-Det ger en hel-C# lösning där UI, affärslogik och autentisering kan ligga nära varandra och där realtidsuppdateringar (SignalR) hanteras av plattformen.  
-Blazor Server kan även köras lokalt under utveckling för att minska användningen av CI/CD-minuter och Azure-resurser.
+Alternatives like React, Angular, and Vue would work technically, but would require a separate build chain (npm) and add unnecessary complexity for an 8-week MVP.  
+HTMX, however, could have been an attractive alternative thanks to its philosophy around **Hypermedia-Driven Applications (HDA)**, where interaction is controlled by the server and not by a heavy frontend.  
+It would have fit well for a ticketing system where the logic already exists in the backend, and where low complexity, rapid development, and clear server-state are important goals.  
+HTMX provides a modern, responsive interface without building an SPA, but lacks the deep integration that Blazor offers in a pure .NET environment.
 
 ---
 
-## Konsekvenser (Consequences)
-**Fördelar:**
-- Samma teknikstack (.NET) i hela projektet → enklare onboarding och färre verktyg.
-- Enkel integration med ASP.NET Identity och Entra ID.
-- Serverdrivet UI → lättare att skydda adminvyer bakom inloggning.
-- Lämpligt för snabb MVP-utveckling (ingen separat SPA-byggkedja).
-- Lätt att hosta i Azure App Service.
-
-**Nackdelar:**
-- Kräver fungerande och relativt stabil server-anslutning (SignalR).
-- Kan bli dyrare i längden än statisk Blazor WASM om man har många samtidiga användare.
-- UI-prestanda påverkas mer av servern än i en ren klientapp.
+## Decision
+We use **.NET 8 Blazor Server** as the frontend framework for the application.  
+It provides an all-C# solution where UI, business logic, and authentication can be close together and where real-time updates (SignalR) are handled by the platform.  
+Blazor Server can also run locally during development to reduce the use of CI/CD minutes and Azure resources.
 
 ---
 
-## Risker / Åtgärder
-- **Risk:** App Service på Free/F1 kan “somna”, vilket påverkar SignalR-anslutningen.  
-  **Åtgärd:** Skala upp till B1 inför demo eller när systemet visas för extern part.
+## Consequences
+**Advantages:**
+- Same technology stack (.NET) throughout the project → easier onboarding and fewer tools.
+- Easy integration with ASP.NET Identity and Entra ID.
+- Server-driven UI → easier to protect admin views behind login.
+- Suitable for rapid MVP development (no separate SPA build chain).
+- Easy to host in Azure App Service.
 
-- **Risk:** För tung logik i Blazor-komponenter kan göra UI långsamt.  
-  **Åtgärd:** Flytta affärslogik till API/domänlager och låt Blazor endast anropa tjänster.
-
-- **Risk:** Framtida behov av publik, helt anonym trafik (t.ex. öppen biljettvisning) kan passa sämre i Server-modellen.  
-  **Åtgärd:** Öppna för kompletterande Razor Pages / statiska vyer eller framtida Blazor WASM-modul.
-
----
-
-## Alternativ (Alternatives)
-- **Blazor WebAssembly:** Bra för statisk hosting, men mer jobb för auth och API-säkerhet i MVP.
-- **React/Angular:** Väletablerat, men kräver egen byggkedja och bryter “ren .NET-stack”. Ökad komplexitet och stort underhållsbehov.
-- **Razor Pages / MVC Views:** Enklare, men sämre för framtida interaktioner och realtid.
-- **HTMX:** Modernt och resurssnålt, ger snabb och serverdriven interaktion utan tung frontend-stack. Passar väl för applikationer med stark backend-logik, men är ännu inte lika etablerat i .NET-ekosystemet och har svagare stöd i Azure-verktygskedjan. 
+**Disadvantages:**
+- Requires a working and relatively stable server connection (SignalR).
+- Can become more expensive in the long run than static Blazor WASM if you have many concurrent users.
+- UI performance is more affected by the server than in a pure client app.
 
 ---
 
-## Referenser (References)
-- [Systemöversikt](../system_overview.md)
+## Risks / Mitigations
+- **Risk:** App Service on Free/F1 can "sleep", which affects the SignalR connection.  
+  **Mitigation:** Scale up to B1 before demo or when the system is shown to external parties.
+
+- **Risk:** Too heavy logic in Blazor components can make the UI slow.  
+  **Mitigation:** Move business logic to API/domain layer and let Blazor only call services.
+
+- **Risk:** Future need for public, fully anonymous traffic (e.g., open ticket viewing) may fit less well in the Server model.  
+  **Mitigation:** Open for complementary Razor Pages / static views or future Blazor WASM module.
+
+---
+
+## Alternatives
+- **Blazor WebAssembly:** Good for static hosting, but more work for auth and API security in MVP.
+- **React/Angular:** Well-established, but requires its own build chain and breaks "pure .NET stack". Increased complexity and high maintenance needs.
+- **Razor Pages / MVC Views:** Simpler, but worse for future interactions and real-time.
+- **HTMX:** Modern and resource-efficient, provides fast and server-driven interaction without a heavy frontend stack. Fits well for applications with strong backend logic, but is not yet as established in the .NET ecosystem and has weaker support in the Azure toolchain. 
+
+---
+
+## References
+- [System overview](../system_overview.md)
 - [Microsoft Docs – Host and deploy Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/host-and-deploy/server)
 
