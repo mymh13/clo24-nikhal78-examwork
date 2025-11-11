@@ -55,6 +55,7 @@ jobs:
           exit 0
 
       - name: Deploy to Azure Web App
+        if: steps.probe.outputs.exists == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.WEBAPP_NAME }}
