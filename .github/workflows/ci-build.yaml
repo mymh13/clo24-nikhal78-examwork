@@ -3,19 +3,49 @@ name: CI - Build solution
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci-build.yaml'
+      - '*.sln'
+      - '*.csproj'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/ci-build.yaml'
+      - '*.sln'
+      - '*.csproj'
+  workflow_dispatch:  # Allow manual trigger
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # Cancel duplicate runs
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.short_sha }}
+      full_sha: ${{ steps.version.outputs.full_sha }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for versioning
+
+      - name: Extract version from Git
+        id: version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          FULL_SHA=$(git rev-parse HEAD)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "full_sha=$FULL_SHA" >> $GITHUB_OUTPUT
+          echo "version=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Version: $SHORT_SHA"
 
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
@@ -26,11 +56,20 @@ jobs:
         run: dotnet restore
 
       - name: Build (Release)
-        run: dotnet build --configuration Release --no-restore
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.short_sha }}
+        run: dotnet build --configuration Release --no-restore /p:Version=${{ steps.version.outputs.short_sha }}
 
       # Publish Web (landing page) as artifact for CD to consume later
       - name: Publish Ticketing.Web
-        run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web
+        run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web /p:Version=${{ steps.version.outputs.short_sha }}
+
+      - name: Create version file
+        run: |
+          echo "${{ steps.version.outputs.short_sha }}" > out/web/VERSION.txt
+          echo "Full SHA: ${{ steps.version.outputs.full_sha }}" >> out/web/VERSION.txt
+          echo "Build: ${{ github.run_number }}" >> out/web/VERSION.txt
+          echo "Commit: ${{ github.event.head_commit.message }}" >> out/web/VERSION.txt
 
       - name: Upload Web artifact
         uses: actions/upload-artifact@v4
@@ -38,3 +77,4 @@ jobs:
           name: web-publish
           path: out/web
           if-no-files-found: error
+          retention-days: 7  # Keep artifacts for 7 days to save storage
