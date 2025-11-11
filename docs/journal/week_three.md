@@ -2,29 +2,31 @@
 
 ## Översikt
 
-Under vecka 3 påbörjas arbetet med att bygga den första versionen av infrastrukturen och koppla samman projektet med CI/CD-pipelines.
-Målet är att skapa en minimal men fungerande kedja för provisioning, build och deploy, utifrån den befintliga lösningen.
+Under vecka 3 påbörjades arbetet med att etablera den första versionen av infrastrukturen och koppla samman projektet med CI/CD-pipelines.
+Målet var att skapa en minimal men fungerande kedja för provisioning, autentisering och deployment, baserat på den befintliga kodbasen.
 
 ---
 
 ## Genomförda aktiviteter
  
-- Veckan inleds med **verifiering av regionvalet** (Sweden Central) och planering av **minimal infrastruktur** för dev-miljön (App Service för Blazor Server landing page).
-- Förbereder struktur i `infra/` inför första Bicep-fil och README-justering.
-- Planerar första **CI/CD-upplägget** i GitHub Actions, med fokus på att automatisera build och verifiering av koden innan deployment.
- 
-*(Fylls på löpande under veckan)*
+- Regionval: Bekräftat att Sweden Central används som primär region för miljön, med fokus på hållbarhet och låg latens.
+- Infrastruktur: Skapat första resursgruppen rg-examwork-dev och förberett struktur i infra/ för kommande Bicep-filer.
+- Azure-integration:
+    - Registrerat appen github-oidc-examwork i Entra ID.
+    - Konfigurerat Federated credentials (OIDC) för GitHub Actions.
+    - Tilldelat rollen Contributor till service principalen i resursgruppen.
+- CI/CD:
+    - Implementerat workflow OIDC Smoke Test (Azure login).
+    - Genomfört lyckad körning – Azure OIDC-inloggning verifierad utan att exponera ID-data.
+    - Förberett cd-web-dev.yaml för framtida deployment till App Service.
 
 ---
 
 ## Reflektion
 
-*(Fylls på efter varje större steg eller i slutet av veckan)*
-
-Exempel:
-- Erfarenheter av att arbeta iterativt med små Bicep-filer.
-- Lärdomar kring CI/CD-konfiguration.
-- Eventuella problem eller beslut som behöver följas upp nästa vecka.
+Arbetet med OIDC gav en djupare förståelse för hur hemlighetsfri autentisering fungerar i en modern GitHub-Actions-pipeline.
+Det visade sig viktigt att hålla en strikt separation mellan Tenant ID, Subscription ID och Client ID, särskilt vid användning av student-subskriptioner i Azure.
+Nästa steg blir att skapa en minimal App Service och testa den första faktiska deploymenten.
 
 ---
 
@@ -39,3 +41,4 @@ Exempel:
 - Förbereda för API-containerisering.
 
 ---
+ 
