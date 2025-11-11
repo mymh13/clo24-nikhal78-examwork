@@ -1,20 +1,20 @@
-# Vecka 2 – Kodstruktur och första körbara version
+# Week 2 – Code Structure and First Runnable Version
 
-## Översikt
+## Overview
 
-Under vecka 2 har fokus legat på att gå från planeringsfas till körbar kodbas.
-Målet var att etablera den tekniska grunden för både backend och frontend samt verifiera att applikationen fungerar lokalt innan infrastruktur och CI/CD påbörjas.
+During week 2, the focus has been on moving from the planning phase to a runnable codebase.
+The goal was to establish the technical foundation for both backend and frontend and verify that the application works locally before infrastructure and CI/CD begin.
 
 ---
 
-## Genomförda aktiviteter
+## Completed Activities
 
-* **Solution och projektstruktur**
+* **Solution and Project Structure**
 
-  * Skapat huvudlösning `clo24-nikhal78-examwork.sln` i projektroten.
-  * Lagt till projekten `Ticketing.Api` och `Ticketing.Contracts` i solution.
-  * Säkrat referenser mellan projekten (`API → Contracts`).
-  * Fastställt permanent repo-struktur:
+  * Created main solution `clo24-nikhal78-examwork.sln` in the project root.
+  * Added projects `Ticketing.Api` and `Ticketing.Contracts` to the solution.
+  * Secured references between projects (`API → Contracts`).
+  * Established permanent repo structure:
 
     ```
     src/
@@ -25,43 +25,43 @@ Målet var att etablera den tekniska grunden för både backend och frontend sam
     └─ tests/
     ```
 
-* **Shared-projekt**
-  * Skapat `Ticketing.Contracts.csproj` (class library, net8.0).
-  * Förberett `BookingDto.cs` enligt dokumenterade domänfält i `cosmos-ticketing-considerations.md`.
+* **Shared Project**
+  * Created `Ticketing.Contracts.csproj` (class library, net8.0).
+  * Prepared `BookingDto.cs` according to documented domain fields in `cosmos-ticketing-considerations.md`.
 
-* **API-projekt**
-  * Skapat `Ticketing.Api.csproj` med Web SDK och referens till `Contracts`.
-  * Implementerat minimal `Program.cs` för körbar Web API-bas.
-  * Bekräftat lyckad kompilering och lokal körning.
+* **API Project**
+  * Created `Ticketing.Api.csproj` with Web SDK and reference to `Contracts`.
+  * Implemented minimal `Program.cs` for runnable Web API base.
+  * Confirmed successful compilation and local execution.
 
-* **Web-projekt (Blazor Server)**
-  * Skapat `Ticketing.Web.csproj` (Blazor Server, net8.0).
-  * Lagt till minimal `Program.cs`, `_Host.cshtml`, `App.razor`, `_Imports.razor`, `MainLayout.razor` och `Index.razor`.
-  * Säkrat att applikationen körs lokalt och renderar en fungerande **landing page**.
-  * Hanterat initiala fel kring `_Host` och `PageTitle` genom att komplettera projektstrukturen.
+* **Web Project (Blazor Server)**
+  * Created `Ticketing.Web.csproj` (Blazor Server, net8.0).
+  * Added minimal `Program.cs`, `_Host.cshtml`, `App.razor`, `_Imports.razor`, `MainLayout.razor`, and `Index.razor`.
+  * Ensured the application runs locally and renders a working **landing page**.
+  * Handled initial errors around `_Host` and `PageTitle` by completing the project structure.
   
-* **Övrigt**
-  * Övervägt designval kring **Entra ID** (för adminroller) och **containerstrategi** (för API, Web och Functions).
-  * Beslutat att containerisering sker i samband med CI/CD och inte under MVP-fasen.
-  * Fastställt regionval:
-    * **Sweden Central (`swedencentral`)** som primär region (hållbarhet + låg latens)
-    * **West Europe (`westeurope`)** som fallback-region
+* **Other**
+  * Considered design choices around **Entra ID** (for admin roles) and **container strategy** (for API, Web, and Functions).
+  * Decided that containerization happens in conjunction with CI/CD and not during the MVP phase.
+  * Established region choice:
+    * **Sweden Central (`swedencentral`)** as primary region (sustainability + low latency)
+    * **West Europe (`westeurope`)** as fallback region
 
 ---
 
-## Reflektion
+## Reflection
 
-Grunden för applikationen är nu körbar och följer en ren, modulär arkitektur.
-Arbetet har fortsatt enligt principen *“en fil i taget”*, vilket minimerat fel och gjort det möjligt att verifiera varje steg lokalt innan nästa introducerats.
-Blazor Server-fronten och API:t ligger redo att byggas ut med funktionalitet för bokningar och datalagring.
+The foundation for the application is now runnable and follows a clean, modular architecture.
+The work has continued according to the principle *"one file at a time"*, which has minimized errors and made it possible to verify each step locally before the next was introduced.
+The Blazor Server frontend and API are ready to be extended with functionality for bookings and data storage.
 
 ---
 
-## Nästa steg (vecka 3)
+## Next Steps (Week 3)
 
-* Skapa **infra/**-struktur med Bicep och definiera Azure-resurser (App Service, Cosmos DB, Key Vault, App Config).
-* Förbereda **GitHub Actions-workflows** för CI (build) och CD (deploy till dev).
-* Utvärdera **Dockerfile** för API och Web inför kommande containerisering.
-* Bekräfta lyckad provisioning i **Sweden Central** innan utökning av infrastrukturen.
+* Create **infra/** structure with Bicep and define Azure resources (App Service, Cosmos DB, Key Vault, App Config).
+* Prepare **GitHub Actions workflows** for CI (build) and CD (deploy to dev).
+* Evaluate **Dockerfile** for API and Web in preparation for upcoming containerization.
+* Confirm successful provisioning in **Sweden Central** before expanding the infrastructure.
 
 ---

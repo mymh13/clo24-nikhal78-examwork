@@ -1,66 +1,66 @@
-# Ordlista (Glossary)
+# Glossary
 
-Denna ordlista samlar centrala begrepp, förkortningar och termer som används i projektet.  
-Syftet är att underlätta förståelsen av tekniska dokument och beslut, särskilt för läsare som inte är insatta i Azure- eller .NET-ekosystemet.
-
----
-
-## Azure-tjänster
-
-| Begrepp / Akronym         | Förklaring                                            | Kommentar / Användning i projektet |
-|---------------------------|-------------------------------------------------------|------------------------------------|
-| **App Service**           | Azure-tjänst för att köra webbappar och API:er.       | Kör både Blazor Server och API-delen i MVP. |
-| **App Configuration**     | Central lagring för inställningar och feature-flaggor.| Styr aktivering av funktioner och miljökonfiguration. |
-| **Key Vault**             | Säker lagring av hemligheter (secrets).               | Används för anslutningssträngar och API-nycklar. |
-| **Cosmos DB**             | Distribuerad NoSQL-databas från Azure.                | Primär databas i MVP (Serverless-läge). |
-| **Service Bus**           | Meddelandekö för asynkron kommunikation.              | Används i framtida eventdrivet flöde. |
-| **Azure Function**        | Serverless-funktion för händelsestyrd logik.          | Konsumerar event (t.ex. `BookingCreated`). |
-| **Application Insights**  | Tjänst för loggning, övervakning och telemetri.       | Spårar händelser och prestanda i applikationen. |
-| **API Management (APIM)** | Gateway för publika endpoints.                        | Hanterar GET-anrop, caching och rate limiting. |
+This glossary collects central concepts, abbreviations, and terms used in the project.  
+The purpose is to facilitate understanding of technical documents and decisions, especially for readers who are not familiar with the Azure or .NET ecosystem.
 
 ---
 
-## .NET-komponenter
+## Azure Services
 
-| Begrepp / Akronym      | Förklaring                                            | Kommentar / Användning i projektet |
-|------------------------|-------------------------------------------------------|------------------------------------|
-| **Blazor Server**      | Webbramverk i .NET för serverdrivna gränssnitt.       | Bygger frontend och hanterar inloggning. |
-| **ASP.NET Identity**   | Ramverk för användarhantering och autentisering.      | Används för kundinloggning. |
-| **Entra ID**           | Tidigare Azure Active Directory (AAD).                | Hanterar autentisering för admin/inspektör. |
-| **xUnit / NSubstitute**| Testverktyg för .NET-projekt.                         | Används för enhetstestning. |
-
----
-
-## Infrastruktur och DevOps
-
-| Begrepp / Akronym      | Förklaring                                            | Kommentar / Användning i projektet |
-|------------------------|-------------------------------------------------------|------------------------------------|
-| **IaC**                | *Infrastructure as Code.*                             | Princip för att definiera infrastruktur i kod (Bicep). |
-| **Bicep**              | Microsofts IaC-språk för Azure.                       | Används för att deklarativt skapa resurser. |
-| **CI/CD**              | *Continuous Integration / Continuous Deployment.*     | Automatiska byggen och leveranser via YAML-pipelines. |
-| **YAML**               | Konfigurationsspråk.                                  | Används för pipelines i DevOps. |
+| Concept / Acronym         | Explanation                                            | Comment / Usage in Project |
+|---------------------------|--------------------------------------------------------|----------------------------|
+| **App Service**           | Azure service for running web apps and APIs.           | Runs both Blazor Server and API part in MVP. |
+| **App Configuration**     | Central storage for settings and feature flags.        | Controls activation of features and environment configuration. |
+| **Key Vault**             | Secure storage of secrets.                             | Used for connection strings and API keys. |
+| **Cosmos DB**             | Distributed NoSQL database from Azure.                 | Primary database in MVP (Serverless mode). |
+| **Service Bus**           | Message queue for asynchronous communication.          | Used in future event-driven flow. |
+| **Azure Function**        | Serverless function for event-driven logic.            | Consumes events (e.g. `BookingCreated`). |
+| **Application Insights**  | Service for logging, monitoring, and telemetry.        | Tracks events and performance in the application. |
+| **API Management (APIM)** | Gateway for public endpoints.                          | Handles GET requests, caching, and rate limiting. |
 
 ---
 
-## Arkitekturmönster
+## .NET Components
 
-| Begrepp / Akronym          | Förklaring                                               | Kommentar / Användning i projektet |
-|----------------------------|----------------------------------------------------------|------------------------------------|
-| **Outbox Pattern**         | Designmönster för tillförlitlig publicering av händelser.| Förbereds i API:t för eventflöden. |
-| **Eventdriven arkitektur** | Arkitekturmönster där komponenter reagerar på händelser. | Införs efter MVP via Service Bus + Function. |
-
----
-
-## Övriga begrepp
-
-| Begrepp / Akronym      | Förklaring                                             | Kommentar / Användning i projektet |
-|------------------------|--------------------------------------------------------|------------------------------------|
-| **ADR**                | *Architecture Decision Record.*                        | Dokument som motiverar och loggar tekniska beslut. |
-| **HDA**                | *Hypermedia-Driven Application.*                       | Arkitekturstil som HTMX bygger på. |
-| **HTMX**               | JavaScript-bibliotek för serverdriven interaktion.     | Alternativ till SPA-ramverk (ej valt i detta projekt). |
-| **MVP**                | *Minimum Viable Product.*                              | Första fungerande versionen av systemet. |
+| Concept / Acronym      | Explanation                                            | Comment / Usage in Project |
+|------------------------|--------------------------------------------------------|----------------------------|
+| **Blazor Server**      | Web framework in .NET for server-driven interfaces.    | Builds frontend and handles login. |
+| **ASP.NET Identity**   | Framework for user management and authentication.      | Used for customer login. |
+| **Entra ID**           | Previously Azure Active Directory (AAD).               | Handles authentication for admin/inspector. |
+| **xUnit / NSubstitute**| Testing tools for .NET projects.                       | Used for unit testing. |
 
 ---
 
-> **Notering:**  
-> Ordlistan uppdateras löpande i takt med att nya tekniska begrepp och designmönster introduceras i projektet.
+## Infrastructure and DevOps
+
+| Concept / Acronym      | Explanation                                            | Comment / Usage in Project |
+|------------------------|--------------------------------------------------------|----------------------------|
+| **IaC**                | *Infrastructure as Code.*                              | Principle for defining infrastructure in code (Bicep). |
+| **Bicep**              | Microsoft's IaC language for Azure.                    | Used to declaratively create resources. |
+| **CI/CD**              | *Continuous Integration / Continuous Deployment.*      | Automatic builds and deliveries via YAML pipelines. |
+| **YAML**               | Configuration language.                                | Used for pipelines in DevOps. |
+
+---
+
+## Architecture Patterns
+
+| Concept / Acronym          | Explanation                                               | Comment / Usage in Project |
+|----------------------------|-----------------------------------------------------------|----------------------------|
+| **Outbox Pattern**         | Design pattern for reliable publishing of events.         | Prepared in the API for event flows. |
+| **Event-driven architecture** | Architecture pattern where components react to events. | Introduced after MVP via Service Bus + Function. |
+
+---
+
+## Other Concepts
+
+| Concept / Acronym      | Explanation                                             | Comment / Usage in Project |
+|------------------------|--------------------------------------------------------|----------------------------|
+| **ADR**                | *Architecture Decision Record.*                        | Document that motivates and logs technical decisions. |
+| **HDA**                | *Hypermedia-Driven Application.*                       | Architecture style that HTMX builds on. |
+| **HTMX**               | JavaScript library for server-driven interaction.      | Alternative to SPA frameworks (not chosen in this project). |
+| **MVP**                | *Minimum Viable Product.*                              | First working version of the system. |
+
+---
+
+> **Note:**  
+> The glossary is updated continuously as new technical concepts and design patterns are introduced in the project.

@@ -1,44 +1,44 @@
-# Vecka 1 – Uppstart och planering
+# Week 1 – Startup and Planning
 
-## Översikt
-Första veckan har fokuserat på uppstart, planering och dokumentationsstruktur.  
-Målet har varit att skapa en tydlig grund för vidare utveckling, med fokus på ordning, modularitet och spårbarhet. 
+## Overview
+The first week has focused on startup, planning, and documentation structure.  
+The goal has been to create a clear foundation for further development, with a focus on organization, modularity, and traceability. 
 
 ---
 
-## Genomförda aktiviteter
+## Completed Activities
 
-- Skapat **grundstruktur för repository** (docs/, infra/, etc.)
-- Skrivit **README.md** och lagt till **MIT License**
-- Lagt till **.gitignore** anpassad för .NET och lokala miljöer
-- Etablerat solution för hela projektet (clo24-nikhal78-examwork.sln)
-- Skapat katalogerna:
-  - `docs/initial_outtakes/` → tidiga planer och översikter  
+- Created **repository base structure** (docs/, infra/, etc.)
+- Written **README.md** and added **MIT License**
+- Added **.gitignore** adapted for .NET and local environments
+- Established solution for the entire project (clo24-nikhal78-examwork.sln)
+- Created directories:
+  - `docs/initial_outtakes/` → early plans and overviews  
   - `docs/adr/` → Architecture Decision Records  
-  - `docs/journal/` → veckologg
-  - `src/` → källkod (api, web, shared)
-- Dokumenterat:
-  - **system_overview.md** – projektbeskrivning, mål och verktyg  
-  - **architecture.md** – applikations- och eventflöden (ASCII-diagram)
-  - **cosmos-ticketing-considerations.md** – data- och domänöverväganden för boknings- och biljettmodellen
-- Skapat sex ADR:er (001–006) för val av Cosmos DB, Auth, IaC, Frontend, Azure Services och Eventdriven arkitektur
-- Påbörjat kodstruktur för MVP:
-  - /src/shared/Ticketing.Contracts/ med projektfil och BookingDto-förberedelse
-  - /src/api/Ticketing.Api/ med projektfil, referens till Contracts och minimal Program.cs
-  - Etablerad solution-fil som kopplar samman projekten
+  - `docs/journal/` → weekly log
+  - `src/` → source code (api, web, shared)
+- Documented:
+  - **system_overview.md** – project description, goals, and tools  
+  - **architecture.md** – application and event flows (ASCII diagrams)
+  - **cosmos-ticketing-considerations.md** – data and domain considerations for booking and ticket model
+- Created six ADRs (001–006) for choice of Cosmos DB, Auth, IaC, Frontend, Azure Services, and Event-driven architecture
+- Started code structure for MVP:
+  - /src/shared/Ticketing.Contracts/ with project file and BookingDto preparation
+  - /src/api/Ticketing.Api/ with project file, reference to Contracts, and minimal Program.cs
+  - Established solution file that connects the projects
 
 ---
 
-### Reflektion
+### Reflection
  
-Strukturen är nu på plats och utformad för att vara skalbar, modulär och enkel att containerisera i nästa steg. Arbetet har följt principen ”en sak i taget”. 
+The structure is now in place and designed to be scalable, modular, and easy to containerize in the next step. The work has followed the principle of "one thing at a time". 
 
 ---
 
-## Nästa steg (vecka 2)
+## Next Steps (Week 2)
 
-- Implementera BookingsController med BookingDto för att möjliggöra första API-testet.
-- Skapa enkel Blazor-frontend (landing page) för att bekräfta helheten lokalt.
-- Förbereda infrastrukturmapp (infra/) med grundläggande Bicep-struktur.
-- Planera container-upplägg för API, Web och Functions.
-- Påbörja utkast till CI/CD-pipeline (GitHub Actions) med fokus på dev-miljön.
+- Implement BookingsController with BookingDto to enable the first API test.
+- Create simple Blazor frontend (landing page) to verify the whole locally.
+- Prepare infrastructure folder (infra/) with basic Bicep structure.
+- Plan container setup for API, Web, and Functions.
+- Start draft of CI/CD pipeline (GitHub Actions) with focus on dev environment.

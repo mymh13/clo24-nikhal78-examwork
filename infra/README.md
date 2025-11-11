@@ -1,12 +1,12 @@
 # Infra (dev) – minimal start
 
-Syfte: provisionera minsta möjliga Azure-resurs för att hosta Blazor Server landing page.
+Purpose: provision the smallest possible Azure resource to host the Blazor Server landing page.
 
-## Förkrav
-- Azure CLI (`az`) inloggad mot rätt tenant/subscription
-- Resursgrupp skapad (Bicep körs på RG-nivå)
+## Prerequisites
+- Azure CLI (`az`) logged in to the correct tenant/subscription
+- Resource group created (Bicep runs at RG level)
 
-## 1) Skapa resursgrupp (en gång)
+## 1) Create resource group (once)
 ```bash
 az group create -n rg-examwork-dev -l swedencentral
 ```

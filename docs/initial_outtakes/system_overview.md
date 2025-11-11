@@ -1,48 +1,48 @@
-## Systemöversikt
-### Syfte
+## System Overview
+### Purpose
   
-Detta projekt syftar till att utveckla ett kostnadseffektivt och händelsestyrt biljettsystem för kollektivtrafik. Applikationen gör det möjligt för kunder att se tillgängliga resor, köpa och avboka biljetter samt för administratörer att hantera rutter och zoner.  
+This project aims to develop a cost-effective and event-driven ticketing system for public transportation. The application enables customers to view available trips, purchase and cancel tickets, and administrators to manage routes and zones.  
   
-Systemet byggs stegvis: först som ett enkelt, synkront och resurseffektivt system, med möjlighet att senare aktivera händelsestyrda flöden utan att ändra grundarkitekturen.  
+The system is built incrementally: first as a simple, synchronous, and resource-efficient system, with the possibility to later activate event-driven flows without changing the core architecture.  
   
-### Teknisk översikt
+### Technical Overview
   
-Systemet använder .NET 8 Blazor Server som frontend och ett Controller-baserat API för affärslogik och datalagring. All data lagras i Azure Cosmos DB (Serverless) för att minimera kostnader vid låg belastning.
-Funktioner som funktionsflaggor, hemlighetshantering och telemetri är integrerade redan från början för att möjliggöra kontroll och övervakning.  
+The system uses .NET 8 Blazor Server as the frontend and a Controller-based API for business logic and data storage. All data is stored in Azure Cosmos DB (Serverless) to minimize costs at low load.
+Features such as feature flags, secret management, and telemetry are integrated from the start to enable control and monitoring.  
   
-#### Azure-tjänster
-| Tjänst                     | Syfte                                                                        | 
+#### Azure Services
+| Service                     | Purpose                                                                        | 
 | -------------------------- | ---------------------------------------------------------------------------- | 
-| **App Service**            | Kör Blazor Server och API-applikationen.                                     | 
-| **Cosmos DB (Serverless)** | Primär databas för resor, bokningar och zoner.                               | 
-| **Azure Function**         | Används för bakgrundsjobb som triggas av händelser (t.ex. `BookingCreated`). | 
-| **Service Bus**            | Kö för asynkrona händelser (inaktiverad i MVP).                              | 
-| **App Configuration**      | Lagrar feature-flags och miljökonfiguration.                                 | 
-| **Key Vault**              | Hanterar secrets och anslutningssträngar.                                    | 
-| **Application Insights**   | Samlar loggar, telemetri och prestandadata.                                  | 
-| **API Management (APIM)**  | Gateway för publika GET-endpoints (läs-only-data).                           | 
+| **App Service**            | Runs Blazor Server and API application.                                     | 
+| **Cosmos DB (Serverless)** | Primary database for trips, bookings, and zones.                               | 
+| **Azure Function**         | Used for background jobs triggered by events (e.g. `BookingCreated`). | 
+| **Service Bus**            | Queue for asynchronous events (disabled in MVP).                              | 
+| **App Configuration**      | Stores feature flags and environment configuration.                                 | 
+| **Key Vault**              | Manages secrets and connection strings.                                    | 
+| **Application Insights**   | Collects logs, telemetry, and performance data.                                  | 
+| **API Management (APIM)**  | Gateway for public GET endpoints (read-only data).                           | 
   
-#### .NET-komponenter och verktyg
-| Komponent                       | Syfte                                                              | 
+#### .NET Components and Tools
+| Component                       | Purpose                                                              | 
 | ------------------------------- | ------------------------------------------------------------------ | 
-| **Blazor Server**               | Användargränssnitt för kunder och administratörer.                 | 
-| **ASP.NET Controller API**      | Hanterar affärslogik och dataåtkomst.                              | 
-| **xUnit + NSubstitute**         | Enhetstestning.                                                    | 
-| **Entity / Repository Pattern** | Abstraktion för datalagring i Cosmos DB.                           | 
-| **Outbox Pattern**              | Förbereder systemet för händelsestyrd publicering via Service Bus. | 
+| **Blazor Server**               | User interface for customers and administrators.                 | 
+| **ASP.NET Controller API**      | Handles business logic and data access.                              | 
+| **xUnit + NSubstitute**         | Unit testing.                                                    | 
+| **Entity / Repository Pattern** | Abstraction for data storage in Cosmos DB.                           | 
+| **Outbox Pattern**              | Prepares the system for event-driven publishing via Service Bus. | 
    
-#### DevOps och infrastruktur  
+#### DevOps and Infrastructure  
  
-| Område | Beskrivning  |
+| Area | Description  |
 |-----------------------------------|-----------------------------------------------------------------------------------------------------------|
-| **CI/CD**                         | Hanteras via Azure DevOps eller GitHub Actions med YAML-pipelines för automatiska byggen och deployment.  |
-| **Infrastructure as Code (IaC)**  | Infrastruktur kan hanteras med **Bicep**, **ARM-mallar** eller **Terraform**.
-    Exakt verktyg beslutas senare, men fokus ligger på att skapa en reproducerbar och kostnadseffektiv miljö.                                   |
-| **Miljöer**                       | Två miljöer planeras: `dev` och `prod`, separerade i egna Resource Groups i Azure.                        |
-| **Loggning och övervakning**      | Implementeras med **Application Insights** och **KQL-frågor** 
-    för att visualisera nyckelvärden i dashboards eller workbooks.                                                                              |
+| **CI/CD**                         | Handled via Azure DevOps or GitHub Actions with YAML pipelines for automatic builds and deployment.  |
+| **Infrastructure as Code (IaC)**  | Infrastructure can be managed with **Bicep**, **ARM templates**, or **Terraform**.
+   Exact tool is decided later, but the focus is on creating a reproducible and cost-effective environment.                                   |
+| **Environments**                       | Two environments are planned: `dev` and `prod`, separated in their own Resource Groups in Azure.                        |
+| **Logging and Monitoring**      | Implemented with **Application Insights** and **KQL queries** 
+   to visualize key values in dashboards or workbooks.                                                                              |
   
-### MVP-omfattning
+### MVP Scope
   
 - Book and cancel trips (Bus, Train).
 - Display available routes and zones.
@@ -50,7 +50,7 @@ Funktioner som funktionsflaggor, hemlighetshantering och telemetri är integrera
 - Track performance and usage via telemetry.
 - Prepare (but not enable) event flow through Service Bus and Functions.
   
-### Möjliga framtida utökningar
+### Possible Future Extensions
   
 - Enable Service Bus + Function pipeline for asynchronous events.
 - Add ticket validation module (Inspector role).

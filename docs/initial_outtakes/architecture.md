@@ -1,143 +1,143 @@
-## Arkitekturöversikt
-### Syfte
+## Architecture Overview
+### Purpose
   
-Detta dokument beskriver hur applikationen är uppbyggd och hur dataflödet ser ut både ur användarens perspektiv och ur ett tekniskt perspektiv. Systemet är designat för att vara modulärt, händelseförberett och kostnadseffektivt med fokus på enkel drift i Azure. 
+This document describes how the application is structured and what the data flow looks like both from the user's perspective and from a technical perspective. The system is designed to be modular, event-ready, and cost-effective with a focus on simple operations in Azure. 
   
-1. Användarflöde
+1. User Flow
 ```java
-[ Kund ] 
+[ Customer ] 
    │
-   │ 1. Loggar in med kundkonto (ASP.NET Identity) (Admin/Inspektör loggar in via Entra ID)
+   │ 1. Logs in with customer account (ASP.NET Identity) (Admin/Inspector logs in via Entra ID)
    │
    ▼
 [ Blazor Server UI ]
-   │ 2. Visar tillgängliga resor (kanske även zoner)
-   │ 3. Kund väljer resa och bokar biljett
+   │ 2. Shows available trips (possibly also zones)
+   │ 3. Customer selects trip and books ticket
    │
    ▼
 [ Ticketing API ]
-   │ 4. Tar emot bokningsförfrågan
-   │ 5. Skapar bokning i databasen
+   │ 4. Receives booking request
+   │ 5. Creates booking in database
    │
    ▼
 [ Cosmos DB (Serverless) ]
-   │ 6. Lagrar bokning, resa, zon och referens till användare:
-            - kund: userAccountId (GUID)
-            - admin/inspektör: oid (Entra ID)
+   │ 6. Stores booking, trip, zone and reference to user:
+            - customer: userAccountId (GUID)
+            - admin/inspector: oid (Entra ID)
    │
    ▼
 [ Application Insights ]
-   │ 7. Loggar användarflödet för övervakning och statistik
+   │ 7. Logs user flow for monitoring and statistics
    │
    ▼
 [ Blazor Server UI ]
-   │ 8. Visar bekräftelse och "Mina bokningar"
+   │ 8. Shows confirmation and "My bookings"
 ```
  
-2. Tekniskt flöde (intern arkitektur)
+2. Technical Flow (Internal Architecture)
 ```java
                       ┌─────────────────────────────────────┐
-                      │            Användargränssnitt       │
+                      │         User Interface               │
                       │─────────────────────────────────────│
                       │  Blazor Server (.NET 8)             │
-                      │  Hanterar UI, inloggning och session│
+                      │  Handles UI, login and session      │
                       │  Auth: ASP.NET Identity + Entra ID  │
                       └─────────────────────────────────────┘
                                       │
                                       ▼
                       ┌─────────────────────────────────────┐
-                      │           Applikationslager         │
+                      │        Application Layer            │
                       │─────────────────────────────────────│
                       │  ASP.NET Controller API             │
-                      │  • Validerar request                │
-                      │  • Anropar domäntjänster            │
-                      │  • Skapar outbox-event (valfritt)   │
+                      │  • Validates request                │
+                      │  • Calls domain services            │
+                      │  • Creates outbox event (optional)  │
                       └─────────────────────────────────────┘
                                       │
                                       ▼
                       ┌─────────────────────────────────────┐
-                      │           Databaslager              │
+                      │         Database Layer              │
                       │─────────────────────────────────────│
                       │  Azure Cosmos DB (Serverless)       │
                       │  • Trip-, Booking-, Zone-data       │
-                      │  • Minimal kostnad vid idle         │
+                      │  • Minimal cost when idle            │
                       └─────────────────────────────────────┘
                                       │
                                       ▼
            ┌────────────────────────────────────────────────────────┐
-           │       Händelse- och integrationslager (påslagsbart)    │
+           │    Event and Integration Layer (optional)                │
            │────────────────────────────────────────────────────────│
-           │  • Azure Service Bus  – mellanlagrar händelser         │
-           │  • Azure Function     – behandlar t.ex. BookingCreated │
-           │  • Outbox Pattern     – säkerställer leverans          │
+           │  • Azure Service Bus  – buffers events                 │
+           │  • Azure Function     – handles e.g. BookingCreated    │
+           │  • Outbox Pattern     – ensures delivery               │
            └────────────────────────────────────────────────────────┘
                                       │
                                       ▼
                       ┌─────────────────────────────────────┐
-                      │   Konfiguration och säkerhet        │
+                      │   Configuration and Security        │
                       │─────────────────────────────────────│
                       │  Azure App Configuration            │
                       │  Azure Key Vault                    │
-                      │  Application Insights (telemetri)   │
+                      │  Application Insights (telemetry)    │
                       └─────────────────────────────────────┘
 ```
 
-### Sammanfattning
-Applikationen följer en tydlig lagerindelning: 
-- Blazor Server hanterar interaktion med användaren.
-- Ticketing API implementerar affärslogiken och kommunicerar med databasen.
-- Cosmos DB fungerar som central lagring.
-- Service Bus och Functions kan aktiveras via feature flag för att övergå till ett händelsestyrt arbetssätt.
-- App Configuration, Key Vault och Application Insights används tvärs över hela systemet för konfiguration, säkerhet och övervakning.
+### Summary
+The application follows a clear layer structure: 
+- Blazor Server handles interaction with the user.
+- Ticketing API implements business logic and communicates with the database.
+- Cosmos DB serves as central storage.
+- Service Bus and Functions can be activated via feature flag to transition to an event-driven approach.
+- App Configuration, Key Vault, and Application Insights are used across the entire system for configuration, security, and monitoring.
  
-### Bilaga - Utkast till Eventflöde (framtida modul)
+### Appendix - Draft Event Flow (Future Module)
 ```java
 [ Ticketing API ]
     │
-    │ 1. Kund skapar bokning via Blazor-gränssnittet
+    │ 1. Customer creates booking via Blazor interface
     │
-    ├─► Skapar bokning i Cosmos DB
+    ├─► Creates booking in Cosmos DB
     │
-    ├─► Lägger till post i Outbox (typ: BookingCreated)
+    ├─► Adds entry to Outbox (type: BookingCreated)
     │
-    └─► Om feature-flaggan "BookingEvents.Enabled" = true:
+    └─► If feature flag "BookingEvents.Enabled" = true:
             ▼
             [ Azure Service Bus ]
                 │
-                │ 2. Tar emot meddelandet "BookingCreated"
+                │ 2. Receives message "BookingCreated"
                 │
                 ▼
             [ Azure Function: OnBookingCreated ]
                 │
-                │ 3. Behandlar händelsen:
-                │     - uppdaterar status / notifierar / skriver logg
-                │     - kan utlösa nya events (t.ex. BookingConfirmed)
+                │ 3. Handles the event:
+                │     - updates status / notifies / writes log
+                │     - can trigger new events (e.g. BookingConfirmed)
                 │
                 ▼
             [ Application Insights ]
                 │
-                │ 4. Loggar hela händelsekedjan för spårning och analys
+                │ 4. Logs entire event chain for tracking and analysis
                 ▼
             [ Cosmos DB ]
                 │
-                │ 5. Eventuella uppdateringar i datalagringen
+                │ 5. Any updates to data storage
                 ▼
             [ Blazor UI ]
                 │
-                │ 6. Kunden får uppdaterad status (t.ex. "Bekräftad bokning")
+                │ 6. Customer receives updated status (e.g. "Confirmed booking")
 ```
-### Sammanfattning av eventflödet
-Detta flöde illustrerar hur systemet kan utökas till ett händelsestyrt arbetssätt utan att förändra den befintliga kärnlogiken. I den synkrona versionen skrivs bokningen direkt till databasen via API:t. 
+### Event Flow Summary
+This flow illustrates how the system can be extended to an event-driven approach without changing the existing core logic. In the synchronous version, the booking is written directly to the database via the API. 
  
-När eventflödet aktiveras används Outbox-mönstret för att skapa en händelsepost i samma transaktion som datalagringen. Denna händelse skickas sedan till Azure Service Bus, där en Azure Function reagerar på meddelandet och utför efterbearbetning, till exempel loggning, notifiering eller statusuppdatering. 
+When the event flow is activated, the Outbox pattern is used to create an event entry in the same transaction as the data storage. This event is then sent to Azure Service Bus, where an Azure Function reacts to the message and performs post-processing, such as logging, notification, or status updates. 
  
-Fördelarna med detta tillvägagångssätt är:
-- Systemet blir lösare kopplat och kan byggas ut stegvis.
-- Nya funktioner kan läggas till som separata prenumeranter (t.ex. e-post, statistik, rapportering).
-- Eventflödet kan aktiveras eller pausas via feature-flaggor utan påverkan på grundsystemet.
-- Det möjliggör skalig parallell behandling utan att API:et belastas av långvariga operationer. 
+The advantages of this approach are:
+- The system becomes more loosely coupled and can be extended incrementally.
+- New features can be added as separate subscribers (e.g., email, statistics, reporting).
+- The event flow can be activated or paused via feature flags without affecting the base system.
+- It enables scalable parallel processing without the API being burdened by long-running operations. 
  
-Detta gör arkitekturen framtidssäker och redo för en mer distribuerad, händelsedriven infrastruktur när behovet uppstår. Det innebär även att vi kan simulera en miljö där ett befintligt system, byggt på kedjade API-anrop (API chaining), kan refaktoreras och ersättas med en modernare och mer händelsedriven arkitektur.
+This makes the architecture future-proof and ready for a more distributed, event-driven infrastructure when the need arises. It also means we can simulate an environment where an existing system, built on chained API calls (API chaining), can be refactored and replaced with a more modern and event-driven architecture.
  
 ### Disclaimer
-Jag har bett en LLM att rita ASCII-flödena utefter min beskrivning. 
+I asked an LLM to draw the ASCII flows according to my description. 

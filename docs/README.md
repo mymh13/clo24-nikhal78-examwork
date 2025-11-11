@@ -1,46 +1,51 @@
-# Projektöversikt för dokumentationen
+# Project Overview for Documentation
 
-Denna katalog innehåller all dokumentation kopplad till projektet – från tidiga planer till beslutade arkitekturval och veckovisa loggar.
-
----
-
-### ./rot-mappen
-|       Fil                     |  Beskrivning  |
-|-------------------------------|---------------|
-| **glossary.md**               | (Valfritt) Ordlista över centrala begrepp och akronymer som används i projektet. |
+This directory contains all documentation related to the project – from early plans to decided architectural choices and weekly logs.
 
 ---
 
-### ./adr/                      ADR - Achitecture Design Record. Dokumenterar design- och arkitekturella beslut.
-|       Fil                     |  Beskrivning  |
-|-------------------------------|---------------|
-| **./archive/**                | Arkiv för äldre eller ersatta ADR-dokument. |
-| **ADR-000-template.md**       | Mall för nya Architecture Decision Records. |
-| **ADR-001-cosmosdb.md**       | Beslut: Databasval (Azure Cosmos DB, Serverless). |
-| **ADR-002-authentication.md** | Beslut: Autentisering via ASP.NET Identity + Entra ID. |
-| **ADR-003-iac.md**            | Beslut: Infrastructure as Code med Bicep. |
-| **ADR-004-frontend.md**       | Beslut: Frontend i .NET 8 Blazor Server. |
-| **ADR-005-azureservices.md**  | Beslut: Centrala Azure-tjänster för drift och övervakning. |
-| **ADR-006-eventdriven.md**    | Planerat beslut: Eventdriven arkitektur (Service Bus + Function). |
+### ./root directory
+
+| File                     | Description  |
+|--------------------------|--------------|
+| **glossary.md**          | (Optional) Glossary of central concepts and acronyms used in the project. |
 
 ---
 
-### ./initial_outtakes/         Tidiga utkast och planer som definierade projektets riktning.
+### ./adr/                      ADR - Architecture Decision Record. Documents design and architectural decisions.
 
-|       Fil                     |  Beskrivning  |
-|-------------------------------|---------------|
-| **system_overview.md**        | Systemöversikt med projektmål, teknisk plan och tjänsteval. |
-| **architecture.md**           | Arkitekturell översikt med ASCII-diagram och flödesbeskrivning. |
-
----
-
-### ./journal/                  Veckovisa loggar för projektets framsteg.
-
-|       Fil                     |  Beskrivning  |
-|-------------------------------|---------------|
-| **week_one.md**               | Vecka 1 – uppstart, planering och dokumentationsstruktur. |
+| File                     | Description  |
+|--------------------------|--------------|
+| **./archive/**           | Archive for older or replaced ADR documents. |
+| **ADR-000-template.md**  | Template for new Architecture Decision Records. |
+| **ADR-001-cosmosdb.md**  | Decision: Database choice (Azure Cosmos DB, Serverless). |
+| **ADR-002-authentication.md** | Decision: Authentication via ASP.NET Identity + Entra ID. |
+| **ADR-003-iac.md**       | Decision: Infrastructure as Code with Bicep. |
+| **ADR-004-frontend.md**  | Decision: Frontend in .NET 8 Blazor Server. |
+| **ADR-005-azureservices.md** | Decision: Core Azure services for operations and monitoring. |
+| **ADR-006-eventdriven.md** | Planned decision: Event-driven architecture (Service Bus + Function). |
 
 ---
 
-> **Notering:**  
-> Dokumentationen uppdateras iterativt under projektets gång. Nya ADR:er och journalposter läggs till successivt när beslut fattas eller milstolpar nås.
+### ./initial_outtakes/         Early drafts and plans that defined the project's direction.
+
+| File                     | Description  |
+|--------------------------|--------------|
+| **system_overview.md**   | System overview with project goals, technical plan, and service choices. |
+| **architecture.md**       | Architectural overview with ASCII diagrams and flow descriptions. |
+| **cosmos-ticketing-considerations.md** | Data and domain considerations for booking and ticket model. |
+
+---
+
+### ./journal/                  Weekly logs for project progress.
+
+| File                     | Description  |
+|--------------------------|--------------|
+| **week_one.md**          | Week 1 – startup, planning, and documentation structure. |
+| **week_two.md**          | Week 2 – code structure and first runnable version. |
+| **week_three.md**        | Week 3 – infrastructure and CI/CD foundation. |
+
+---
+
+> **Note:**  
+> The documentation is updated iteratively during the project. New ADRs and journal entries are added progressively as decisions are made or milestones are reached.

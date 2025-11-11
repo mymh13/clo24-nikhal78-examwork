@@ -1,44 +1,42 @@
-# Vecka 3 – Infrastruktur och CI/CD-grund
+# Week 3 – Infrastructure and CI/CD Foundation
 
-## Översikt
+## Overview
 
-Under vecka 3 påbörjades arbetet med att etablera den första versionen av infrastrukturen och koppla samman projektet med CI/CD-pipelines.
-Målet var att skapa en minimal men fungerande kedja för provisioning, autentisering och deployment, baserat på den befintliga kodbasen.
+During week 3, work began on establishing the first version of the infrastructure and connecting the project with CI/CD pipelines.
+The goal was to create a minimal but functional chain for provisioning, authentication, and deployment, based on the existing codebase.
 
 ---
 
-## Genomförda aktiviteter
+## Completed Activities
  
-- Regionval: Bekräftat att Sweden Central används som primär region för miljön, med fokus på hållbarhet och låg latens.
-- Infrastruktur: Skapat första resursgruppen rg-examwork-dev och förberett struktur i infra/ för kommande Bicep-filer.
-- Azure-integration:
-    - Registrerat appen github-oidc-examwork i Entra ID.
-    - Konfigurerat Federated credentials (OIDC) för GitHub Actions.
-    - Tilldelat rollen Contributor till service principalen i resursgruppen.
+- Region choice: Confirmed that Sweden Central is used as the primary region for the environment, with focus on sustainability and low latency.
+- Infrastructure: Created the first resource group rg-examwork-dev and prepared structure in infra/ for upcoming Bicep files.
+- Azure integration:
+    - Registered the app github-oidc-examwork in Entra ID.
+    - Configured Federated credentials (OIDC) for GitHub Actions.
+    - Assigned the Contributor role to the service principal in the resource group.
 - CI/CD:
-    - Implementerat workflow OIDC Smoke Test (Azure login).
-    - Genomfört lyckad körning – Azure OIDC-inloggning verifierad utan att exponera ID-data.
-    - Förberett cd-web-dev.yaml för framtida deployment till App Service.
+    - Implemented OIDC Smoke Test workflow (Azure login).
+    - Completed successful run – Azure OIDC login verified without exposing ID data.
+    - Prepared cd-web-dev.yaml for future deployment to App Service.
 
 ---
 
-## Reflektion
+## Reflection
 
-Arbetet med OIDC gav en djupare förståelse för hur hemlighetsfri autentisering fungerar i en modern GitHub-Actions-pipeline.
-Det visade sig viktigt att hålla en strikt separation mellan Tenant ID, Subscription ID och Client ID, särskilt vid användning av student-subskriptioner i Azure.
-Nästa steg blir att skapa en minimal App Service och testa den första faktiska deploymenten.
+The work with OIDC provided a deeper understanding of how secretless authentication works in a modern GitHub Actions pipeline.
+It proved important to maintain a strict separation between Tenant ID, Subscription ID, and Client ID, especially when using student subscriptions in Azure.
+The next step will be to create a minimal App Service and test the first actual deployment.
 
 ---
 
-## Nästa steg (vecka 4)
+## Next Steps (Week 4)
 
-*(Planeras i slutet av veckan)*
-
-Exempel:
-- Utöka Bicep till att inkludera Cosmos DB och Key Vault.
-- Testa första automatiserade deployment till App Service.
-- Införa loggning och telemetri (Application Insights).
-- Förbereda för API-containerisering.
+Examples:
+- Create App Service in swedencentral and test first deployment.
+- Introduce Application Insights for basic telemetry.
+- Begin Bicep automation for resource group and App Service.
+- Prepare pipeline for API containerization.
 
 ---
  

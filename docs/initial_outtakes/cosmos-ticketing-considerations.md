@@ -1,44 +1,44 @@
-# Cosmos-baserad biljettmodell – överväganden
+# Cosmos-based Ticket Model – Considerations
 
-## Syfte
-Syftet med detta dokument är att samla de tidiga tankarna kring hur bokningar och biljetter ska lagras i Cosmos DB för MVP:t. Det är inte ett slutgiltigt beslut (ingen ADR) utan ett underlag för kommande designbeslut.
+## Purpose
+The purpose of this document is to gather early thoughts on how bookings and tickets should be stored in Cosmos DB for the MVP. It is not a final decision (no ADR) but a basis for upcoming design decisions.
 
-## Problem / utmaningar
-- Vi vill kunna **boka nu men använda senare** (aktivering vs giltighet).
-- Vi vill **hålla allt i ett dokument i början** (billigt, enkelt, snabb MVP).
-- Vi vill **behålla fält för framtida funktioner** (på-/avstigning, flera zoner) för att slippa migrera tidigt.
-- Vi måste **logga källa och status** för att kunna bygga eventdrivna flöden senare.
-- Vi vill **inte låsa oss vid rutter** nu, utan börja med **zon**.
+## Problems / Challenges
+- We want to be able to **book now but use later** (activation vs validity).
+- We want to **keep everything in one document initially** (cheap, simple, fast MVP).
+- We want to **retain fields for future features** (boarding/alighting, multiple zones) to avoid early migration.
+- We must **log source and status** to be able to build event-driven flows later.
+- We want to **not lock ourselves to routes** now, but start with **zone**.
 
-## Domänantaganden (MVP)
-- _Booking_ = kunden har beställt en biljett.
-- _Ticket_ = det som visas/valideras, kan vara samma dokument i MVP.
-- _Customer/User_ = den som äger bokningen (kan vara separat modell senare).
+## Domain Assumptions (MVP)
+- _Booking_ = the customer has ordered a ticket.
+- _Ticket_ = what is displayed/validated, can be the same document in MVP.
+- _Customer/User_ = the one who owns the booking (can be a separate model later).
 
-## Fältförslag (MVP)
-**Identitet & kund**
+## Field Proposal (MVP)
+**Identity & Customer**
 - `id` – guid
-- `customerId` – referens till användare (kan vara email i början)
+- `customerId` – reference to user (can be email initially)
 - `customerName`
 - `email`
-- `phoneNumber` (valfritt men reserverat fält)
+- `phoneNumber` (optional but reserved field)
 
-**Biljett**
+**Ticket**
 - `ticketType` – `standard | student | senior`
-- `zone` – en zon i MVP, men fältet finns
-- `routeOn` / `routeOff` – hållplats in/ut, för framtida behov
-- `validFrom` / `validTo` – när biljetten gäller
-- `ticketDuration` – hur länge biljetten gäller
-- `activatedAt` - för framtiden, see Aktiverings-avsnittet längre ner
+- `zone` – one zone in MVP, but the field exists
+- `routeOn` / `routeOff` – boarding/alighting stop, for future needs
+- `validFrom` / `validTo` – when the ticket is valid
+- `ticketDuration` – how long the ticket is valid
+- `activatedAt` - for the future, see Activation section below
 
-**Meta & drift**
-- `bookingDate` – när bokningen skapades
+**Meta & Operations**
+- `bookingDate` – when the booking was created
 - `status` – `pending | confirmed | cancelled`
 - `source` – `web | mobile | inspector | backoffice`
 - `price` / `currency`
-- `validationCode` – kan senare göras om till QR
+- `validationCode` – can later be converted to QR
 
-## Exempel
+## Example
 ```json
 {
   "id": "guid-här",
@@ -64,15 +64,16 @@ Syftet med detta dokument är att samla de tidiga tankarna kring hur bokningar o
   "currency": "SEK",
   "validationCode": "A7K3FD"
 }
+```
 
-## Aktivering (framtida)
+## Activation (Future)
 
-MVP använder fördefinierad giltighet: klienten skickar `validFrom`, servern räknar ut `validTo` baserat på biljettens längd.
+MVP uses predefined validity: the client sends `validFrom`, the server calculates `validTo` based on the ticket's length.
 
-För framtida stöd av “aktivera vid påstigning” läggs följande fält till:
-- `activatedAt` – tidpunkt då biljetten faktiskt börjar gälla
-- `ticketDurationMinutes` – t.ex. 60, 1440, 43200
+For future support of "activate on boarding", the following fields are added:
+- `activatedAt` – point in time when the ticket actually starts to be valid
+- `ticketDurationMinutes` – e.g. 60, 1440, 43200
 
-Vid aktivering:  
+On activation:  
 `validFrom = activatedAt`  
 `validTo = activatedAt + ticketDurationMinutes`
