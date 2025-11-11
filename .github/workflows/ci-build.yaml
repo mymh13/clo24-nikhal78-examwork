@@ -50,7 +50,10 @@ jobs:
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "8.0.404"  # Use specific version instead of 8.0.x
+
+      - name: Verify .NET version
+        run: dotnet --version
 
       - name: Restore
         run: dotnet restore
@@ -58,11 +61,11 @@ jobs:
       - name: Build (Release)
         env:
           BUILD_VERSION: ${{ steps.version.outputs.short_sha }}
-        run: dotnet build --configuration Release --no-restore /p:Version=${{ steps.version.outputs.short_sha }}
+        run: dotnet build --configuration Release --no-restore /p:AssemblyVersion=1.0.0.${{ github.run_number }} /p:FileVersion=1.0.0.${{ github.run_number }} /p:InformationalVersion=1.0.0-${{ steps.version.outputs.short_sha }}
 
       # Publish Web (landing page) as artifact for CD to consume later
       - name: Publish Ticketing.Web
-        run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web /p:Version=${{ steps.version.outputs.short_sha }}
+        run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web /p:AssemblyVersion=1.0.0.${{ github.run_number }} /p:FileVersion=1.0.0.${{ github.run_number }} /p:InformationalVersion=1.0.0-${{ steps.version.outputs.short_sha }}
 
       - name: Create version file
         run: |
