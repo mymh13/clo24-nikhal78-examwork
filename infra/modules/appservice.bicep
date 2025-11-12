@@ -38,6 +38,14 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
           value: 'false'
         }
+        {
+          name: 'WEBSITE_STACK'
+          value: 'DOTNET'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'false'
+        }
       ]
     }
     httpsOnly: true

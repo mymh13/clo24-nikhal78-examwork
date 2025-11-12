@@ -34,24 +34,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify target Web App exists (skip deploy if missing)
+      - name: Verify target Web App exists
         id: probe
         shell: bash
         run: |
-          set -e
-          WEBAPP_NAME="${{ vars.WEBAPP_NAME }}"
-          WEBAPP_RG="${{ vars.WEBAPP_RG }}"
-          
-          echo "Checking for App Service: ${WEBAPP_NAME} in ${WEBAPP_RG}"
-          
-          if [ -z "${WEBAPP_NAME}" ] || [ -z "${WEBAPP_RG}" ]; then
-            echo "ERROR: WEBAPP_NAME or WEBAPP_RG is empty!"
-            echo "WEBAPP_NAME: '${WEBAPP_NAME}'"
-            echo "WEBAPP_RG: '${WEBAPP_RG}'"
-            exit 1
-          fi
-          
-          if ! az webapp show -n "${WEBAPP_NAME}" -g "${WEBAPP_RG}" >/dev/null 2>&1; then
+          if ! az webapp show -n "${{ vars.WEBAPP_NAME }}" -g "${{ vars.WEBAPP_RG }}" >/dev/null 2>&1; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -60,80 +47,13 @@ jobs:
       - name: Skip (no Web App yet)
         if: steps.probe.outputs.exists == 'false'
         run: |
-          echo "No Web App named '${{ vars.WEBAPP_NAME }}' in resource group '${{ vars.WEBAPP_RG }}'. Skipping deployment."
+          echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
-
-      - name: List deployment package contents (debug)
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          echo "=== Package contents ==="
-          ls -la web-publish/ || echo "web-publish directory not found"
-          echo "=== Looking for DLL ==="
-          find web-publish -name "*.dll" -type f | head -10 || echo "No DLL files found"
-
-      - name: Stop App Service before deployment
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          echo "=== Stopping App Service to ensure clean deployment ==="
-          az webapp stop \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}"
-        env:
-          WEBAPP_NAME: ${{ vars.WEBAPP_NAME }}
-          WEBAPP_RG: ${{ vars.WEBAPP_RG }}
-
-      - name: Configure App Service (stack and startup)
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          echo "=== Setting App Service configuration ==="
-          az webapp config set \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --linux-fx-version "DOTNET|8.0" \
-            --startup-file "dotnet Ticketing.Web.dll" \
-            --always-on true
-          
-          echo "=== Verifying configuration ==="
-          az webapp config show \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --query "{linuxFxVersion: linuxFxVersion, appCommandLine: appCommandLine, alwaysOn: alwaysOn}" \
-            -o table
-
-      - name: Create deployment zip
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          cd web-publish
-          zip -r ../web-deploy.zip .
-          cd ..
-          ls -lh web-deploy.zip
 
       - name: Deploy to Azure Web App
         if: steps.probe.outputs.exists == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.WEBAPP_NAME }}
-          package: web-deploy.zip
-          type: zip
+          package: web-publish
           clean: true
-
-      - name: Start App Service after deployment
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          echo "=== Starting App Service with .NET files ==="
-          az webapp start \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}"
-          
-          echo "=== Verifying configuration ==="
-          az webapp config show \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --query "{linuxFxVersion: linuxFxVersion, appCommandLine: appCommandLine}" \
-            -o table
-          
-          echo "=== Checking deployed files ==="
-          az webapp deployment list-publishing-profiles \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --xml | grep -i "publishUrl\|msdeploySite" || echo "Deployment profiles retrieved"
