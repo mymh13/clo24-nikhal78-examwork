@@ -80,12 +80,22 @@ jobs:
             --query "{linuxFxVersion: linuxFxVersion, appCommandLine: appCommandLine, alwaysOn: alwaysOn}" \
             -o table
 
+      - name: Create deployment zip
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          cd web-publish
+          zip -r ../web-deploy.zip .
+          cd ..
+          ls -lh web-deploy.zip
+
       - name: Deploy to Azure Web App
         if: steps.probe.outputs.exists == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.WEBAPP_NAME }}
-          package: web-publish
+          package: web-deploy.zip
+          type: zip
+          clean: true
 
       - name: Verify deployment and restart app
         if: steps.probe.outputs.exists == 'true'

@@ -4,8 +4,8 @@ param appServiceName string
 @description('Location for all resources')
 param location string = 'swedencentral'
 
-@description('App Service plan SKU - Free tier for dev')
-param appServicePlanSku string = 'F1'
+@description('App Service plan SKU - Basic B1 tier for dev')
+param appServicePlanSku string = 'B1'
 
 @description('Runtime stack - .NET 8')
 param runtimeStack string = 'DOTNET|8.0'
@@ -20,7 +20,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
   sku: {
     name: appServicePlanSku
-    tier: appServicePlanSku == 'F1' ? 'Free' : 'Basic'
+    tier: appServicePlanSku == 'F1' ? 'Free' : (appServicePlanSku == 'B1' ? 'Basic' : 'Standard')
   }
 }
 

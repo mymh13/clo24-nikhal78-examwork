@@ -4,8 +4,8 @@ param appServiceName string = 'examwork-web-dev'
 @description('Location for all resources')
 param location string = 'swedencentral'
 
-@description('App Service plan SKU - Free tier for dev')
-param appServicePlanSku string = 'F1'
+@description('App Service plan SKU - Basic B1 tier for dev')
+param appServicePlanSku string = 'B1'
 
 // Deploy App Service using the module
 module appService '../../modules/appservice.bicep' = {
