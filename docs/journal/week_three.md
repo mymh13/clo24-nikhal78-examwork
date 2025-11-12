@@ -14,9 +14,17 @@ The goal was to create a minimal but functional chain for provisioning, authenti
     - Created the first resource group rg-examwork-dev.
     - Established Bicep structure following planned architecture (modules/, env/dev/, env/prod/).
     - Created App Service module (infra/modules/appservice.bicep) and dev environment deployment (infra/env/dev/main.bicep).
-    - Successfully deployed App Service `examwork-web-dev` (Linux, .NET 8, Free tier) in Sweden Central.
+    - Successfully deployed App Service `examwork-web-dev` (Linux, .NET 8, Basic B1 tier) in Sweden Central.
+    - Upgraded App Service from Free tier to Basic B1 to enable SSL certificate bindings.
     - Configured custom domain `ticket.mymh.dev` with CNAME pointing to App Service.
     - Created ADR-007 documenting SSL certificate decision (manual Let's Encrypt via Docker).
+    - Completed SSL certificate setup:
+      - Added DNS TXT record `_acme-challenge.ticket.mymh.dev` for Let's Encrypt DNS-01 validation.
+      - Generated Let's Encrypt certificate using Certbot (Docker).
+      - Converted certificate to PFX format.
+      - Uploaded certificate to Azure App Service.
+      - Bound SSL certificate to custom domain via Azure Portal (Basic tier required).
+    - Custom domain now accessible via HTTPS: `https://ticket.mymh.dev` with valid SSL certificate.
 - Azure integration:
     - Registered the app github-oidc-examwork in Entra ID.
     - Configured Federated credentials (OIDC) for GitHub Actions.
@@ -34,7 +42,7 @@ The goal was to create a minimal but functional chain for provisioning, authenti
     - Translated all project documentation from Swedish to English (automated translation via LLMs).
     - Updated all ADR files, journal entries, glossary, and README files to English.
     - Maintained formatting and structure throughout the translation process.
-    - Created ADR-007 for SSL certificate decision (manual Let's Encrypt on Free tier).
+    - Created ADR-007 for SSL certificate decision (manual Let's Encrypt via Docker).
 
 ---
 
@@ -52,15 +60,16 @@ Translating all documentation to English improves accessibility and aligns with 
 
 Establishing the Bicep structure with modules and environment separation provides a solid foundation for infrastructure automation. The modular approach makes it easy to add new resources (Cosmos DB, Key Vault, etc.) as the project progresses.
 
-The App Service is now deployed and accessible via both the default Azure URL and the custom domain. DNS propagation was faster than expected, allowing immediate configuration of the custom domain binding. The next step is to configure the SSL certificate using the Docker-based Let's Encrypt approach documented in ADR-007.
+The App Service is now deployed and accessible via both the default Azure URL and the custom domain. DNS propagation was faster than expected, allowing immediate configuration of the custom domain binding.
+
+SSL certificate configuration was completed using the Docker-based Let's Encrypt approach documented in ADR-007. The process involved adding a DNS TXT record at Loopia, generating the certificate via Certbot, converting to PFX format, and uploading to Azure. A key learning was that the Free tier does not support SSL certificate bindings - the Azure CLI commands failed silently without clear error messages, making it difficult to diagnose. The issue was only discovered when attempting to bind the certificate through the Azure Portal, which explicitly stated that Basic tier or higher is required. Upgrading to Basic B1 enabled the SSL binding functionality, and the certificate was successfully bound via the portal. The custom domain is now fully functional with HTTPS at `https://ticket.mymh.dev`.
 
 ---
 
 ## Next Steps (Week 4)
 
 Examples:
-- Configure SSL certificate for `ticket.mymh.dev` using Let's Encrypt (Docker approach from ADR-007).
-- Test first deployment via CD workflow to App Service.
+- Test first deployment via CD workflow to App Service (Blazor landing page).
 - Introduce Application Insights for basic telemetry.
 - Begin adding Cosmos DB module to Bicep infrastructure.
 - Prepare pipeline for API containerization.

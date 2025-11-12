@@ -35,6 +35,14 @@ secrets.json
 appsettings.*.local.json
 local.settings.json       # Azure Functions local config
 
+# --- Certificates & SSL
+letsencrypt/
+*.pfx
+*.pem
+*.key
+*.crt
+*.cer
+
 # --- Packages
 packages/
 .nuget/
