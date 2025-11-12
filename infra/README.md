@@ -10,3 +10,28 @@ Purpose: provision the smallest possible Azure resource to host the Blazor Serve
 ```bash
 az group create -n rg-examwork-dev -l swedencentral
 ```
+
+## 2) Deploy App Service (Linux, .NET 8)
+```bash
+# Deploy using Bicep (dev environment)
+az deployment group create \
+  --resource-group rg-examwork-dev \
+  --template-file infra/env/dev/main.bicep \
+  --parameters @infra/env/dev/main.parameters.json
+
+# Get the App Service URL
+az webapp show -n examwork-web-dev -g rg-examwork-dev --query defaultHostName -o tsv
+```
+
+**Note:** The App Service name must be globally unique. If `examwork-web-dev` is taken, update `infra/env/dev/main.parameters.json` with a different name.
+
+After deployment, configure the GitHub Actions variables:
+- `WEBAPP_NAME`: The App Service name (e.g., `examwork-web-dev`)
+- `WEBAPP_RG`: `rg-examwork-dev`
+
+## Structure
+
+- `modules/` - Reusable Bicep modules (appservice, cosmos, etc.)
+- `env/dev/` - Development environment deployments
+- `env/prod/` - Production environment deployments (future)
+- `policies/` - APIM policies (future)

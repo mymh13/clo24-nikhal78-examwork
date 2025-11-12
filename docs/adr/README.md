@@ -10,7 +10,7 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
  
-Last updated: 2025-10-30  
+Last updated: 2025-11-12  
  
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -20,6 +20,7 @@ Last updated: 2025-10-30
 | ADR-004 | Frontend choice: .NET 8 Blazor Server                           | Accepted | 2025-10-30 | Full .NET stack and easy hosting |
 | ADR-005 | Cloud services choice: App Service, App Config, Key Vault, App Insights and APIM | Accepted | 2025-10-30 | Core Azure components for operations |
 | ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Activated after MVP |
+| ADR-007 | SSL Certificate: Manual Let's Encrypt on Free Tier | Accepted | 2025-11-12 | Cost-optimized SSL for custom domain |
  
 ---
  
