@@ -54,6 +54,15 @@ jobs:
           echo "No Web App named '${{ vars.WEBAPP_NAME }}' in resource group '${{ vars.WEBAPP_RG }}'. Skipping deployment."
           exit 0
 
+      - name: Configure App Service startup command
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          az webapp config set \
+            --name "${{ vars.WEBAPP_NAME }}" \
+            --resource-group "${{ vars.WEBAPP_RG }}" \
+            --linux-fx-version "DOTNET|8.0" \
+            --startup-file "dotnet Ticketing.Web.dll"
+
       - name: Deploy to Azure Web App
         if: steps.probe.outputs.exists == 'true'
         uses: azure/webapps-deploy@v3
