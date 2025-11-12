@@ -19,6 +19,15 @@ The goal was to create a minimal but functional chain for provisioning, authenti
     - Implemented OIDC Smoke Test workflow (Azure login).
     - Completed successful run – Azure OIDC login verified without exposing ID data.
     - Prepared cd-web-dev.yaml for future deployment to App Service.
+    - Enhanced CI workflow with path filters to reduce unnecessary runs (only triggers on code changes, not docs/infra).
+    - Added concurrency control to cancel duplicate workflow runs and save GitHub Actions minutes.
+    - Implemented Git SHA-based versioning for all builds (short SHA embedded in assembly version).
+    - Fixed CD workflow to skip deployment gracefully when App Service doesn't exist yet.
+    - Resolved .NET SDK version mismatch and assembly versioning issues.
+- Documentation:
+    - Translated all project documentation from Swedish to English (automated translation via LLMs).
+    - Updated all ADR files, journal entries, glossary, and README files to English.
+    - Maintained formatting and structure throughout the translation process.
 
 ---
 
@@ -26,6 +35,14 @@ The goal was to create a minimal but functional chain for provisioning, authenti
 
 The work with OIDC provided a deeper understanding of how secretless authentication works in a modern GitHub Actions pipeline.
 It proved important to maintain a strict separation between Tenant ID, Subscription ID, and Client ID, especially when using student subscriptions in Azure.
+
+Optimizing the CI/CD workflows to reduce GitHub Actions minutes consumption was crucial given the 2000-minute monthly limit.
+Path filters and concurrency controls proved effective in preventing unnecessary workflow runs while maintaining full functionality.
+
+The Git SHA-based versioning approach provides automatic traceability without manual version management, which aligns well with the incremental development approach.
+
+Translating all documentation to English improves accessibility and aligns with professional development practices, while automated translation via LLMs made this really swift to do. Originally I thought all documentation had to be in Swedish given that this is a Swedish exam/thesis course, but I got updated information that English was fine. I see multiple benefits by documentation being accessible to everyone, so shifted to English then.
+
 The next step will be to create a minimal App Service and test the first actual deployment.
 
 ---
