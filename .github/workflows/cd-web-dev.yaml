@@ -39,14 +39,23 @@ jobs:
         shell: bash
         run: |
           set -e
+          WEBAPP_NAME="${{ vars.WEBAPP_NAME }}"
+          WEBAPP_RG="${{ vars.WEBAPP_RG }}"
+          
+          echo "Checking for App Service: ${WEBAPP_NAME} in ${WEBAPP_RG}"
+          
+          if [ -z "${WEBAPP_NAME}" ] || [ -z "${WEBAPP_RG}" ]; then
+            echo "ERROR: WEBAPP_NAME or WEBAPP_RG is empty!"
+            echo "WEBAPP_NAME: '${WEBAPP_NAME}'"
+            echo "WEBAPP_RG: '${WEBAPP_RG}'"
+            exit 1
+          fi
+          
           if ! az webapp show -n "${WEBAPP_NAME}" -g "${WEBAPP_RG}" >/dev/null 2>&1; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
-        env:
-          WEBAPP_NAME: ${{ vars.WEBAPP_NAME }}
-          WEBAPP_RG:   ${{ vars.WEBAPP_RG }}
 
       - name: Skip (no Web App yet)
         if: steps.probe.outputs.exists == 'false'
@@ -69,6 +78,9 @@ jobs:
           az webapp stop \
             --name "${{ vars.WEBAPP_NAME }}" \
             --resource-group "${{ vars.WEBAPP_RG }}"
+        env:
+          WEBAPP_NAME: ${{ vars.WEBAPP_NAME }}
+          WEBAPP_RG: ${{ vars.WEBAPP_RG }}
 
       - name: Configure App Service (stack and startup)
         if: steps.probe.outputs.exists == 'true'
