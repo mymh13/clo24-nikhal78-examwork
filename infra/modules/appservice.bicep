@@ -45,7 +45,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: ''  # Set via Azure CLI/Portal if image is private
+          value: ''  // Set via Azure CLI/Portal if image is private
         }
       ]
     }
