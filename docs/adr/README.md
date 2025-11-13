@@ -10,8 +10,8 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
  
-Last updated: 2025-11-12  
- 
+Last updated: 2025-11-13  
+
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
 | ADR-001 | Database choice: Azure Cosmos DB (Serverless)                   | Accepted | 2025-10-30 | Cost and operations optimization |
@@ -21,6 +21,7 @@ Last updated: 2025-11-12
 | ADR-005 | Cloud services choice: App Service, App Config, Key Vault, App Insights and APIM | Accepted | 2025-10-30 | Core Azure components for operations |
 | ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Activated after MVP |
 | ADR-007 | SSL Certificate: Manual Let's Encrypt on Free Tier | Accepted | 2025-11-12 | Cost-optimized SSL for custom domain |
+| ADR-008 | Deployment Strategy: Docker Containers via GHCR | Accepted | 2025-11-13 | Resolves Oryx auto-detection issues, reliable container deployment |
  
 ---
  
