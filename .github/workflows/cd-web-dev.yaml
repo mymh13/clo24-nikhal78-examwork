@@ -9,9 +9,6 @@ permissions:
   contents: read
   id-token: write    # required for OIDC login to Azure
 
-env:
-  ARTIFACT_NAME: web-publish
-
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -19,14 +16,6 @@ jobs:
     environment: dev
 
     steps:
-      - name: Download build artifact from CI
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-          path: web-publish
-
       - name: Set up Azure CLI
         uses: azure/login@v2
         with:
@@ -50,13 +39,21 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
-      - name: Deploy to Azure Web App (zip deploy)
+      - name: Get container image tag
+        if: steps.probe.outputs.exists == 'true'
+        id: image
+        run: |
+          # Get short SHA from the workflow run commit
+          SHORT_SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+          echo "container_image=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Using container image: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:$SHORT_SHA"
+
+      - name: Update App Service to use Docker container
         if: steps.probe.outputs.exists == 'true'
         run: |
-          cd web-publish
-          zip -r ../deploy.zip .
-          cd ..
-          az webapp deployment source config-zip \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
+          az webapp config set \
             --name "${{ vars.WEBAPP_NAME }}" \
-            --src deploy.zip
+            --resource-group "${{ vars.WEBAPP_RG }}" \
+            --linux-fx-version "DOCKER|${{ steps.image.outputs.container_image }}"
+          
+          az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"

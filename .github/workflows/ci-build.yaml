@@ -8,6 +8,7 @@ on:
       - '.github/workflows/ci-build.yaml'
       - '*.sln'
       - '*.csproj'
+      - '**/Dockerfile'
   pull_request:
     branches: [ "main" ]
     paths:
@@ -15,10 +16,12 @@ on:
       - '.github/workflows/ci-build.yaml'
       - '*.sln'
       - '*.csproj'
+      - '**/Dockerfile'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:
   contents: read
+  packages: write  # Required for pushing to GHCR
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -47,37 +50,22 @@ jobs:
           echo "version=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "Version: $SHORT_SHA"
 
-      - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v4
+      # Build and push Docker image to GHCR
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          dotnet-version: "8.0.404"  # Use specific version instead of 8.0.x
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify .NET version
-        run: dotnet --version
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Build (Release)
-        env:
-          BUILD_VERSION: ${{ steps.version.outputs.short_sha }}
-        run: dotnet build --configuration Release --no-restore /p:AssemblyVersion=1.0.0.${{ github.run_number }} /p:FileVersion=1.0.0.${{ github.run_number }} /p:InformationalVersion=1.0.0-${{ steps.version.outputs.short_sha }}
-
-      # Publish Web (landing page) as artifact for CD to consume later
-      - name: Publish Ticketing.Web
-        run: dotnet publish src/web/Ticketing.Web/Ticketing.Web.csproj -c Release -o out/web /p:AssemblyVersion=1.0.0.${{ github.run_number }} /p:FileVersion=1.0.0.${{ github.run_number }} /p:InformationalVersion=1.0.0-${{ steps.version.outputs.short_sha }}
-
-      - name: Create version file
-        run: |
-          echo "${{ steps.version.outputs.short_sha }}" > out/web/VERSION.txt
-          echo "Full SHA: ${{ steps.version.outputs.full_sha }}" >> out/web/VERSION.txt
-          echo "Build: ${{ github.run_number }}" >> out/web/VERSION.txt
-          echo "Commit: ${{ github.event.head_commit.message }}" >> out/web/VERSION.txt
-
-      - name: Upload Web artifact
-        uses: actions/upload-artifact@v4
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
-          name: web-publish
-          path: out/web
-          if-no-files-found: error
-          retention-days: 7  # Keep artifacts for 7 days to save storage
+          context: .
+          file: ./src/web/Ticketing.Web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:${{ steps.version.outputs.short_sha }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

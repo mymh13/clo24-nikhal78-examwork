@@ -21,7 +21,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
 }
 
-// App Service - minimal configuration
+// App Service - using Docker container from GHCR
 resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appServiceName
   location: location
@@ -29,8 +29,25 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNET|8.0'
-      appCommandLine: 'dotnet Ticketing.Web.dll'
+      linuxFxVersion: 'DOCKER|ghcr.io/mymh13/clo24-nikhal78-examwork/web:latest'
+      appSettings: [
+        {
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+          value: 'false'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: 'https://ghcr.io'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+          value: 'mymh13'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
+          value: ''  # Set via Azure CLI/Portal if image is private
+        }
+      ]
     }
   }
 }
