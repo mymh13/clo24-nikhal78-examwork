@@ -4,6 +4,9 @@
   "parameters": {
     "appServiceName": {
       "value": "examwork-web-dev"
+    },
+    "cosmosAccountName": {
+      "value": "examwork-cosmos-dev"
     }
   }
 }

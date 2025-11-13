@@ -1,6 +1,9 @@
 @description('Name of the App Service')
 param appServiceName string = 'examwork-web-dev'
 
+@description('Name of the Cosmos DB account')
+param cosmosAccountName string = 'examwork-cosmos-dev'
+
 @description('Location for all resources')
 param location string = 'swedencentral'
 
@@ -17,7 +20,20 @@ module appService '../../modules/appservice.bicep' = {
   }
 }
 
-// Output the App Service URL
+// Deploy Cosmos DB using the module
+module cosmosDb '../../modules/cosmosdb.bicep' = {
+  name: 'cosmosDb-deployment'
+  params: {
+    cosmosAccountName: cosmosAccountName
+    location: location
+  }
+}
+
+// Outputs
 output appServiceUrl string = appService.outputs.appServiceUrl
 output appServiceName string = appService.outputs.appServiceName
+output cosmosAccountName string = cosmosDb.outputs.cosmosAccountName
+output cosmosEndpoint string = cosmosDb.outputs.cosmosEndpoint
+output databaseName string = cosmosDb.outputs.databaseName
+output bookingsContainerName string = cosmosDb.outputs.bookingsContainerName
 
