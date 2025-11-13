@@ -50,55 +50,13 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
-      - name: Verify deployment package
+      - name: Deploy to Azure Web App (zip deploy)
         if: steps.probe.outputs.exists == 'true'
         run: |
-          echo "Checking deployment package contents..."
-          ls -la web-publish/ | head -20
-          if [ -f "web-publish/Ticketing.Web.dll" ]; then
-            echo "✓ Ticketing.Web.dll found"
-          else
-            echo "✗ Ticketing.Web.dll NOT found!"
-            exit 1
-          fi
-
-      - name: Stop App Service (force container refresh)
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          az webapp stop --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
-
-      - name: Deploy to Azure Web App
-        if: steps.probe.outputs.exists == 'true'
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.WEBAPP_NAME }}
-          package: web-publish
-          clean: true
-
-      - name: Force .NET runtime configuration and restart
-        if: steps.probe.outputs.exists == 'true'
-        run: |
-          # Explicitly set runtime stack to force .NET container image
-          az webapp config set \
-            --name "${{ vars.WEBAPP_NAME }}" \
+          cd web-publish
+          zip -r ../deploy.zip .
+          cd ..
+          az webapp deployment source config-zip \
             --resource-group "${{ vars.WEBAPP_RG }}" \
-            --linux-fx-version "DOTNET|8.0" \
-            --startup-file "dotnet Ticketing.Web.dll"
-          
-          # Ensure app settings are set
-          az webapp config appsettings set \
             --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --settings WEBSITE_STACK=DOTNET SCM_DO_BUILD_DURING_DEPLOYMENT=false
-          
-          # Verify configuration
-          echo "Current runtime config:"
-          az webapp config show \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --query "{linuxFxVersion: linuxFxVersion, appCommandLine: appCommandLine}" -o json
-          
-          # Restart to apply changes
-          az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
-          echo "App Service restarted. Waiting 15 seconds for container to initialize..."
-          sleep 15
+            --src deploy.zip

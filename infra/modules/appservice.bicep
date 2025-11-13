@@ -21,7 +21,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
 }
 
-// App Service - minimal: Force .NET 8 runtime
+// App Service - minimal configuration
 resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appServiceName
   location: location
@@ -31,16 +31,6 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     siteConfig: {
       linuxFxVersion: 'DOTNET|8.0'
       appCommandLine: 'dotnet Ticketing.Web.dll'
-      appSettings: [
-        {
-          name: 'WEBSITE_STACK'
-          value: 'DOTNET'
-        }
-        {
-          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
-          value: 'false'
-        }
-      ]
     }
   }
 }
