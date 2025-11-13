@@ -7,6 +7,9 @@ param location string = 'swedencentral'
 @description('App Service plan SKU - Basic B1 tier for dev')
 param appServicePlanSku string = 'B1'
 
+@description('Application Insights connection string')
+param appInsightsConnectionString string = ''
+
 // App Service Plan - minimal
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: '${appServiceName}-plan'
@@ -46,6 +49,10 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         {
           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
           value: ''  // Set via Azure CLI/Portal if image is private
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsightsConnectionString
         }
       ]
     }

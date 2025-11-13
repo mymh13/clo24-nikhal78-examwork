@@ -7,6 +7,9 @@
     },
     "cosmosAccountName": {
       "value": "examwork-cosmos-dev"
+    },
+    "appInsightsName": {
+      "value": "examwork-insights-dev"
     }
   }
 }

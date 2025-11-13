@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Components.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Application Insights
+builder.Services.AddApplicationInsightsTelemetry();
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

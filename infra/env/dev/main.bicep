@@ -4,19 +4,21 @@ param appServiceName string = 'examwork-web-dev'
 @description('Name of the Cosmos DB account')
 param cosmosAccountName string = 'examwork-cosmos-dev'
 
+@description('Name of the Application Insights resource')
+param appInsightsName string = 'examwork-insights-dev'
+
 @description('Location for all resources')
 param location string = 'swedencentral'
 
 @description('App Service plan SKU - Basic B1 tier for dev')
 param appServicePlanSku string = 'B1'
 
-// Deploy App Service using the module
-module appService '../../modules/appservice.bicep' = {
-  name: 'appService-deployment'
+// Deploy Application Insights using the module (must be before App Service)
+module appInsights '../../modules/applicationinsights.bicep' = {
+  name: 'appInsights-deployment'
   params: {
-    appServiceName: appServiceName
+    appInsightsName: appInsightsName
     location: location
-    appServicePlanSku: appServicePlanSku
   }
 }
 
@@ -29,6 +31,17 @@ module cosmosDb '../../modules/cosmosdb.bicep' = {
   }
 }
 
+// Deploy App Service using the module
+module appService '../../modules/appservice.bicep' = {
+  name: 'appService-deployment'
+  params: {
+    appServiceName: appServiceName
+    location: location
+    appServicePlanSku: appServicePlanSku
+    appInsightsConnectionString: appInsights.outputs.connectionString
+  }
+}
+
 // Outputs
 output appServiceUrl string = appService.outputs.appServiceUrl
 output appServiceName string = appService.outputs.appServiceName
@@ -36,4 +49,6 @@ output cosmosAccountName string = cosmosDb.outputs.cosmosAccountName
 output cosmosEndpoint string = cosmosDb.outputs.cosmosEndpoint
 output databaseName string = cosmosDb.outputs.databaseName
 output bookingsContainerName string = cosmosDb.outputs.bookingsContainerName
+output appInsightsName string = appInsights.outputs.appInsightsName
+output appInsightsConnectionString string = appInsights.outputs.connectionString
 
