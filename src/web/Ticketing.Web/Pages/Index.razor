@@ -6,9 +6,42 @@
     <h1>Välkommen till Biljettbokningssystemet</h1>
     <p class="lead">MVP, lågkostnadsplattform för biljettbokning byggd med .NET 8 Blazor Server.</p>
 
-    <p>Projektet är i utvecklingsfas. Mer funktionalitet kommer stegvis.
-        Vi bor numera på Azure App Service med en DNS-pekare till detta system.
-    </p>
+    <p>Projektet är i utvecklingsfas. Mer funktionalitet kommer stegvis.</p>
+
+    <div class="tech-overview">
+        <h3>Infrastructure & Deployment</h3>
+        <p>
+            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, Basic B1 tier, Sweden Central)<br>
+            <strong>IaC:</strong> Bicep modules → Environment-specific deployments (dev/prod)<br>
+            <strong>CI/CD:</strong> GitHub Actions → Docker build → GHCR → App Service container deployment<br>
+            <strong>Custom Domain:</strong> ticket.mymh.dev with Let's Encrypt SSL (manual DNS-01 validation)
+        </p>
+
+        <h3>Application Stack</h3>
+        <p>
+            <strong>Frontend:</strong> .NET 8 Blazor Server (server-side rendering, real-time updates)<br>
+            <strong>API:</strong> .NET 8 Web API (Controller-based, planned for business logic)<br>
+            <strong>Database:</strong> Azure Cosmos DB Serverless (NoSQL, pay-per-request, ticketing database)<br>
+            <strong>Container:</strong> Docker multi-stage build (SDK for build, ASP.NET runtime for production)<br>
+            <strong>Registry:</strong> GitHub Container Registry (GHCR, public images, no authentication needed)
+        </p>
+
+        <h3>Data & Storage</h3>
+        <p>
+            <strong>Database:</strong> Cosmos DB Serverless (database: ticketing, container: bookings)<br>
+            <strong>Partition Key:</strong> /customerId (enables efficient customer-based queries)<br>
+            <strong>Consistency:</strong> Session consistency (balanced performance and guarantees)<br>
+            <strong>Cost Model:</strong> Pay-per-request (zero cost when idle, perfect for MVP)
+        </p>
+
+        <h3>Security & Authentication</h3>
+        <p>
+            <strong>CI/CD Auth:</strong> Azure OIDC (secretless GitHub Actions → Azure authentication)<br>
+            <strong>Secrets:</strong> Azure Key Vault (planned for connection strings and API keys)<br>
+            <strong>Identity:</strong> ASP.NET Identity + Entra ID (planned for customer/admin authentication)<br>
+            <strong>Network:</strong> App Service with custom domain and SSL/TLS encryption
+        </p>
+    </div>
 
     <p class="mt-4 text-muted">Version / Vecka 3 av Examensarbete</p>
 </div>

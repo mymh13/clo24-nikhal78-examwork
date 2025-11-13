@@ -1,0 +1,35 @@
+/* Tech Overview Styling */
+.tech-overview {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 900px;
+    border-left: 3px solid #4ec9b0;
+    text-align: left;
+}
+
+.tech-overview h3 {
+    color: #4ec9b0;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+    text-shadow: 0 0 10px rgba(78, 201, 176, 0.3);
+}
+
+.tech-overview h3:first-child {
+    margin-top: 0;
+}
+
+.tech-overview p {
+    margin: 0 0 20px 0;
+    line-height: 1.8;
+    color: #d4d4d4;
+    font-size: 0.95em;
+}
+
+.tech-overview strong {
+    color: #4ec9b0;
+    font-weight: 600;
+}
+
