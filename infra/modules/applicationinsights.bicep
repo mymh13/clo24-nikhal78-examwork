@@ -15,8 +15,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: applicationType
     Request_Source: 'rest'
-    // Use Workspace-based mode for better integration with Log Analytics
-    WorkspaceResourceId: ''
     IngestionMode: 'ApplicationInsights'
   }
 }

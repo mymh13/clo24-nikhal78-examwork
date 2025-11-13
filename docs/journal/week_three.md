@@ -15,6 +15,7 @@ The goal was to create a minimal but functional chain for provisioning, authenti
 - **Bicep Structure:** Established modular architecture (`modules/`, `env/dev/`, `env/prod/`).
 - **App Service Module:** Created `infra/modules/appservice.bicep` and dev environment deployment.
 - **Cosmos DB Module:** Created `infra/modules/cosmosdb.bicep` with Serverless mode configuration.
+- **Application Insights Module:** Created `infra/modules/applicationinsights.bicep` for telemetry and monitoring.
 
 ### App Service Deployment
 - **Deployment:** Successfully deployed App Service `examwork-web-dev` (Linux, .NET 8, Basic B1 tier).
@@ -34,6 +35,15 @@ The goal was to create a minimal but functional chain for provisioning, authenti
 - **Container:** Created container `bookings` with partition key `/customerId`.
 - **Configuration:** Verified Serverless mode (pay-per-request, no fixed costs).
 - **Note:** Confirmed Free Tier is not applicable with Serverless mode (expected behavior).
+
+### Application Insights Setup
+- **Resource:** Deployed Application Insights `examwork-insights-dev` in Sweden Central.
+- **Configuration:** Created Bicep module with Application Insights component (API version 2020-02-02).
+- **Integration:** Configured App Service with `APPLICATIONINSIGHTS_CONNECTION_STRING` environment variable.
+- **Application Code:** Added `Microsoft.ApplicationInsights.AspNetCore` NuGet package (v2.22.0) to Ticketing.Web.
+- **Telemetry:** Configured `AddApplicationInsightsTelemetry()` in `Program.cs` for automatic telemetry collection.
+- **Deployment Challenge:** Initial deployment attempts failed with Azure internal server error due to empty `WorkspaceResourceId` property in Bicep template. Resolved by removing the property, allowing successful deployment (~43 seconds).
+- **Storage:** Connection string stored in Azure App Service app settings (not stored locally, only in Azure).
 
 ### Azure Authentication (OIDC)
 - **App Registration:** Registered `github-oidc-examwork` in Entra ID.
@@ -88,7 +98,9 @@ The Git SHA-based versioning approach provides automatic traceability without ma
 
 Translating all documentation to English improves accessibility and aligns with professional development practices, while automated translation via LLMs made this really swift to do. Originally I thought all documentation had to be in Swedish given that this is a Swedish exam/thesis course, but I got updated information that English was fine. I see multiple benefits by documentation being accessible to everyone, so shifted to English then.
 
-Establishing the Bicep structure with modules and environment separation provides a solid foundation for infrastructure automation. The modular approach makes it easy to add new resources (Cosmos DB, Key Vault, etc.) as the project progresses. Cosmos DB was successfully added using the same modular pattern, demonstrating the flexibility of the infrastructure setup. The Serverless mode configuration ensures zero cost when idle, which aligns perfectly with the MVP phase and cost optimization goals.
+Establishing the Bicep structure with modules and environment separation provides a solid foundation for infrastructure automation. The modular approach makes it easy to add new resources (Cosmos DB, Application Insights, Key Vault, etc.) as the project progresses. Both Cosmos DB and Application Insights were successfully added using the same modular pattern, demonstrating the flexibility of the infrastructure setup. The Serverless mode configuration ensures zero cost when idle, which aligns perfectly with the MVP phase and cost optimization goals.
+
+Application Insights was successfully integrated into the infrastructure. The deployment encountered an Azure internal server error initially, which was traced to an empty `WorkspaceResourceId` property in the Bicep template. Removing this property resolved the issue, and the deployment completed successfully. The connection string is stored in Azure App Service app settings (not locally), and the Application Insights SDK will automatically detect it when the application runs. This provides a foundation for monitoring, logging, and performance tracking as the application grows.
 
 The App Service is now deployed and accessible via both the default Azure URL and the custom domain. DNS propagation was faster than expected, allowing immediate configuration of the custom domain binding.
 
@@ -103,11 +115,11 @@ After extensive troubleshooting, the decision was made to switch to Docker conta
 
 ## Next Steps (Week 4)
 
-- Introduce Application Insights for basic telemetry and monitoring.
 - Add Azure Key Vault for secure secret management (Cosmos DB connection strings, etc.).
 - Prepare API containerization (extend Docker approach to API project).
 - Begin connecting application code to Cosmos DB for data persistence.
 - Continue development of Blazor landing page features.
+- Verify Application Insights telemetry collection after next application deployment.
 
 ---
  
