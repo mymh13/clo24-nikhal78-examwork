@@ -7,16 +7,13 @@ param location string = 'swedencentral'
 @description('App Service plan SKU - Basic B1 tier for dev')
 param appServicePlanSku string = 'B1'
 
-@description('Runtime stack - .NET 8')
-param runtimeStack string = 'DOTNET|8.0'
-
-// App Service Plan
+// App Service Plan - minimal
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: '${appServiceName}-plan'
   location: location
   kind: 'linux'
   properties: {
-    reserved: true // Required for Linux
+    reserved: true
   }
   sku: {
     name: appServicePlanSku
@@ -24,7 +21,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
 }
 
-// App Service
+// App Service - minimal: Force .NET 8 runtime
 resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appServiceName
   location: location
@@ -32,12 +29,9 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: runtimeStack
+      linuxFxVersion: 'DOTNET|8.0'
+      appCommandLine: 'dotnet Ticketing.Web.dll'
       appSettings: [
-        {
-          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
-          value: 'false'
-        }
         {
           name: 'WEBSITE_STACK'
           value: 'DOTNET'
@@ -48,7 +42,6 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
       ]
     }
-    httpsOnly: true
   }
 }
 
