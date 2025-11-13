@@ -50,6 +50,23 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
+      - name: Verify deployment package
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          echo "Checking deployment package contents..."
+          ls -la web-publish/ | head -20
+          if [ -f "web-publish/Ticketing.Web.dll" ]; then
+            echo "✓ Ticketing.Web.dll found"
+          else
+            echo "✗ Ticketing.Web.dll NOT found!"
+            exit 1
+          fi
+
+      - name: Stop App Service (force container refresh)
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          az webapp stop --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
+
       - name: Deploy to Azure Web App
         if: steps.probe.outputs.exists == 'true'
         uses: azure/webapps-deploy@v3
@@ -57,3 +74,17 @@ jobs:
           app-name: ${{ vars.WEBAPP_NAME }}
           package: web-publish
           clean: true
+
+      - name: Ensure .NET runtime configuration
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          az webapp config set \
+            --name "${{ vars.WEBAPP_NAME }}" \
+            --resource-group "${{ vars.WEBAPP_RG }}" \
+            --linux-fx-version "DOTNET|8.0" \
+            --startup-file "dotnet Ticketing.Web.dll"
+
+      - name: Start App Service
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          az webapp start --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
