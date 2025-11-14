@@ -14,7 +14,8 @@
             <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, Basic B1 tier, Sweden Central)<br>
             <strong>IaC:</strong> Bicep modules → Environment-specific deployments (dev/prod)<br>
             <strong>CI/CD:</strong> GitHub Actions → Docker build → GHCR → App Service container deployment<br>
-            <strong>Custom Domain:</strong> ticket.mymh.dev with Let's Encrypt SSL (manual DNS-01 validation)
+            <strong>Custom Domain:</strong> ticket.mymh.dev with Let's Encrypt SSL (manual DNS-01 validation)<br>
+            <strong>Monitoring:</strong> Azure Application Insights (telemetry, logging, performance tracking)
         </p>
 
         <h3>Application Stack</h3>
@@ -30,7 +31,6 @@
         <p>
             <strong>Database:</strong> Cosmos DB Serverless (database: ticketing, container: bookings)<br>
             <strong>Partition Key:</strong> /customerId (enables efficient customer-based queries)<br>
-            <strong>Consistency:</strong> Session consistency (balanced performance and guarantees)<br>
             <strong>Cost Model:</strong> Pay-per-request (zero cost when idle, perfect for MVP)
         </p>
 
