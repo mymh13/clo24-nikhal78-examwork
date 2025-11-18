@@ -77,8 +77,26 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ## Next Steps (Week 5)
 
-- [List planned activities for the upcoming week]
-- [Continue with next priorities]
+### Planned Development Phases (Iterative Approach)
+
+**Phase 1: Basic Authentication Structure**
+- Implement minimal authentication system with hardcoded admin user
+- Use same structure as future ASP.NET Identity/Entra ID integration
+- Add `[Authorize]` attributes to protect endpoints from day one
+- Create simple test page to validate auth structure works
+- **Goal:** Establish auth architecture early to avoid refactoring later
+
+**Phase 2: Basic Data Operations**
+- Create minimal Cosmos DB service with `CreateBookingAsync` method
+- Test creating booking documents in Cosmos DB
+- Add query method to read bookings by customerId
+- Validate data operations work end-to-end
+
+**Phase 3: Secrets Management**
+- Store Cosmos DB connection string in Azure Key Vault
+- Update application to read connection string from Key Vault
+- Test locally first, then update App Service configuration
+- Validate secure secret management workflow
 
 ---
 
