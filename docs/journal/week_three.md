@@ -75,6 +75,8 @@ The goal was to create a minimal but functional chain for provisioning, authenti
   - Implemented dark theme with cyan accent color (#4ec9b0) for consistency.
   - Tech-overview displays four categories: Infrastructure & Deployment, Application Stack, Data & Storage, Security & Authentication.
   - Content reflects current deployed state and planned features (marked as "planned").
+  - Updated landing page to include Application Insights in Infrastructure & Deployment section.
+  - Removed Consistency detail from Data & Storage section (standard practice, not worth highlighting).
 
 ### Documentation
 - **Translation:** Translated all project documentation from Swedish to English (automated via LLMs).
