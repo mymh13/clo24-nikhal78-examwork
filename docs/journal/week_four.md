@@ -58,6 +58,30 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Connection test confirmed: "Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'".
 - **Status:** Minimal integration complete and validated. Ready for service layer implementation in next iteration.
 
+### Authentication (Phase 1)
+- **Approach:** Implemented minimal authentication structure following iterative, test-driven approach.
+- **Implementation:**
+  - Created cookie-based authentication using ASP.NET Core's built-in authentication middleware.
+  - Same structure as ASP.NET Identity/Entra ID (can swap authentication scheme later without code changes).
+  - Hardcoded admin user for development/testing (will be replaced with real auth later).
+- **Components:**
+  - `AuthController` with `/api/auth/login` and `/api/auth/logout` endpoints.
+  - `Login.razor` page with form-based login.
+  - `TestAuth.razor` protected page with `[Authorize]` attribute for validation.
+- **Testing:** 
+  - Validated login flow: form submission → cookie creation → authenticated state.
+  - Validated logout flow: cookie deletion → unauthenticated state.
+  - Validated protected page access: redirects to login when not authenticated.
+- **Status:** Phase 1 complete. Authentication structure established and validated. All future endpoints can use `[Authorize]` from day one.
+
+### System Architecture
+- **Code Organization:** Refactored `Program.cs` to use extension method pattern (reduced from 95 to 19 lines).
+  - Created `ServiceCollectionExtensions` for service registration (Application Insights, Cosmos DB, Authentication, etc.).
+  - Created `WebApplicationExtensions` for pipeline configuration and startup validation.
+  - Created `ConfigurationExtensions` for configuration loading.
+- **Benefits:** Improved code readability, maintainability, and separation of concerns. Follows ASP.NET Core conventions and makes `Program.cs` minimal and focused.
+- **Decision:** Documented in ADR-009: Extension Methods Pattern for Application Startup Configuration.
+
 ### Frontend & UI
 - [Document any Blazor landing page or UI improvements]
 
@@ -79,12 +103,12 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ### Planned Development Phases (Iterative Approach)
 
-**Phase 1: Basic Authentication Structure**
-- Implement minimal authentication system with hardcoded admin user
-- Use same structure as future ASP.NET Identity/Entra ID integration
-- Add `[Authorize]` attributes to protect endpoints from day one
-- Create simple test page to validate auth structure works
-- **Goal:** Establish auth architecture early to avoid refactoring later
+**Phase 1: Basic Authentication Structure** ✅ **COMPLETE**
+- Implemented minimal authentication system with hardcoded admin user
+- Using same structure as future ASP.NET Identity/Entra ID integration
+- `[Authorize]` attributes working to protect endpoints
+- Test page validates auth structure works
+- **Goal:** Establish auth architecture early to avoid refactoring later - **ACHIEVED**
 
 **Phase 2: Basic Data Operations**
 - Create minimal Cosmos DB service with `CreateBookingAsync` method

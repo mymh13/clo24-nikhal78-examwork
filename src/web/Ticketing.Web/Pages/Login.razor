@@ -1,0 +1,31 @@
+@page "/login"
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="container">
+    <h1>Login</h1>
+    
+    @if (isAuthenticated)
+    {
+        <p>You are already logged in!</p>
+        <a href="/test-auth">Go to Test Auth Page</a>
+    }
+    else
+    {
+        <p>Click the button below to login as admin (hardcoded for testing):</p>
+        <form method="post" action="/api/auth/login">
+            <button type="submit" class="btn btn-primary">Login as Admin</button>
+        </form>
+    }
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+
+    protected override void OnInitialized()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        isAuthenticated = user?.Identity?.IsAuthenticated == true;
+    }
+
+}
+

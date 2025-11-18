@@ -24,6 +24,9 @@ This directory contains all documentation related to the project – from early 
 | **ADR-004-frontend.md**  | Decision: Frontend in .NET 8 Blazor Server. |
 | **ADR-005-azureservices.md** | Decision: Core Azure services for operations and monitoring. |
 | **ADR-006-eventdriven.md** | Planned decision: Event-driven architecture (Service Bus + Function). |
+| **ADR-007-ssl-certificate.md** | Decision: SSL certificate strategy (manual Let's Encrypt via Docker). |
+| **ADR-008-docker-deployment.md** | Decision: Deployment strategy (Docker containers via GHCR). |
+| **ADR-009-extension-methods-pattern.md** | Decision: Code organization using extension methods pattern for startup configuration. |
 
 ---
 
@@ -44,6 +47,7 @@ This directory contains all documentation related to the project – from early 
 | **week_one.md**          | Week 1 – startup, planning, and documentation structure. |
 | **week_two.md**          | Week 2 – code structure and first runnable version. |
 | **week_three.md**        | Week 3 – infrastructure and CI/CD foundation. |
+| **week_four.md**         | Week 4 – infrastructure expansion and application integration. |
 
 ---
 

@@ -10,7 +10,7 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
  
-Last updated: 2025-11-13  
+Last updated: 2025-11-18  
 
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -22,6 +22,7 @@ Last updated: 2025-11-13
 | ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Activated after MVP |
 | ADR-007 | SSL Certificate: Manual Let's Encrypt on Free Tier | Accepted | 2025-11-12 | Cost-optimized SSL for custom domain |
 | ADR-008 | Deployment Strategy: Docker Containers via GHCR | Accepted | 2025-11-13 | Resolves Oryx auto-detection issues, reliable container deployment |
+| ADR-009 | Code Organization: Extension Methods Pattern | Accepted | 2025-11-18 | Improved readability and maintainability of startup configuration |
  
 ---
  
