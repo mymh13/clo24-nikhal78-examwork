@@ -10,6 +10,9 @@
     },
     "appInsightsName": {
       "value": "examwork-insights-dev"
+    },
+    "keyVaultName": {
+      "value": "examwork-kv-dev"
     }
   }
 }
