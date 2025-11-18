@@ -1,27 +1,62 @@
-# Week 4 – [Week Focus Title]
+# Week 4 – Infrastructure Expansion and Application Integration
 
 ## Overview
 
-[Brief overview of the week's goals and focus areas. What are the main objectives for this week?]
+During week 4, work focused on expanding the infrastructure foundation with Azure Key Vault and preparing for application integration with Cosmos DB. The goal was to establish secure secret management capabilities and begin connecting the application to data storage.
 
 ---
 
 ## Completed Activities
 
 ### Infrastructure Setup
-- [Add any new infrastructure components or modules created this week]
+- **Key Vault Module:** Created `infra/modules/keyvault.bicep` with modular architecture following the established pattern.
+- **Key Vault Deployment:** Successfully deployed Azure Key Vault `examwork-kv-dev` in Sweden Central.
 
 ### Azure Key Vault Setup
-- [Document Key Vault deployment and configuration if completed]
+- **Resource:** Deployed Key Vault `examwork-kv-dev` in Sweden Central (Standard SKU).
+- **Configuration:** 
+  - Soft delete enabled (7-day retention period) for data protection.
+  - Purge protection disabled for dev environment (can be enabled for production).
+  - RBAC-ready configuration (no access policies; will use Azure RBAC when granting access).
+  - Standard SKU selected for cost-effective secret management.
+- **Integration:** Added Key Vault module to `infra/env/dev/main.bicep` deployment.
+- **Deployment Challenge:** Initial deployment failed due to Azure API restriction - cannot explicitly set `enablePurgeProtection: false`. Resolved by conditionally including the property only when `true` using Bicep's `union()` function to merge objects.
+- **Outputs:** Key Vault name and URI exposed as deployment outputs for future reference.
+- **Status:** Key Vault is ready for secret storage. Access policies/RBAC can be configured when secrets are added (e.g., Cosmos DB connection strings).
 
 ### Application Insights Verification
-- [Document verification of telemetry collection and any insights gained]
+- **Configuration Check:** Verified `APPLICATIONINSIGHTS_CONNECTION_STRING` is correctly set in App Service app settings.
+- **Resource Status:** Confirmed Application Insights resource `examwork-insights-dev` is active and accessible.
+- **Application Status:** Verified application is running and responding (HTTP 200) at `https://ticket.mymh.dev`.
+- **Code Integration:** Confirmed Application Insights SDK (`Microsoft.ApplicationInsights.AspNetCore` v2.22.0) is installed and `AddApplicationInsightsTelemetry()` is configured in `Program.cs`.
+- **Telemetry Collection:** Application is configured to automatically send telemetry. Telemetry data should appear in Application Insights portal within 2-5 minutes after requests are made.
+- **Verification Method:** Used Azure CLI to verify configuration and resource status. Portal verification recommended for viewing actual telemetry data (requests, page views, performance metrics).
+- **Status:** Application Insights is properly configured and ready to collect telemetry. Telemetry will be visible in Azure Portal after application usage.
 
 ### API Containerization
 - [Document API Docker setup if completed]
 
 ### Cosmos DB Integration
-- [Document application code changes to connect to Cosmos DB]
+- **Approach:** Implemented minimal Cosmos DB integration using iterative, test-driven approach (small steps with validation).
+- **Booking Model:** Created minimal `Booking` entity in `Ticketing.Contracts/Bookings/Booking.cs` with essential properties:
+  - `Id` (GUID, document ID)
+  - `CustomerId` (partition key)
+  - `CustomerName`
+  - `BookingDate`
+- **SDK Integration:** Added `Microsoft.Azure.Cosmos` v3.45.0 NuGet package to `Ticketing.Web`.
+- **Configuration:** 
+  - Added minimal Cosmos DB client configuration in `Program.cs`.
+  - Connection string loaded from `appsettings.Development.local.json` (gitignored, contains secrets).
+  - CosmosClient registered as singleton in dependency injection.
+- **Connection Validation:** 
+  - Implemented startup connection test to validate Cosmos DB access.
+  - Test verifies connection to `ticketing` database and `bookings` container.
+  - Connection test runs asynchronously on application startup and logs success/failure.
+- **Local Testing:** 
+  - Tested locally with connection string from Azure Cosmos DB account.
+  - Verified connection string loading, client registration, and successful database/container access.
+  - Connection test confirmed: "Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'".
+- **Status:** Minimal integration complete and validated. Ready for service layer implementation in next iteration.
 
 ### Frontend & UI
 - [Document any Blazor landing page or UI improvements]
