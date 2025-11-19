@@ -70,6 +70,13 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Verified connection string loading, client registration, and successful database/container access.
   - Connection test confirmed: "Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'".
 - **Status:** Service layer complete and validated. Ready for secrets management integration (Phase 3).
+- **Secrets Management Integration:**
+  - Connection string now stored in Azure Key Vault (`CosmosDb--ConnectionString`).
+  - Application configured to read from Key Vault using `DefaultAzureCredential`.
+  - Local development: Falls back to `appsettings.Development.local.json` if Key Vault unavailable (requires `az login` for Key Vault access).
+  - App Service: Uses managed identity to automatically access Key Vault (no secrets in app settings).
+  - Key Vault configured with RBAC authorization (modern approach, no access policies).
+  - **Status:** Secrets management complete. Connection string securely stored in Key Vault, application configured for both local and Azure environments.
 
 ### Authentication (Phase 1)
 - **Approach:** Implemented minimal authentication structure following iterative, test-driven approach.
@@ -133,11 +140,17 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - Validated service layer architecture and Cosmos DB integration
 - **Goal:** Establish data operations foundation - **ACHIEVED**
 
-**Phase 3: Secrets Management**
-- Store Cosmos DB connection string in Azure Key Vault
-- Update application to read connection string from Key Vault
-- Test locally first, then update App Service configuration
-- Validate secure secret management workflow
+**Phase 3: Secrets Management** **COMPLETE**
+- Added Azure Key Vault configuration provider NuGet packages (`Azure.Extensions.AspNetCore.Configuration.Secrets`, `Azure.Identity`)
+- Updated `ConfigurationExtensions` to load secrets from Key Vault using `DefaultAzureCredential`
+- Stored Cosmos DB connection string in Key Vault as `CosmosDb--ConnectionString`
+- Enabled RBAC authorization on Key Vault (updated Bicep to enable by default)
+- Enabled managed identity on App Service (SystemAssigned)
+- Granted App Service managed identity "Key Vault Secrets User" role for Key Vault access
+- Updated Bicep to pass Key Vault name to App Service app settings
+- Created `appsettings.json` with Key Vault name configuration (safe to commit, no secrets)
+- Validated local testing with fallback to `appsettings.Development.local.json` when Key Vault unavailable
+- **Goal:** Secure secret management with Key Vault integration - **ACHIEVED**
 
 ---
 

@@ -10,6 +10,9 @@ param appServicePlanSku string = 'B1'
 @description('Application Insights connection string')
 param appInsightsConnectionString string = ''
 
+@description('Key Vault name for secret references')
+param keyVaultName string = ''
+
 // App Service Plan - minimal
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: '${appServiceName}-plan'
@@ -29,6 +32,9 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   name: appServiceName
   location: location
   kind: 'app,linux'
+  identity: {
+    type: 'SystemAssigned'  // Enable managed identity for Key Vault access
+  }
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
@@ -53,6 +59,10 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: appInsightsConnectionString
+        }
+        {
+          name: 'KeyVault:Name'
+          value: keyVaultName
         }
       ]
     }

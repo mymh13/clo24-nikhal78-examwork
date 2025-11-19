@@ -2,8 +2,11 @@ using Ticketing.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load local configuration
+// Load local configuration (appsettings.Development.local.json)
 builder.Configuration.AddLocalConfiguration(builder.Environment);
+
+// Load Key Vault configuration (if configured)
+builder.Configuration.AddKeyVaultConfiguration(builder.Environment);
 
 // Add application services
 builder.Services.AddApplicationServices(builder.Configuration);

@@ -51,6 +51,7 @@ module appService '../../modules/appservice.bicep' = {
     location: location
     appServicePlanSku: appServicePlanSku
     appInsightsConnectionString: appInsights.outputs.connectionString
+    keyVaultName: keyVaultName
   }
 }
 

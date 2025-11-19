@@ -38,9 +38,10 @@ var keyVaultProperties = union(baseProperties, purgeProtectionProperty)
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
-  properties: keyVaultProperties
-  // Using RBAC for access control (modern approach)
-  // Access policies can be configured via Azure Portal or CLI when needed
+  properties: {
+    ...keyVaultProperties
+    enableRbacAuthorization: true  // Use RBAC instead of access policies
+  }
 }
 
 // Output the vault name and URI
