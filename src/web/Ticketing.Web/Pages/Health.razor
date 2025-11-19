@@ -7,7 +7,15 @@
 <div class="container">
     <h1>System Health Status</h1>
 
-    @if (healthStatus == null)
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div style="margin: 20px 0; padding: 15px; background: #ff6b6b; color: white; border-radius: 8px;">
+            <h3>Error</h3>
+            <p>@errorMessage</p>
+            <p>API endpoint: /api/health</p>
+        </div>
+    }
+    else if (healthStatus == null)
     {
         <p>Loading health status...</p>
     }
@@ -72,17 +80,26 @@
 
 @code {
     private HealthStatus? healthStatus;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            healthStatus = await Http.GetFromJsonAsync<HealthStatus>("/api/health");
+            var response = await Http.GetAsync("/api/health");
+            if (response.IsSuccessStatusCode)
+            {
+                healthStatus = await response.Content.ReadFromJsonAsync<HealthStatus>();
+            }
+            else
+            {
+                errorMessage = $"API returned status {response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            }
         }
         catch (Exception ex)
         {
-            // Handle error - could show error message
-            Console.WriteLine($"Error loading health status: {ex.Message}");
+            errorMessage = $"Error loading health status: {ex.Message}";
+            Console.WriteLine(errorMessage);
         }
     }
 
