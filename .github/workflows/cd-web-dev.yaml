@@ -39,10 +39,36 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
-      - name: Restart App Service to pull latest image
+      - name: Get container image tag
+        if: steps.probe.outputs.exists == 'true'
+        id: image
+        run: |
+          # Use commit SHA to match CI workflow's SHA tag
+          # CI pushes both timestamp and SHA tags, so SHA will always match
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+          SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+          IMAGE_TAG="ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:$SHORT_SHA"
+          echo "container_image=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Using container image: $IMAGE_TAG (commit: $SHORT_SHA)"
+
+      - name: Update App Service container image
         if: steps.probe.outputs.exists == 'true'
         run: |
-          # CI workflow always pushes to 'latest' tag
-          echo "Restarting App Service to pull latest container image..."
+          # Update to SHA tag to force pull of new image (unique tag = no cache)
+          CONTAINER_IMAGE="${{ steps.image.outputs.container_image }}"
+          echo "Updating App Service to: $CONTAINER_IMAGE"
+          
+          # Update linuxFxVersion - this should work with SHA tag
+          az webapp config set \
+            --name "${{ vars.WEBAPP_NAME }}" \
+            --resource-group "${{ vars.WEBAPP_RG }}" \
+            --linux-fx-version "DOCKER|$CONTAINER_IMAGE" || {
+            echo "Warning: Failed to update to SHA tag, trying 'latest'..."
+            az webapp config set \
+              --name "${{ vars.WEBAPP_NAME }}" \
+              --resource-group "${{ vars.WEBAPP_RG }}" \
+              --linux-fx-version "DOCKER|ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:latest"
+          }
+          
+          echo "Restarting App Service..."
           az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
-          echo "App Service restarted. New image will be pulled on next request."
