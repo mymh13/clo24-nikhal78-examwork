@@ -80,7 +80,9 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Local development: Falls back to `appsettings.Development.local.json` if Key Vault unavailable (requires `az login` for Key Vault access).
   - App Service: Uses managed identity to automatically access Key Vault (no secrets in app settings).
   - Key Vault configured with RBAC authorization (modern approach, no access policies).
-  - **Status:** Secrets management complete. Connection string securely stored in Key Vault, application configured for both local and Azure environments.
+  - **Azure Deployment Issue:** Initially, App Service managed identity lacked "Key Vault Secrets User" role, preventing connection string retrieval.
+  - **Resolution:** Granted App Service managed identity the "Key Vault Secrets User" role on Key Vault using Azure CLI, then restarted App Service.
+  - **Status:** Secrets management complete. Connection string securely stored in Key Vault, application configured for both local and Azure environments. Cosmos DB client now registers correctly in Azure.
 
 ### Authentication (Phase 1)
 - **Approach:** Implemented minimal authentication structure following iterative, test-driven approach.
@@ -137,13 +139,44 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Status:** CI/CD pipelines working correctly. SHA-based versioning ensures unique tags for each deployment, forcing Azure to pull new images.
 
 ### Documentation
-- [Document any ADRs, documentation updates, or journal entries]
+- **ADR-008:** Documented Docker container deployment strategy (migration from Oryx/zip-deploy to GHCR containerization).
+- **ADR-009:** Documented Extension Methods Pattern for Application Startup Configuration.
+- **Week 4 Journal:** Comprehensive documentation of infrastructure expansion, Cosmos DB integration, authentication implementation, and secrets management.
 
 ---
 
 ## Reflection
 
-[Reflect on the week's work, challenges encountered, lessons learned, and key achievements. What went well? What could be improved?]
+### What Went Well
+- **Infrastructure Expansion:** Successfully deployed Key Vault and integrated it with the application using managed identities and RBAC. The modern RBAC approach is cleaner than legacy access policies.
+- **Iterative Development:** The phased approach (Authentication → Data Operations → Secrets Management) worked well, allowing us to validate each component before moving to the next.
+- **Code Organization:** Refactoring `Program.cs` to use extension methods significantly improved code readability and maintainability. The separation of concerns makes the codebase easier to understand and modify. I want to highlight that this was the plan already from the start, but I do not start off by creating the extension methods until Program.c starts to become unreadable.
+- **Cosmos DB Integration:** Successfully integrated Cosmos DB with proper serialization configuration. The camelCase naming policy automatically handles the `id` property requirement.
+- **Health Monitoring:** The health check endpoint and page proved great for diagnosing configuration issues in Azure, especially the missing RBAC permission.
+
+### Challenges Encountered
+- **Cosmos DB Serialization:** Initial issue with `id` property not being serialized correctly. Resolved by configuring `CosmosPropertyNamingPolicy.CamelCase` on the CosmosClient.
+- **Key Vault RBAC Permissions:** Discovered that granting managed identity permission to Key Vault was a manual step not included in the initial Bicep deployment. This caused the Cosmos DB client to not register in Azure, leading to "Unable to resolve service" errors.
+- **Configuration Key Formats:** Had to handle both `KeyVault:Name` (from appsettings.json) and `KeyVault__Name` (from Azure app settings) due to Azure's restriction on colons in app setting names.
+
+### Lessons Learned
+- **Always verify RBAC permissions:** When using managed identities with Key Vault, the role assignment must be explicitly granted. This should ideally be automated in Bicep or documented as a required manual step.
+- **Health checks are essential:** The health check endpoint quickly revealed the root cause of the Cosmos DB registration issue, saving significant debugging time.
+- **Configuration flexibility:** Supporting both `:` and `__` formats for configuration keys provides better compatibility between local development and Azure environments.
+- **Code cleanup matters:** Removing debug logging and excessive comments before production deployment improves code quality and maintainability.
+
+### Key Achievements
+- ✅ Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
+- ✅ Secure secrets management: Connection strings stored in Key Vault, accessed via managed identity (no secrets in code or app settings).
+- ✅ Functional booking system: Create and retrieve bookings working end-to-end with Cosmos DB.
+- ✅ Authentication structure: Cookie-based auth with `[Authorize]` protection working correctly.
+- ✅ Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices.
+- ✅ CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
+
+### What Could Be Improved
+- **Automate RBAC assignments:** Consider adding role assignments to Bicep templates or documenting them as required post-deployment steps.
+- **Error handling:** Could improve error messages when services fail to register (e.g., more descriptive errors when Cosmos DB connection string is missing).
+- **Testing:** Add automated integration tests for the booking API endpoints to catch issues earlier.
 
 ---
 

@@ -29,7 +29,7 @@
         <div style="margin: 20px 0;">
             <h3>Configuration Status</h3>
             <div style="background: #1e1e1e; padding: 15px; border-radius: 8px; text-align: left;">
-                <p><strong>Key Vault:</strong> 
+                <p><strong>Key Vault: </strong> 
                     @if (healthStatus.Configuration.KeyVaultConfigured)
                     {
                         <span style="color: #4ec9b0;">✓ Configured</span> <text>(@healthStatus.Configuration.KeyVaultName)</text>
@@ -39,7 +39,7 @@
                         <span style="color: #ff6b6b;">✗ Not configured</span>
                     }
                 </p>
-                <p><strong>Cosmos DB Client:</strong> 
+                <p><strong>Cosmos DB Client: </strong> 
                     @if (healthStatus.Configuration.CosmosDbClientRegistered)
                     {
                         <span style="color: #4ec9b0;">✓ Registered</span>
@@ -49,7 +49,7 @@
                         <span style="color: #ff6b6b;">✗ Not registered</span>
                     }
                 </p>
-                <p><strong>Cosmos DB Connection:</strong> 
+                <p><strong>Cosmos DB Connection: </strong> 
                     @if (healthStatus.Configuration.CosmosDbConnectionStatus == "Connected")
                     {
                         <span style="color: #4ec9b0;">✓ @healthStatus.Configuration.CosmosDbConnectionStatus</span>
@@ -59,7 +59,7 @@
                         <span style="color: #ff6b6b;">✗ @healthStatus.Configuration.CosmosDbConnectionStatus</span>
                     }
                 </p>
-                <p><strong>Application Insights:</strong> 
+                <p><strong>Application Insights: </strong> 
                     @if (healthStatus.Configuration.ApplicationInsightsConfigured)
                     {
                         <span style="color: #4ec9b0;">✓ Configured</span>

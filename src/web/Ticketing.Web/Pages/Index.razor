@@ -11,35 +11,20 @@
     <div class="tech-overview">
         <h3>Infrastructure & Deployment</h3>
         <p>
-            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, Basic B1 tier, Sweden Central)<br>
-            <strong>IaC:</strong> Bicep modules → Environment-specific deployments (dev/prod)<br>
-            <strong>CI/CD:</strong> GitHub Actions → Docker build → GHCR → App Service container deployment<br>
-            <strong>Custom Domain:</strong> ticket.mymh.dev with Let's Encrypt SSL (manual DNS-01 validation)<br>
-            <strong>Monitoring:</strong> Azure Application Insights (telemetry, logging, performance tracking)
+            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, B1 tier, Sweden Central) | <strong>IaC:</strong> Bicep modules (env-specific deployments) | <strong>CI/CD:</strong> GitHub Actions → Docker → GHCR → App Service<br>
+            <strong>Domain:</strong> ticket.mymh.dev (Let's Encrypt SSL, DNS-01) | <strong>Monitoring:</strong> Application Insights (telemetry, logging, performance) | <strong>Secrets:</strong> Key Vault (RBAC, managed identity)
         </p>
 
         <h3>Application Stack</h3>
         <p>
-            <strong>Frontend:</strong> .NET 8 Blazor Server (server-side rendering, real-time updates)<br>
-            <strong>API:</strong> .NET 8 Web API (Controller-based, planned for business logic)<br>
-            <strong>Database:</strong> Azure Cosmos DB Serverless (NoSQL, pay-per-request, ticketing database)<br>
-            <strong>Container:</strong> Docker multi-stage build (SDK for build, ASP.NET runtime for production)<br>
-            <strong>Registry:</strong> GitHub Container Registry (GHCR, public images, no authentication needed)
+            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) | <strong>API:</strong> ASP.NET Core Web API (Controller-based) | <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request)<br>
+            <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) | <strong>Registry:</strong> GHCR (public, no auth) | <strong>Auth:</strong> Cookie-based (ASP.NET Identity/Entra ID ready)
         </p>
 
-        <h3>Data & Storage</h3>
+        <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Database:</strong> Cosmos DB Serverless (database: ticketing, container: bookings)<br>
-            <strong>Partition Key:</strong> /customerId (enables efficient customer-based queries)<br>
-            <strong>Cost Model:</strong> Pay-per-request (zero cost when idle, perfect for MVP)
-        </p>
-
-        <h3>Security & Authentication</h3>
-        <p>
-            <strong>CI/CD Auth:</strong> Azure OIDC (secretless GitHub Actions → Azure authentication)<br>
-            <strong>Secrets:</strong> Azure Key Vault (deployed, ready for connection strings and API keys)<br>
-            <strong>Identity:</strong> Minimal authentication structure (hardcoded admin for dev, will be replaced with ASP.NET Identity/Entra ID)<br>
-            <strong>Network:</strong> App Service with custom domain and SSL/TLS encryption
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService), Dependency Injection (scoped/singleton)<br>
+            <strong>Data:</strong> Cosmos DB (ticketing/bookings, partition: /customerId) | <strong>Serialization:</strong> camelCase naming policy (CosmosPropertyNamingPolicy) | <strong>Health:</strong> /api/health endpoint (non-sensitive status)
         </p>
     </div>
 
