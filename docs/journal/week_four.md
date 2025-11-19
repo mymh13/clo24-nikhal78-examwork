@@ -52,11 +52,24 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Implemented startup connection test to validate Cosmos DB access.
   - Test verifies connection to `ticketing` database and `bookings` container.
   - Connection test runs asynchronously on application startup and logs success/failure.
+- **Service Layer Implementation:**
+  - Created `IBookingService` interface and `BookingService` implementation.
+  - Implemented `CreateBookingAsync` method (creates bookings with partition key support).
+  - Implemented `GetBookingsByCustomerIdAsync` method (queries bookings by customerId using partition key).
+  - Registered `BookingService` as scoped service in dependency injection.
+- **API Endpoints:**
+  - Created `BookingsController` with `[Authorize]` protection.
+  - `POST /api/bookings` - Create new booking.
+  - `GET /api/bookings/customer/{customerId}` - Get all bookings for a customer.
+- **Testing:**
+  - Created test page `/test-bookings` for manual API testing.
+  - Configured HttpClient with base address for Blazor Server API calls.
+  - Validated service layer architecture and endpoint structure.
 - **Local Testing:** 
   - Tested locally with connection string from Azure Cosmos DB account.
   - Verified connection string loading, client registration, and successful database/container access.
   - Connection test confirmed: "Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'".
-- **Status:** Minimal integration complete and validated. Ready for service layer implementation in next iteration.
+- **Status:** Service layer complete and validated. Ready for secrets management integration (Phase 3).
 
 ### Authentication (Phase 1)
 - **Approach:** Implemented minimal authentication structure following iterative, test-driven approach.
@@ -103,18 +116,22 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ### Planned Development Phases (Iterative Approach)
 
-**Phase 1: Basic Authentication Structure** ✅ **COMPLETE**
+**Phase 1: Basic Authentication Structure** **COMPLETE**
 - Implemented minimal authentication system with hardcoded admin user
 - Using same structure as future ASP.NET Identity/Entra ID integration
 - `[Authorize]` attributes working to protect endpoints
 - Test page validates auth structure works
 - **Goal:** Establish auth architecture early to avoid refactoring later - **ACHIEVED**
 
-**Phase 2: Basic Data Operations**
-- Create minimal Cosmos DB service with `CreateBookingAsync` method
-- Test creating booking documents in Cosmos DB
-- Add query method to read bookings by customerId
-- Validate data operations work end-to-end
+**Phase 2: Basic Data Operations** **COMPLETE**
+- Created minimal Cosmos DB service (`IBookingService` interface and `BookingService` implementation)
+- Implemented `CreateBookingAsync` method for creating booking documents in Cosmos DB
+- Implemented `GetBookingsByCustomerIdAsync` method to query bookings by customerId
+- Created `BookingsController` with POST and GET endpoints (`/api/bookings` and `/api/bookings/customer/{customerId}`)
+- Registered `BookingService` as scoped service in dependency injection
+- Created test page (`/test-bookings`) for manual API testing
+- Validated service layer architecture and Cosmos DB integration
+- **Goal:** Establish data operations foundation - **ACHIEVED**
 
 **Phase 3: Secrets Management**
 - Store Cosmos DB connection string in Azure Key Vault

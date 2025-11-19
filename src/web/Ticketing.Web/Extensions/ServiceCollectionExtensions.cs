@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Azure.Cosmos;
+using Ticketing.Web.Services;
 
 namespace Ticketing.Web.Extensions;
 
@@ -15,7 +16,9 @@ public static class ServiceCollectionExtensions
         if (!string.IsNullOrEmpty(cosmosConnectionString))
         {
             services.AddSingleton<CosmosClient>(sp => new CosmosClient(cosmosConnectionString));
-            Console.WriteLine("Cosmos DB connection string found - client will be registered");
+            // Register Booking Service
+            services.AddScoped<IBookingService, BookingService>();
+            Console.WriteLine("Cosmos DB connection string found - client and booking service will be registered");
         }
         else
         {
@@ -34,6 +37,12 @@ public static class ServiceCollectionExtensions
 
         // Add services to the container
         services.AddHttpContextAccessor();
+        services.AddScoped(sp =>
+        {
+            var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+            var baseUrl = $"{httpContext?.Request.Scheme}://{httpContext?.Request.Host}";
+            return new HttpClient { BaseAddress = new Uri(baseUrl) };
+        });
         services.AddControllers();
         services.AddRazorPages();
         services.AddServerSideBlazor();
