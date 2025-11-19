@@ -12,7 +12,10 @@ public static class ServiceCollectionExtensions
         services.AddApplicationInsightsTelemetry();
 
         // Add Cosmos DB Client
-        var cosmosConnectionString = configuration["CosmosDb:ConnectionString"];
+        // Try both formats: Key Vault uses -- which gets converted to : in configuration
+        var cosmosConnectionString = configuration["CosmosDb:ConnectionString"] 
+            ?? configuration["CosmosDb--ConnectionString"];
+        
         if (!string.IsNullOrEmpty(cosmosConnectionString))
         {
             services.AddSingleton<CosmosClient>(sp => new CosmosClient(cosmosConnectionString));
@@ -23,6 +26,9 @@ public static class ServiceCollectionExtensions
         else
         {
             Console.WriteLine("Cosmos DB connection string not found - skipping client registration");
+            Console.WriteLine("Checked keys: CosmosDb:ConnectionString, CosmosDb--ConnectionString");
+            // Register a null CosmosClient so DI can resolve CosmosClient? in controllers
+            services.AddSingleton<CosmosClient?>(sp => null);
         }
 
         // Add Authentication (minimal - hardcoded admin, same structure as real auth)

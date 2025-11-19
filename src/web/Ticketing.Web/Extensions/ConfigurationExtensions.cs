@@ -8,8 +8,6 @@ public static class ConfigurationExtensions
 {
     public static IConfigurationBuilder AddLocalConfiguration(this IConfigurationBuilder builder, IWebHostEnvironment environment)
     {
-        // Load local development settings if they exist (appsettings.Development.local.json)
-        // Load regardless of environment for local testing
         builder.AddJsonFile("appsettings.Development.local.json", optional: true, reloadOnChange: true);
         
         return builder;
@@ -17,7 +15,9 @@ public static class ConfigurationExtensions
 
     public static IConfigurationBuilder AddKeyVaultConfiguration(this IConfigurationBuilder builder, IWebHostEnvironment environment)
     {
-        var keyVaultName = builder.Build()["KeyVault:Name"];
+        // Try both KeyVault:Name and KeyVault__Name (Azure app settings use __)
+        var tempConfig = builder.Build();
+        var keyVaultName = tempConfig["KeyVault:Name"] ?? tempConfig["KeyVault__Name"];
         
         if (!string.IsNullOrEmpty(keyVaultName))
         {
@@ -25,10 +25,6 @@ public static class ConfigurationExtensions
             
             try
             {
-                // Use DefaultAzureCredential which supports:
-                // - Managed Identity (when running on Azure)
-                // - Azure CLI (when running locally with 'az login')
-                // - Visual Studio / VS Code authentication
                 builder.AddAzureKeyVault(
                     new Uri(keyVaultUri),
                     new DefaultAzureCredential(),
@@ -39,12 +35,18 @@ public static class ConfigurationExtensions
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: Failed to load Key Vault configuration: {ex.Message}");
+                Console.WriteLine($"Exception type: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 Console.WriteLine("Falling back to local configuration only.");
             }
         }
         else
         {
             Console.WriteLine("Key Vault name not configured - skipping Key Vault configuration");
+            Console.WriteLine("Checked keys: KeyVault:Name, KeyVault__Name");
         }
         
         return builder;
