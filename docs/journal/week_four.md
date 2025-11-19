@@ -103,7 +103,11 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Decision:** Documented in ADR-009: Extension Methods Pattern for Application Startup Configuration.
 
 ### Frontend & UI
-- [Document any Blazor landing page or UI improvements]
+- **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page for system health monitoring.
+  - Shows non-sensitive configuration status (Key Vault name, Cosmos DB connection status, Application Insights configuration).
+  - Tests Cosmos DB connection without exposing secrets.
+  - Visual health status page with color-coded indicators.
+  - Useful for verifying Key Vault integration and overall system health after deployments.
 
 ### CI/CD Pipelines
 - [Document any pipeline updates or optimizations]

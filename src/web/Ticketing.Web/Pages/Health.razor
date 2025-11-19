@@ -1,0 +1,105 @@
+@page "/health"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>System Health</PageTitle>
+
+<div class="container">
+    <h1>System Health Status</h1>
+
+    @if (healthStatus == null)
+    {
+        <p>Loading health status...</p>
+    }
+    else
+    {
+        <div style="margin: 20px 0;">
+            <h3>Overall Status: <span style="color: @(healthStatus.Status == "Healthy" ? "#4ec9b0" : "#ff6b6b")">@healthStatus.Status</span></h3>
+            <p><strong>Timestamp:</strong> @healthStatus.Timestamp.ToString("yyyy-MM-dd HH:mm:ss UTC")</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Configuration Status</h3>
+            <div style="background: #1e1e1e; padding: 15px; border-radius: 8px; text-align: left;">
+                <p><strong>Key Vault:</strong> 
+                    @if (healthStatus.Configuration.KeyVaultConfigured)
+                    {
+                        <span style="color: #4ec9b0;">✓ Configured</span> (@healthStatus.Configuration.KeyVaultName)
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not configured</span>
+                    }
+                </p>
+                <p><strong>Cosmos DB Client:</strong> 
+                    @if (healthStatus.Configuration.CosmosDbClientRegistered)
+                    {
+                        <span style="color: #4ec9b0;">✓ Registered</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not registered</span>
+                    }
+                </p>
+                <p><strong>Cosmos DB Connection:</strong> 
+                    @if (healthStatus.Configuration.CosmosDbConnectionStatus == "Connected")
+                    {
+                        <span style="color: #4ec9b0;">✓ @healthStatus.Configuration.CosmosDbConnectionStatus</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ @healthStatus.Configuration.CosmosDbConnectionStatus</span>
+                    }
+                </p>
+                <p><strong>Application Insights:</strong> 
+                    @if (healthStatus.Configuration.ApplicationInsightsConfigured)
+                    {
+                        <span style="color: #4ec9b0;">✓ Configured</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not configured</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    }
+</div>
+
+@code {
+    private HealthStatus? healthStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            healthStatus = await Http.GetFromJsonAsync<HealthStatus>("/api/health");
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show error message
+            Console.WriteLine($"Error loading health status: {ex.Message}");
+        }
+    }
+
+    private class HealthStatus
+    {
+        public string Status { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+        public ConfigurationStatus Configuration { get; set; } = new();
+    }
+
+    private class ConfigurationStatus
+    {
+        public string KeyVaultName { get; set; } = string.Empty;
+        public bool KeyVaultConfigured { get; set; }
+        public bool CosmosDbClientRegistered { get; set; }
+        public string CosmosDbConnectionStatus { get; set; } = string.Empty;
+        public bool ApplicationInsightsConfigured { get; set; }
+    }
+}
+
