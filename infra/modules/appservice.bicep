@@ -38,8 +38,8 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      // linuxFxVersion is managed by CD workflow (GitHub Actions)
-      // It will be set to the specific image tag during deployment
+      // Default to 'latest' tag - CD workflow will update to specific SHA tag
+      linuxFxVersion: 'DOCKER|ghcr.io/mymh13/clo24-nikhal78-examwork/web:latest'
       appSettings: [
         {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'

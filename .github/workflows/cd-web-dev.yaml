@@ -51,9 +51,14 @@ jobs:
       - name: Update App Service to use Docker container
         if: steps.probe.outputs.exists == 'true'
         run: |
+          echo "Updating App Service to use container: ${{ steps.image.outputs.container_image }}"
+          
+          # Update linuxFxVersion to point to the specific image tag
           az webapp config set \
             --name "${{ vars.WEBAPP_NAME }}" \
             --resource-group "${{ vars.WEBAPP_RG }}" \
-            --linux-fx-version "DOCKER|${{ steps.image.outputs.container_image }}"
+            --linux-fx-version "DOCKER|${{ steps.image.outputs.container_image }}" \
+            || (echo "Failed to update linuxFxVersion. The image might not exist yet or there's a configuration issue." && exit 1)
           
+          echo "Restarting App Service to apply changes..."
           az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
