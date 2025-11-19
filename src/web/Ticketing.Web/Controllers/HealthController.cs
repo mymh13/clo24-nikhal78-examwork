@@ -25,18 +25,23 @@ public class HealthController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<HealthStatus>> GetHealth()
     {
-        var health = new HealthStatus
+        try
         {
-            Status = "Healthy",
-            Timestamp = DateTime.UtcNow,
-            Configuration = new ConfigurationStatus
+            // Try both KeyVault:Name and KeyVault__Name (Azure converts __ to : in app settings)
+            var keyVaultName = _configuration["KeyVault:Name"] ?? _configuration["KeyVault__Name"] ?? "Not configured";
+            
+            var health = new HealthStatus
             {
-                KeyVaultName = _configuration["KeyVault:Name"] ?? "Not configured",
-                KeyVaultConfigured = !string.IsNullOrEmpty(_configuration["KeyVault:Name"]),
-                CosmosDbClientRegistered = _cosmosClient != null,
-                ApplicationInsightsConfigured = !string.IsNullOrEmpty(_configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"])
-            }
-        };
+                Status = "Healthy",
+                Timestamp = DateTime.UtcNow,
+                Configuration = new ConfigurationStatus
+                {
+                    KeyVaultName = keyVaultName,
+                    KeyVaultConfigured = !string.IsNullOrEmpty(keyVaultName) && keyVaultName != "Not configured",
+                    CosmosDbClientRegistered = _cosmosClient != null,
+                    ApplicationInsightsConfigured = !string.IsNullOrEmpty(_configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+                }
+            };
 
         // Test Cosmos DB connection if client is available
         if (_cosmosClient != null)
@@ -61,6 +66,13 @@ public class HealthController : ControllerBase
         }
 
         return Ok(health);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in health check endpoint");
+            // Return error response instead of letting it bubble up
+            return StatusCode(500, new { error = ex.Message, details = ex.ToString() });
+        }
     }
 }
 
