@@ -58,12 +58,15 @@ jobs:
           CONTAINER_IMAGE="${{ steps.image.outputs.container_image }}"
           echo "Updating App Service to: $CONTAINER_IMAGE"
           
-          # Update linuxFxVersion - this should work with SHA tag
-          az webapp config set \
+          # Try using container config API instead of general config API
+          # This might work better with managed identity enabled
+          az webapp config container set \
             --name "${{ vars.WEBAPP_NAME }}" \
             --resource-group "${{ vars.WEBAPP_RG }}" \
-            --linux-fx-version "DOCKER|$CONTAINER_IMAGE" || {
-            echo "Warning: Failed to update to SHA tag, trying 'latest'..."
+            --container-image-name "$CONTAINER_IMAGE" \
+            --container-registry-url "https://ghcr.io" \
+            --container-registry-user "mymh13" || {
+            echo "Warning: Container config API failed, trying general config API with 'latest'..."
             az webapp config set \
               --name "${{ vars.WEBAPP_NAME }}" \
               --resource-group "${{ vars.WEBAPP_RG }}" \
