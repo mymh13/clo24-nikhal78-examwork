@@ -45,13 +45,10 @@ jobs:
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           FULL_SHA=$(git rev-parse HEAD)
-          # Use timestamp for unique tag (YYYYMMDD-HHMMSS format)
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "full_sha=$FULL_SHA" >> $GITHUB_OUTPUT
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "version=$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "Version: $TIMESTAMP (SHA: $SHORT_SHA)"
+          echo "version=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Version: $SHORT_SHA"
 
       # Build and push Docker image to GHCR
       - name: Log in to GitHub Container Registry

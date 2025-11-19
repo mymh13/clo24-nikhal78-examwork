@@ -38,7 +38,6 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      // Default to 'latest' tag - CD workflow will update to specific SHA tag
       linuxFxVersion: 'DOCKER|ghcr.io/mymh13/clo24-nikhal78-examwork/web:latest'
       appSettings: [
         {
@@ -55,7 +54,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
-          value: ''  // Set via Azure CLI/Portal if image is private
+          value: ''
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
