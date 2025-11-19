@@ -61,7 +61,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
           value: appInsightsConnectionString
         }
         {
-          name: 'KeyVault:Name'
+          name: 'KeyVault__Name'
           value: keyVaultName
         }
       ]
