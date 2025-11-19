@@ -69,7 +69,11 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Tested locally with connection string from Azure Cosmos DB account.
   - Verified connection string loading, client registration, and successful database/container access.
   - Connection test confirmed: "Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'".
-- **Status:** Service layer complete and validated. Ready for secrets management integration (Phase 3).
+- **Cosmos DB Serialization Fix:**
+  - Fixed `id` property serialization issue - Cosmos DB requires lowercase `id` property in JSON documents.
+  - Configured `CosmosClient` with `CosmosPropertyNamingPolicy.CamelCase` to automatically convert C# property names (e.g., `Id`) to camelCase JSON (e.g., `id`).
+  - Ensured `Id` and `BookingDate` are always set before sending to Cosmos DB (form submissions may not include these).
+  - **Status:** Booking creation fully functional. Documents correctly stored in Cosmos DB with proper `id` property.
 - **Secrets Management Integration:**
   - Connection string now stored in Azure Key Vault (`CosmosDb--ConnectionString`).
   - Application configured to read from Key Vault using `DefaultAzureCredential`.
@@ -101,6 +105,12 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Created `ConfigurationExtensions` for configuration loading.
 - **Benefits:** Improved code readability, maintainability, and separation of concerns. Follows ASP.NET Core conventions and makes `Program.cs` minimal and focused.
 - **Decision:** Documented in ADR-009: Extension Methods Pattern for Application Startup Configuration.
+- **Code Cleanup:**
+  - Removed debug logging and excessive comments from production code.
+  - Cleaned up verbose console output while keeping essential startup validation logs.
+  - Simplified error handling messages.
+  - Removed redundant inline comments.
+  - **Status:** Code is production-ready and clean, ready for Azure deployment.
 
 ### Frontend & UI
 - **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page for system health monitoring.
@@ -155,6 +165,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - Created `BookingsController` with POST and GET endpoints (`/api/bookings` and `/api/bookings/customer/{customerId}`)
 - Registered `BookingService` as scoped service in dependency injection
 - Created test page (`/test-bookings`) for manual API testing
+- Fixed Cosmos DB serialization: Configured camelCase naming policy to ensure `id` property is correctly serialized
 - Validated service layer architecture and Cosmos DB integration
 - **Goal:** Establish data operations foundation - **ACHIEVED**
 

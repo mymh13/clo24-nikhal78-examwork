@@ -24,10 +24,14 @@ public class BookingService : IBookingService
 
         var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
         
-        // Ensure Id is set
-        if (string.IsNullOrEmpty(booking.Id))
+        if (string.IsNullOrWhiteSpace(booking.Id))
         {
             booking.Id = Guid.NewGuid().ToString();
+        }
+        
+        if (booking.BookingDate == default)
+        {
+            booking.BookingDate = DateTime.UtcNow;
         }
 
         var response = await container.CreateItemAsync(

@@ -6,10 +6,8 @@ public static class WebApplicationExtensions
 {
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        // Configure the HTTP request pipeline
         if (!app.Environment.IsDevelopment())
         {
-            // Configure error handler to return JSON for API routes, HTML for pages
             app.UseExceptionHandler(errorApp =>
             {
                 errorApp.Run(async context =>
@@ -17,7 +15,6 @@ public static class WebApplicationExtensions
                     var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
                     var exception = exceptionHandlerPathFeature?.Error;
                     
-                    // If it's an API route, return JSON error
                     if (context.Request.Path.StartsWithSegments("/api"))
                     {
                         context.Response.StatusCode = 500;
@@ -30,7 +27,6 @@ public static class WebApplicationExtensions
                     }
                     else
                     {
-                        // For non-API routes, redirect to error page
                         context.Response.Redirect("/Error");
                     }
                 });

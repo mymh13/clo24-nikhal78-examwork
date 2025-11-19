@@ -14,11 +14,11 @@ public class HealthController : ControllerBase
 
     public HealthController(
         IConfiguration configuration,
-        CosmosClient? cosmosClient,
+        IServiceProvider serviceProvider,
         ILogger<HealthController> logger)
     {
         _configuration = configuration;
-        _cosmosClient = cosmosClient;
+        _cosmosClient = serviceProvider.GetService<CosmosClient>();
         _logger = logger;
     }
 
@@ -27,7 +27,6 @@ public class HealthController : ControllerBase
     {
         try
         {
-            // Try both KeyVault:Name and KeyVault__Name (Azure converts __ to : in app settings)
             var keyVaultName = _configuration["KeyVault:Name"] ?? _configuration["KeyVault__Name"] ?? "Not configured";
             
             var health = new HealthStatus
@@ -43,7 +42,6 @@ public class HealthController : ControllerBase
                 }
             };
 
-        // Test Cosmos DB connection if client is available
         if (_cosmosClient != null)
         {
             try
@@ -70,7 +68,6 @@ public class HealthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in health check endpoint");
-            // Return error response instead of letting it bubble up
             return StatusCode(500, new { error = ex.Message, details = ex.ToString() });
         }
     }
