@@ -110,7 +110,21 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
   - Useful for verifying Key Vault integration and overall system health after deployments.
 
 ### CI/CD Pipelines
-- [Document any pipeline updates or optimizations]
+- **Workflow Cleanup:** Simplified CI/CD workflows by removing unnecessary complexity and bloat.
+  - Removed timestamp-based versioning attempts, reverted to simple SHA-based tagging.
+  - Cleaned up CD workflow to use straightforward `az webapp config set` command.
+  - CI workflow now pushes images with SHA tag (`web:SHORT_SHA`) and `latest` tag.
+  - CD workflow extracts SHA from CI workflow run and updates App Service to use specific SHA tag.
+- **Deployment Issues & Resolution:**
+  - Encountered persistent "Bad Request" errors when trying to update `linuxFxVersion` via Azure CLI.
+  - Issue occurred after enabling managed identity for Key Vault access.
+  - Root cause: Cached state in App Service configuration preventing updates.
+  - **Solution:** Deleted and recreated App Service via Bicep to clear cached state.
+  - After recreation, CD workflow successfully updates container image tags.
+- **Configuration Fix:**
+  - Fixed Bicep app setting: Changed `KeyVault:Name` to `KeyVault__Name` (Azure doesn't allow colons in app setting names).
+  - ASP.NET Core automatically converts `__` to `:` when reading configuration, so code remains unchanged.
+- **Status:** CI/CD pipelines working correctly. SHA-based versioning ensures unique tags for each deployment, forcing Azure to pull new images.
 
 ### Documentation
 - [Document any ADRs, documentation updates, or journal entries]
