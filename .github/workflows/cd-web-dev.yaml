@@ -39,18 +39,10 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
-      - name: Update App Service to use Docker container
+      - name: Restart App Service to pull latest image
         if: steps.probe.outputs.exists == 'true'
         run: |
-          # Use 'latest' tag - CI workflow always pushes to 'latest'
-          CONTAINER_IMAGE="ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/web:latest"
-          echo "Updating App Service to use container: $CONTAINER_IMAGE"
-          
-          # Update linuxFxVersion to point to latest image
-          az webapp config set \
-            --name "${{ vars.WEBAPP_NAME }}" \
-            --resource-group "${{ vars.WEBAPP_RG }}" \
-            --linux-fx-version "DOCKER|$CONTAINER_IMAGE"
-          
-          echo "Restarting App Service to apply changes..."
+          # CI workflow always pushes to 'latest' tag
+          echo "Restarting App Service to pull latest container image..."
           az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
+          echo "App Service restarted. New image will be pulled on next request."
