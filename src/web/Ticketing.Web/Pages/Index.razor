@@ -11,20 +11,17 @@
     <div class="tech-overview">
         <h3>Infrastructure & Deployment</h3>
         <p>
-            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, B1 tier, Sweden Central) | <strong>IaC:</strong> Bicep modules (env-specific deployments) | <strong>CI/CD:</strong> GitHub Actions → Docker → GHCR → App Service<br>
-            <strong>Domain:</strong> ticket.mymh.dev (Let's Encrypt SSL, DNS-01) | <strong>Monitoring:</strong> Application Insights (telemetry, logging, performance) | <strong>Secrets:</strong> Key Vault (RBAC, managed identity)
+            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, B1 tier, Sweden Central) &nbsp;|&nbsp; <strong>IaC:</strong> Bicep modules (env-specific deployments) &nbsp;|&nbsp; <strong>CI/CD:</strong> GitHub Actions → Docker → GHCR → App Service &nbsp;|&nbsp; <strong>Domain:</strong> ticket.mymh.dev (Let's Encrypt SSL, DNS-01) &nbsp;|&nbsp; <strong>Monitoring:</strong> Application Insights (telemetry, logging, performance) &nbsp;|&nbsp; <strong>Secrets:</strong> Key Vault (RBAC, managed identity)
         </p>
 
         <h3>Application Stack</h3>
         <p>
-            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) | <strong>API:</strong> ASP.NET Core Web API (Controller-based) | <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request)<br>
-            <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) | <strong>Registry:</strong> GHCR (public, no auth) | <strong>Auth:</strong> Cookie-based (ASP.NET Identity/Entra ID ready)
+            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) &nbsp;|&nbsp; <strong>API:</strong> ASP.NET Core Web API (Controller-based) &nbsp;|&nbsp; <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request) &nbsp;|&nbsp; <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) &nbsp;|&nbsp; <strong>Registry:</strong> GHCR (public, no auth) &nbsp;|&nbsp; <strong>Auth:</strong> Cookie-based (ASP.NET Identity/Entra ID ready)
         </p>
 
         <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService), Dependency Injection (scoped/singleton)<br>
-            <strong>Data:</strong> Cosmos DB (ticketing/bookings, partition: /customerId) | <strong>Serialization:</strong> camelCase naming policy (CosmosPropertyNamingPolicy) | <strong>Health:</strong> /api/health endpoint (non-sensitive status)
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings, partition: /customerId) &nbsp;|&nbsp; <strong>Serialization:</strong> camelCase naming policy (CosmosPropertyNamingPolicy) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status)
         </p>
     </div>
 

@@ -34,6 +34,7 @@ logs/
 secrets.json
 appsettings.*.local.json
 local.settings.json       # Azure Functions local config
+/docs/notes.md
 
 # --- Certificates & SSL
 letsencrypt/
