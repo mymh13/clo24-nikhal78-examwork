@@ -166,12 +166,12 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Code cleanup matters:** Removing debug logging and excessive comments before production deployment improves code quality and maintainability.
 
 ### Key Achievements
-- ✅ Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
-- ✅ Secure secrets management: Connection strings stored in Key Vault, accessed via managed identity (no secrets in code or app settings).
-- ✅ Functional booking system: Create and retrieve bookings working end-to-end with Cosmos DB.
-- ✅ Authentication structure: Cookie-based auth with `[Authorize]` protection working correctly.
-- ✅ Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices.
-- ✅ CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
+- Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
+- Secure secrets management: Connection strings stored in Key Vault, accessed via managed identity (no secrets in code or app settings).
+- Functional booking system: Create and retrieve bookings working end-to-end with Cosmos DB.
+- Authentication structure: Cookie-based auth with `[Authorize]` protection working correctly.
+- Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices.
+- CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
 
 ### What Could Be Improved
 - **Automate RBAC assignments:** Consider adding role assignments to Bicep templates or documenting them as required post-deployment steps.
@@ -180,7 +180,13 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ---
 
-## Next Steps (Week 5)
+## Ongoing Work (Week 4 - Continued)
+
+### Frontend Improvements
+- **Landing Page Navigation:** Added functional buttons to the home page (`Index.razor`) for easy navigation to login and health check pages.
+- **Button Styling:** Styled navigation buttons to match the application's dark theme with teal accent colors, including hover effects and responsive design.
+
+---
 
 ### Planned Development Phases (Iterative Approach)
 
@@ -216,3 +222,4 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ---
 
+## Next Steps (Week 5)
