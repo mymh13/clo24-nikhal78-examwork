@@ -212,6 +212,96 @@ p {
     text-decoration: underline;
 }
 
+/* Admin Dashboard Styling */
+.user-info {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 3px solid #4ec9b0;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.user-info p {
+    margin: 8px 0;
+    font-size: 1em;
+}
+
+.user-info strong {
+    color: #4ec9b0;
+}
+
+.section-divider {
+    border: none;
+    border-top: 2px solid #3a3a3a;
+    margin: 30px 0;
+}
+
+.booking-section {
+    margin: 30px 0;
+}
+
+.booking-section h2 {
+    color: #4ec9b0;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.booking-form-container {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 8px;
+    border-left: 3px solid #4ec9b0;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.booking-form-container h3 {
+    color: #4ec9b0;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+}
+
+.booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.result-box {
+    margin-top: 20px;
+    background: #2d2d2d;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #3a3a3a;
+}
+
+.result-box pre {
+    margin: 0;
+    color: #e0e0e0;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #7a8288, #6c757d);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
 @media (max-width: 768px) {
     h1 {
         font-size: 2rem;

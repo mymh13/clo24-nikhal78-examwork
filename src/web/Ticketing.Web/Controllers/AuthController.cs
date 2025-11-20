@@ -19,7 +19,7 @@ public class AuthController : ControllerBase
             return Redirect("/login?error=Please provide both username and password");
         }
 
-        if (username == "admin" && password == "admin")
+        if (username == "king" && password == "cantona")
         {
             var claims = new[]
             {
@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
 
             await HttpContext.SignInAsync("Hardcoded", principal, authProperties);
 
-            return Redirect("/test-auth");
+            return Redirect("/admin");
         }
 
         return Redirect("/login?error=Invalid username or password");
@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync("Hardcoded");
-        return Redirect("/test-auth");
+        return Redirect("/admin");
     }
 }
 

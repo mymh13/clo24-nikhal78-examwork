@@ -10,7 +10,7 @@
     {
         <div class="login-message">
             <p>You are already logged in!</p>
-            <a href="/test-auth" class="btn btn-primary">Go to Test Auth Page</a>
+            <a href="/admin" class="btn btn-primary">Go to Admin Dashboard</a>
         </div>
     }
     else
@@ -50,7 +50,7 @@
 
     protected override void OnInitialized()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
+        var user = HttpContextAccessor.HttpContext?.User;about:blank#blocked
         isAuthenticated = user?.Identity?.IsAuthenticated == true;
         
         var query = HttpContextAccessor.HttpContext?.Request.Query;
