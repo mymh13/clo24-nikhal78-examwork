@@ -1,31 +1,62 @@
 @page "/login"
 @inject IHttpContextAccessor HttpContextAccessor
 
+<PageTitle>Login</PageTitle>
+
 <div class="container">
     <h1>Login</h1>
     
     @if (isAuthenticated)
     {
-        <p>You are already logged in!</p>
-        <a href="/test-auth">Go to Test Auth Page</a>
+        <div class="login-message">
+            <p>You are already logged in!</p>
+            <a href="/test-auth" class="btn btn-primary">Go to Test Auth Page</a>
+        </div>
     }
     else
     {
-        <p>Click the button below to login as admin (hardcoded for testing):</p>
-        <form method="post" action="/api/auth/login">
-            <button type="submit" class="btn btn-primary">Login as Admin</button>
-        </form>
+        <div class="login-form-container">
+            <form method="post" action="/api/auth/login" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username or Email</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter username or email" required autofocus />
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
+                </div>
+                
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-message">
+                        <p>@errorMessage</p>
+                    </div>
+                }
+                
+                <button type="submit" class="btn btn-primary btn-login">Login</button>
+            </form>
+        </div>
     }
+    
+    <div class="back-link">
+        <a href="/">← Back to home page</a>
+    </div>
 </div>
 
 @code {
     private bool isAuthenticated = false;
+    private string errorMessage = string.Empty;
 
     protected override void OnInitialized()
     {
         var user = HttpContextAccessor.HttpContext?.User;
         isAuthenticated = user?.Identity?.IsAuthenticated == true;
+        
+        var query = HttpContextAccessor.HttpContext?.Request.Query;
+        if (query?.ContainsKey("error") == true)
+        {
+            errorMessage = query["error"].ToString();
+        }
     }
-
 }
-

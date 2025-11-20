@@ -12,27 +12,37 @@ public class AuthController : ControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login()
+    public async Task<IActionResult> Login([FromForm] string username, [FromForm] string password)
     {
-        var claims = new[]
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            new Claim(ClaimTypes.NameIdentifier, "admin-001"),
-            new Claim(ClaimTypes.Name, "Admin User"),
-            new Claim(ClaimTypes.Email, "admin@test.local"),
-            new Claim(ClaimTypes.Role, "Admin")
-        };
+            return Redirect("/login?error=Please provide both username and password");
+        }
 
-        var identity = new ClaimsIdentity(claims, "Hardcoded");
-        var principal = new ClaimsPrincipal(identity);
-
-        var authProperties = new AuthenticationProperties
+        if (username == "admin" && password == "admin")
         {
-            IsPersistent = true
-        };
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "admin-001"),
+                new Claim(ClaimTypes.Name, "Admin User"),
+                new Claim(ClaimTypes.Email, "admin@test.local"),
+                new Claim(ClaimTypes.Role, "Admin")
+            };
 
-        await HttpContext.SignInAsync("Hardcoded", principal, authProperties);
+            var identity = new ClaimsIdentity(claims, "Hardcoded");
+            var principal = new ClaimsPrincipal(identity);
 
-        return Redirect("/test-auth");
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true
+            };
+
+            await HttpContext.SignInAsync("Hardcoded", principal, authProperties);
+
+            return Redirect("/test-auth");
+        }
+
+        return Redirect("/login?error=Invalid username or password");
     }
 
     [HttpPost("logout")]
