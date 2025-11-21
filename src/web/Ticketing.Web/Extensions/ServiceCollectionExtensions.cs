@@ -172,8 +172,30 @@ public static class ServiceCollectionExtensions
                     
                     options.Events.OnRemoteFailure = context =>
                     {
-                        Console.WriteLine($"OpenID Connect remote failure: {context.Failure?.Message}");
-                        context.Response.Redirect("/login?error=Authentication failed. Please try again.");
+                        var errorMessage = context.Failure?.Message ?? "Unknown error";
+                        var innerException = context.Failure?.InnerException?.Message;
+                        Console.WriteLine($"OpenID Connect remote failure: {errorMessage}");
+                        if (!string.IsNullOrEmpty(innerException))
+                        {
+                            Console.WriteLine($"Inner exception: {innerException}");
+                        }
+                        Console.WriteLine($"Stack trace: {context.Failure?.StackTrace}");
+                        
+                        var encodedError = Uri.EscapeDataString($"Authentication failed: {errorMessage}");
+                        context.Response.Redirect($"/login?error={encodedError}");
+                        context.HandleResponse();
+                        return Task.CompletedTask;
+                    };
+                    
+                    options.Events.OnAuthenticationFailed = context =>
+                    {
+                        var errorMessage = context.Exception?.Message ?? "Unknown authentication error";
+                        Console.WriteLine($"OpenID Connect authentication failed: {errorMessage}");
+                        Console.WriteLine($"Exception type: {context.Exception?.GetType().Name}");
+                        Console.WriteLine($"Stack trace: {context.Exception?.StackTrace}");
+                        
+                        var encodedError = Uri.EscapeDataString($"Authentication error: {errorMessage}");
+                        context.Response.Redirect($"/login?error={encodedError}");
                         context.HandleResponse();
                         return Task.CompletedTask;
                     };
