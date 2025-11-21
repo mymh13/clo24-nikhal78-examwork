@@ -54,7 +54,6 @@ public static class WebApplicationExtensions
         var cosmosClient = app.Services.GetService<CosmosClient>();
         if (cosmosClient != null)
         {
-            Console.WriteLine("Testing Cosmos DB connection...");
             _ = Task.Run(async () =>
             {
                 try
@@ -62,22 +61,13 @@ public static class WebApplicationExtensions
                     await Task.Delay(500);
                     var database = cosmosClient.GetDatabase("ticketing");
                     var container = database.GetContainer("bookings");
-                    var containerProperties = await container.ReadContainerAsync();
-                    Console.WriteLine($"Cosmos DB connected successfully: Database 'ticketing' Container 'bookings'");
+                    await container.ReadContainerAsync();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Cosmos DB connection failed: {ex.Message}");
-                    if (ex.InnerException != null)
-                    {
-                        Console.WriteLine($"  Inner exception: {ex.InnerException.Message}");
-                    }
                 }
             });
-        }
-        else
-        {
-            Console.WriteLine("Cosmos DB client not registered - skipping connection test");
         }
 
         return app;

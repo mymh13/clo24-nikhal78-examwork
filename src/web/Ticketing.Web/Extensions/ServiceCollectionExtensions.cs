@@ -122,67 +122,50 @@ public static class ServiceCollectionExtensions
 
                     options.Events.OnTokenValidated = async context =>
                     {
-                        try
+                        var claimsIdentity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
+                        if (claimsIdentity != null)
                         {
-                            var claimsIdentity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
-                            if (claimsIdentity != null)
-                            {
-                                var email = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-                                var name = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
-                                    ?? context.Principal?.FindFirst("name")?.Value;
-                                
-                                if (!string.IsNullOrEmpty(email))
-                                {
-                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, email));
-                                }
-                                if (!string.IsNullOrEmpty(name))
-                                {
-                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, name));
-                                }
-
-                                var roles = context.Principal?.FindAll("roles")?.Select(c => c.Value) ?? Enumerable.Empty<string>();
-                                foreach (var role in roles)
-                                {
-                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
-                                }
-
-                                if (!roles.Any())
-                                {
-                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin"));
-                                }
-                            }
+                            var email = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                            var name = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
+                                ?? context.Principal?.FindFirst("name")?.Value;
                             
-                            if (context.Principal != null)
+                            if (!string.IsNullOrEmpty(email))
                             {
-                                var cookieAuthProperties = new AuthenticationProperties
-                                {
-                                    IsPersistent = true,
-                                    AllowRefresh = true,
-                                    RedirectUri = "/admin"
-                                };
-                                
-                                await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, context.Principal, cookieAuthProperties);
+                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, email));
+                            }
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, name));
+                            }
+
+                            var roles = context.Principal?.FindAll("roles")?.Select(c => c.Value) ?? Enumerable.Empty<string>();
+                            foreach (var role in roles)
+                            {
+                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
+                            }
+
+                            if (!roles.Any())
+                            {
+                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin"));
                             }
                         }
-                        catch (Exception ex)
+                        
+                        if (context.Principal != null)
                         {
-                            Console.WriteLine($"Error in OnTokenValidated: {ex.Message}");
-                            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                            throw;
+                            var cookieAuthProperties = new AuthenticationProperties
+                            {
+                                IsPersistent = true,
+                                AllowRefresh = true,
+                                RedirectUri = "/admin"
+                            };
+                            
+                            await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, context.Principal, cookieAuthProperties);
                         }
                     };
                     
                     options.Events.OnRemoteFailure = context =>
                     {
                         var errorMessage = context.Failure?.Message ?? "Unknown error";
-                        var innerException = context.Failure?.InnerException?.Message;
-                        Console.WriteLine($"OpenID Connect remote failure: {errorMessage}");
-                        if (!string.IsNullOrEmpty(innerException))
-                        {
-                            Console.WriteLine($"Inner exception: {innerException}");
-                        }
-                        Console.WriteLine($"Stack trace: {context.Failure?.StackTrace}");
-                        
                         var encodedError = Uri.EscapeDataString($"Authentication failed: {errorMessage}");
                         context.Response.Redirect($"/login?error={encodedError}");
                         context.HandleResponse();
@@ -192,10 +175,6 @@ public static class ServiceCollectionExtensions
                     options.Events.OnAuthenticationFailed = context =>
                     {
                         var errorMessage = context.Exception?.Message ?? "Unknown authentication error";
-                        Console.WriteLine($"OpenID Connect authentication failed: {errorMessage}");
-                        Console.WriteLine($"Exception type: {context.Exception?.GetType().Name}");
-                        Console.WriteLine($"Stack trace: {context.Exception?.StackTrace}");
-                        
                         var encodedError = Uri.EscapeDataString($"Authentication error: {errorMessage}");
                         context.Response.Redirect($"/login?error={encodedError}");
                         context.HandleResponse();

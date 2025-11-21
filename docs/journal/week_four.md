@@ -39,10 +39,11 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ### Azure Entra ID Authentication (Admin Users)
 - **Approach:** Implemented Azure Entra ID authentication for administrator users following ADR-002 dual authentication model. Added OpenID Connect package and configured dual authentication schemes (Cookie default, OpenID Connect challenge).
-- **Azure AD App Registration:** Created app registration `examwork-web-dev` with "Web" platform, configured redirect URIs for local and production environments, and set front-channel logout URL (single URL limitation).
-- **Configuration:** OpenID Connect configured with authorization code flow, token validation, automatic Admin role mapping, and claims extraction. Secrets (Client ID, Tenant ID) stored in Key Vault, accessed via managed identity in Azure.
-- **UI & Flow:** Login page conditionally shows "Sign in with Microsoft" button when Azure AD is configured. Logout redirects to login page with success message. Standard login form remains for future non-Entra ID users.
-- **Status:** Azure Entra ID authentication fully implemented. Admin users can authenticate via Microsoft accounts with proper role mapping and logout flow.
+- **Azure AD App Registration:** Created app registration `examwork-web-dev` with "Web" platform, configured redirect URIs for local and production environments, and set front-channel logout URL (single URL limitation). Created client secret for authorization code flow.
+- **Configuration:** OpenID Connect configured with authorization code flow, client secret authentication, token validation, automatic Admin role mapping, and claims extraction. Secrets (Client ID, Tenant ID, Client Secret) stored in Key Vault, accessed via managed identity in Azure.
+- **Authentication Flow:** Fixed redirect URI to use HTTPS behind Azure App Service load balancer using forwarded headers. Implemented cookie sign-in after OpenID Connect token validation to ensure user is recognized as authenticated. Configured redirect to `/admin` after successful authentication.
+- **UI & Flow:** Login page conditionally shows "Sign in with Microsoft" button when Azure AD is configured. Logout redirects to login page with success message. Standard login form remains for future non-Entra ID users. Created Error page for proper error handling.
+- **Status:** Azure Entra ID authentication fully implemented and working. Admin users can authenticate via Microsoft accounts with proper role mapping, cookie sign-in, and redirect flow. Authentication restricted to single tenant (only users in the Azure AD tenant can log in).
 
 ### System Architecture
 - **Code Organization:** Refactored `Program.cs` to use extension method pattern (reduced from 95 to 19 lines). Created extension methods for service registration, pipeline configuration, and configuration loading. Documented in ADR-009.
@@ -82,6 +83,9 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Configuration Key Formats:** Had to handle both `KeyVault:Name` (from appsettings.json) and `KeyVault__Name` (from Azure app settings) due to Azure's restriction on colons in app setting names.
 - **Azure AD Platform Configuration:** Initially selected "Public client/native" platform instead of "Web" platform for redirect URIs. Corrected to use "Web" platform which is appropriate for Blazor Server applications.
 - **Front-Channel Logout URL Limitation:** Azure AD app registration only allows one front-channel logout URL per app. Cannot configure separate URLs for local and production environments. Using production URL for both (works for local testing as well).
+- **Client Secret Requirement:** Azure AD requires client secret for authorization code flow. Initially missing client secret configuration caused authentication failures. Resolved by creating client secret in Azure AD and storing it in Key Vault.
+- **Redirect URI HTTPS Issue:** App Service behind load balancer was sending HTTP redirect URIs instead of HTTPS. Resolved by configuring forwarded headers middleware and explicitly setting HTTPS redirect URI in OpenID Connect events.
+- **Cookie Sign-In After OpenID Connect:** Users authenticated via Entra ID were not recognized as logged in because they were only authenticated via OpenID Connect scheme, not the default Cookie scheme. Resolved by implementing cookie sign-in in `OnTokenValidated` event.
 
 ### Lessons Learned
 - **Always verify RBAC permissions:** When using managed identities with Key Vault, the role assignment must be explicitly granted. This should ideally be automated in Bicep or documented as a required manual step.
@@ -91,11 +95,11 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 
 ### Key Achievements
 - Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
-- Secure secrets management: Connection strings stored in Key Vault, accessed via managed identity (no secrets in code or app settings).
+- Secure secrets management: Connection strings and Azure AD secrets stored in Key Vault, accessed via managed identity (no secrets in code or app settings).
 - Functional booking system: Create and retrieve bookings working end-to-end with Cosmos DB.
 - Authentication structure: Cookie-based auth with `[Authorize]` protection working correctly.
-- Azure Entra ID integration: Admin users can authenticate via Microsoft accounts with proper role mapping and logout flow.
-- Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices.
+- Azure Entra ID integration: Admin users can authenticate via Microsoft accounts with proper role mapping, cookie sign-in, and redirect flow. Authentication fully functional in production.
+- Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices. Removed debug logging and unnecessary code.
 - CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
 - Dual authentication model: Foundation established for both Entra ID (admin/inspector) and local Identity (customers) as per ADR-002.
 
@@ -111,6 +115,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 ### Frontend Improvements
 - **Landing Page Navigation:** Added functional buttons to home page for navigation to login and health check pages, styled to match dark theme.
 - **Authentication UI:** Login page with conditional Entra ID button, admin landing page with user info and booking management, logout flow with success message.
+- **Error Handling:** Created Error page for proper error display. Improved authentication error handling with user-friendly error messages on login page.
 
 ---
 
