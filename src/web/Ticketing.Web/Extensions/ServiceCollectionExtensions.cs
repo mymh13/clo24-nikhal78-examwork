@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Http;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -35,6 +36,13 @@ public static class ServiceCollectionExtensions
         var azureAdTenantId = configuration["AzureAd:TenantId"];
         var azureAdInstance = configuration["AzureAd:Instance"] ?? "https://login.microsoftonline.com/";
         var azureAdCallbackPath = configuration["AzureAd:CallbackPath"] ?? "/signin-oidc";
+
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
 
         services.AddAuthentication(options =>
         {
@@ -80,6 +88,16 @@ public static class ServiceCollectionExtensions
                     options.Scope.Add("openid");
                     options.Scope.Add("profile");
                     options.Scope.Add("email");
+                    
+                    options.Events.OnRedirectToIdentityProvider = context =>
+                    {
+                        var request = context.Request;
+                        if (request.Scheme == "https" || request.Headers["X-Forwarded-Proto"].ToString().Equals("https", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.ProtocolMessage.RedirectUri = $"https://{request.Host}{options.CallbackPath}";
+                        }
+                        return Task.CompletedTask;
+                    };
 
                     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
