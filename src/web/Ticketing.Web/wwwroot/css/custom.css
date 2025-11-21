@@ -1,9 +1,65 @@
-/* Global styles */
+/* ============================================
+   CSS Variables (Design Tokens)
+   ============================================ */
+:root {
+    /* Colors - Primary Theme */
+    --color-primary: #4ec9b0;
+    --color-primary-hover: #5dd9c4;
+    --color-primary-dark: #3aa895;
+    --color-primary-shadow: rgba(78, 201, 176, 0.3);
+    --color-primary-shadow-hover: rgba(78, 201, 176, 0.5);
+    
+    /* Colors - Backgrounds */
+    --color-bg-primary: #1e1e1e;
+    --color-bg-secondary: #2d2d2d;
+    --color-bg-tertiary: #3a3a3a;
+    --color-bg-gradient-start: #2d2d2d;
+    --color-bg-gradient-end: #1a1a1a;
+    --color-bg-hover: #333333;
+    
+    /* Colors - Text */
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #d4d4d4;
+    --color-text-muted: #a0a0a0;
+    --color-text-placeholder: #888888;
+    
+    /* Colors - Status */
+    --color-success: #4ec9b0;
+    --color-success-bg: #1e3a1e;
+    --color-error: #ff6b6b;
+    --color-error-bg: #3a1e1e;
+    --color-info: #888;
+    --color-info-bg: #2d2d2d;
+    
+    /* Colors - Microsoft/Entra ID */
+    --color-microsoft: #0078D4;
+    --color-microsoft-dark: #005a9e;
+    --color-microsoft-darker: #004578;
+    --color-microsoft-shadow: rgba(0, 120, 212, 0.4);
+    
+    /* Spacing */
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 30px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    
+    /* Transitions */
+    --transition-default: all 0.3s ease;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
-    color: #e0e0e0;
+    background: linear-gradient(135deg, var(--color-bg-gradient-start), var(--color-bg-gradient-end));
+    color: var(--color-text-primary);
     line-height: 1.6;
     text-align: center;
     padding: 50px 20px;
@@ -11,30 +67,30 @@ body {
 }
 
 h1, h2, h3 {
-    color: #4ec9b0;
+    color: var(--color-primary);
 }
 
 h1 {
     font-size: 2.5em;
-    margin: 0 0 20px 0;
-    text-shadow: 0 0 10px rgba(78, 201, 176, 0.3);
+    margin: 0 0 var(--spacing-lg) 0;
+    text-shadow: 0 0 10px var(--color-primary-shadow);
 }
 
 p {
     font-size: 1.2em;
     margin: 10px 0;
-    color: #e0e0e0;
+    color: var(--color-text-primary);
 }
 
 .lead {
     font-size: 1.3em;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
 .text-muted {
-    color: #a0a0a0;
+    color: var(--color-text-muted);
     font-size: 0.9em;
-    margin-top: 30px;
+    margin-top: var(--spacing-xl);
 }
 
 .container {
@@ -43,129 +99,78 @@ p {
     text-align: center;
 }
 
-/* Tech Overview Styling */
-.tech-overview {
-    background: #1e1e1e;
-    padding: 25px;
-    border-radius: 8px;
-    margin: 30px auto;
-    max-width: 900px;
-    border-left: 3px solid #4ec9b0;
-    text-align: left;
-}
-
-.tech-overview h3 {
-    color: #4ec9b0;
-    margin-top: 20px;
-    margin-bottom: 15px;
-    font-size: 1.3em;
-    text-shadow: 0 0 10px rgba(78, 201, 176, 0.3);
-    border-bottom: 2px solid #4ec9b0;
-    padding-bottom: 5px;
-}
-
-.tech-overview h3:first-child {
-    margin-top: 0;
-}
-
-.tech-overview p {
-    margin: 0 0 20px 0;
-    line-height: 1.8;
-    color: #d4d4d4;
-    font-size: 0.95em;
-}
-
-.tech-overview strong {
-    color: #4ec9b0;
-    font-weight: 600;
-}
-
-/* Button Container Styling */
-.button-container {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin: 30px 0;
-    flex-wrap: wrap;
-}
-
-.button-container .btn {
+/* ============================================
+   Components - Buttons
+   ============================================ */
+.btn {
     display: inline-block;
-    padding: 12px 30px;
-    background: linear-gradient(135deg, #4ec9b0, #3aa895);
-    color: #1a1a1a;
+    padding: var(--spacing-sm) var(--spacing-xl);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-bg-gradient-end);
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     font-size: 1em;
-    transition: all 0.3s ease;
+    transition: var(--transition-default);
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(78, 201, 176, 0.3);
+    box-shadow: 0 4px 15px var(--color-primary-shadow);
 }
 
-.button-container .btn:hover {
-    background: linear-gradient(135deg, #5dd9c4, #4ec9b0);
+.btn:hover {
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(78, 201, 176, 0.5);
-    color: #1a1a1a;
+    box-shadow: 0 6px 20px var(--color-primary-shadow-hover);
+    color: var(--color-bg-gradient-end);
 }
 
-.button-container .btn:active {
+.btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(78, 201, 176, 0.3);
+    box-shadow: 0 2px 10px var(--color-primary-shadow);
 }
 
-/* Login Form Styling */
-.login-form-container {
-    max-width: 400px;
-    margin: 30px auto;
-    background: #1e1e1e;
-    padding: 30px;
-    border-radius: 8px;
-    border-left: 3px solid #4ec9b0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    text-align: left;
-}
-
-.form-group label {
-    color: #4ec9b0;
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: #ffffff;
+    padding: 10px var(--spacing-lg);
+    border-radius: var(--radius-sm);
+    border: none;
     font-weight: 600;
-    font-size: 0.95em;
+    cursor: pointer;
+    transition: var(--transition-default);
 }
 
-.form-input {
-    padding: 12px 15px;
-    background: #2d2d2d;
-    border: 2px solid #3a3a3a;
-    border-radius: 6px;
-    color: #e0e0e0;
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #7a8288, #6c757d);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.btn-entra {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-microsoft), var(--color-microsoft-dark));
+    color: #ffffff;
+    padding: var(--spacing-sm) 24px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-weight: 600;
     font-size: 1em;
-    transition: all 0.3s ease;
-    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition-default);
+    width: 100%;
+    max-width: 300px;
 }
 
-.form-input:focus {
-    outline: none;
-    border-color: #4ec9b0;
-    box-shadow: 0 0 10px rgba(78, 201, 176, 0.3);
-    background: #333333;
+.btn-entra:hover {
+    background: linear-gradient(135deg, var(--color-microsoft-dark), var(--color-microsoft-darker));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--color-microsoft-shadow);
 }
 
-.form-input::placeholder {
-    color: #888888;
+.btn-entra svg {
+    vertical-align: middle;
 }
 
 .btn-login {
@@ -175,93 +180,299 @@ p {
     font-size: 1.1em;
 }
 
-.login-message {
-    margin: 30px 0;
+/* ============================================
+   Components - Forms
+   ============================================ */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    text-align: left;
 }
 
-.login-message p {
-    margin-bottom: 20px;
-}
-
-.error-message {
-    background: rgba(220, 53, 69, 0.2);
-    border: 1px solid rgba(220, 53, 69, 0.5);
-    border-radius: 6px;
-    padding: 12px;
-    margin: 10px 0;
-}
-
-.error-message p {
-    color: #ff6b6b;
-    margin: 0;
+.form-group label {
+    color: var(--color-primary);
+    font-weight: 600;
     font-size: 0.95em;
 }
 
+.form-input {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: 1em;
+    transition: var(--transition-default);
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary-shadow);
+    background: var(--color-bg-hover);
+}
+
+.form-input::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+/* ============================================
+   Components - Messages
+   ============================================ */
+.success-message {
+    margin-top: var(--spacing-lg);
+    background: var(--color-success-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-success);
+}
+
+.success-message p {
+    margin: 0;
+    color: var(--color-success);
+    font-weight: 500;
+}
+
+.error-message {
+    margin-top: var(--spacing-lg);
+    background: var(--color-error-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-error);
+}
+
+.error-message p {
+    margin: 0;
+    color: var(--color-error);
+    font-weight: 500;
+}
+
+.info-message {
+    margin-top: var(--spacing-lg);
+    background: var(--color-info-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-info);
+}
+
+.info-message p {
+    margin: 0;
+    color: var(--color-info);
+}
+
+.login-message {
+    margin: var(--spacing-xl) 0;
+}
+
+.login-message p {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Components - Cards & Containers
+   ============================================ */
+.tech-overview {
+    background: var(--color-bg-primary);
+    padding: 25px;
+    border-radius: var(--radius-md);
+    margin: var(--spacing-xl) auto;
+    max-width: 900px;
+    border-left: 3px solid var(--color-primary);
+    text-align: left;
+}
+
+.tech-overview h3 {
+    color: var(--color-primary);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.3em;
+    text-shadow: 0 0 10px var(--color-primary-shadow);
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 5px;
+}
+
+.tech-overview h3:first-child {
+    margin-top: 0;
+}
+
+.tech-overview p {
+    margin: 0 0 var(--spacing-lg) 0;
+    line-height: 1.8;
+    color: var(--color-text-secondary);
+    font-size: 0.95em;
+}
+
+.tech-overview strong {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.login-form-container {
+    max-width: 400px;
+    margin: var(--spacing-xl) auto;
+    background: var(--color-bg-primary);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.booking-form-container {
+    background: var(--color-bg-primary);
+    padding: 25px;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-primary);
+    margin: var(--spacing-lg) 0;
+    text-align: left;
+}
+
+.user-info {
+    background: var(--color-bg-primary);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--color-primary);
+    margin: var(--spacing-lg) 0;
+    text-align: left;
+}
+
+.user-info p {
+    margin: var(--spacing-xs) 0;
+    font-size: 1em;
+}
+
+.user-info strong {
+    color: var(--color-primary);
+}
+
+/* ============================================
+   Components - Tables
+   ============================================ */
+.bookings-table-container {
+    margin-top: var(--spacing-lg);
+    overflow-x: auto;
+}
+
+.bookings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.bookings-table thead {
+    background: var(--color-bg-secondary);
+}
+
+.bookings-table th {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    color: var(--color-primary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-bg-tertiary);
+}
+
+.bookings-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.bookings-table tbody tr:hover {
+    background: var(--color-bg-secondary);
+}
+
+.bookings-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================
+   Layout Components
+   ============================================ */
+.button-container {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin: var(--spacing-xl) 0;
+    flex-wrap: wrap;
+}
+
+.button-container .btn {
+    width: auto;
+}
+
+.section-divider {
+    border: none;
+    border-top: 2px solid var(--color-bg-tertiary);
+    margin: var(--spacing-xl) 0;
+}
+
+.booking-section {
+    margin: var(--spacing-xl) 0;
+}
+
+.booking-section h2 {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+}
+
+.booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.booking-form-container h3 {
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.2em;
+}
+
 .back-link {
-    margin-top: 30px;
+    margin-top: var(--spacing-xl);
 }
 
 .back-link a {
-    color: #4ec9b0;
+    color: var(--color-primary);
     text-decoration: none;
-    transition: color 0.3s ease;
+    transition: var(--transition-default);
 }
 
 .back-link a:hover {
-    color: #5dd9c4;
+    color: var(--color-primary-hover);
     text-decoration: underline;
 }
 
-/* Entra ID Login Styling */
+/* ============================================
+   Page-Specific Styles
+   ============================================ */
+/* Login Page */
 .admin-login-section {
-    margin-bottom: 30px;
-    padding-bottom: 30px;
-    border-bottom: 2px solid #3a3a3a;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 2px solid var(--color-bg-tertiary);
 }
 
 .admin-login-section h2 {
-    color: #4ec9b0;
+    color: var(--color-primary);
     margin-bottom: 10px;
     font-size: 1.3em;
     text-align: left;
 }
 
 .admin-login-section p {
-    color: #b0b0b0;
-    margin-bottom: 20px;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-lg);
     text-align: left;
-}
-
-.btn-entra {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #0078D4, #005a9e);
-    color: #ffffff;
-    padding: 12px 24px;
-    border-radius: 6px;
-    border: none;
-    font-weight: 600;
-    font-size: 1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    max-width: 300px;
-}
-
-.btn-entra:hover {
-    background: linear-gradient(135deg, #005a9e, #004578);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4);
-}
-
-.btn-entra svg {
-    vertical-align: middle;
 }
 
 .login-divider {
     text-align: center;
-    margin: 30px 0;
+    margin: var(--spacing-xl) 0;
     position: relative;
 }
 
@@ -272,177 +483,26 @@ p {
     right: 0;
     top: 50%;
     height: 1px;
-    background: #3a3a3a;
+    background: var(--color-bg-tertiary);
 }
 
 .login-divider span {
-    background: #1e1e1e;
-    padding: 0 15px;
-    color: #888;
+    background: var(--color-bg-primary);
+    padding: 0 var(--spacing-md);
+    color: var(--color-text-placeholder);
     position: relative;
 }
 
 .standard-login-section h2 {
-    color: #4ec9b0;
-    margin-bottom: 20px;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
     font-size: 1.3em;
     text-align: left;
 }
 
-/* Admin Dashboard Styling */
-.user-info {
-    background: #1e1e1e;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 3px solid #4ec9b0;
-    margin: 20px 0;
-    text-align: left;
-}
-
-.user-info p {
-    margin: 8px 0;
-    font-size: 1em;
-}
-
-.user-info strong {
-    color: #4ec9b0;
-}
-
-.section-divider {
-    border: none;
-    border-top: 2px solid #3a3a3a;
-    margin: 30px 0;
-}
-
-.booking-section {
-    margin: 30px 0;
-}
-
-.booking-section h2 {
-    color: #4ec9b0;
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.booking-form-container {
-    background: #1e1e1e;
-    padding: 25px;
-    border-radius: 8px;
-    border-left: 3px solid #4ec9b0;
-    margin: 20px 0;
-    text-align: left;
-}
-
-.booking-form-container h3 {
-    color: #4ec9b0;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.2em;
-}
-
-.booking-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.success-message {
-    margin-top: 20px;
-    background: #1e3a1e;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 3px solid #4ec9b0;
-}
-
-.success-message p {
-    margin: 0;
-    color: #4ec9b0;
-    font-weight: 500;
-}
-
-.error-message {
-    margin-top: 20px;
-    background: #3a1e1e;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 3px solid #ff6b6b;
-}
-
-.error-message p {
-    margin: 0;
-    color: #ff6b6b;
-    font-weight: 500;
-}
-
-.info-message {
-    margin-top: 20px;
-    background: #2d2d2d;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 3px solid #888;
-}
-
-.info-message p {
-    margin: 0;
-    color: #888;
-}
-
-.bookings-table-container {
-    margin-top: 20px;
-    overflow-x: auto;
-}
-
-.bookings-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #1e1e1e;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.bookings-table thead {
-    background: #2d2d2d;
-}
-
-.bookings-table th {
-    padding: 12px 15px;
-    text-align: left;
-    color: #4ec9b0;
-    font-weight: 600;
-    border-bottom: 2px solid #3a3a3a;
-}
-
-.bookings-table td {
-    padding: 12px 15px;
-    color: #e0e0e0;
-    border-bottom: 1px solid #3a3a3a;
-}
-
-.bookings-table tbody tr:hover {
-    background: #2d2d2d;
-}
-
-.bookings-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
-    color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, #7a8288, #6c757d);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
-}
-
+/* ============================================
+   Responsive Design
+   ============================================ */
 @media (max-width: 768px) {
     h1 {
         font-size: 2rem;
@@ -453,7 +513,7 @@ p {
     }
 
     .tech-overview {
-        padding: 20px;
+        padding: var(--spacing-lg);
     }
 
     .button-container {
@@ -467,8 +527,7 @@ p {
     }
 
     .login-form-container {
-        padding: 20px;
-        margin: 20px 10px;
+        padding: var(--spacing-lg);
+        margin: var(--spacing-lg) 10px;
     }
 }
-
