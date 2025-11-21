@@ -16,6 +16,16 @@ public static class ServiceCollectionExtensions
         // Add Application Insights
         services.AddApplicationInsightsTelemetry();
 
+        // Add Session (GDPR-compliant: cookie only contains session ID, data stored server-side)
+        services.AddDistributedMemoryCache();
+        services.AddSession(options =>
+        {
+            options.IdleTimeout = TimeSpan.FromMinutes(30);
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+        });
+
         var cosmosConnectionString = configuration["CosmosDb:ConnectionString"] 
             ?? configuration["CosmosDb--ConnectionString"];
         
@@ -54,6 +64,11 @@ public static class ServiceCollectionExtensions
             {
                 options.LoginPath = "/login";
                 options.AccessDeniedPath = "/login";
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.SlidingExpiration = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Events.OnRedirectToLogin = context =>
                 {
                     if (context.Request.Path.StartsWithSegments("/api"))

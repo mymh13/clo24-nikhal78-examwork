@@ -27,6 +27,7 @@ This directory contains all documentation related to the project – from early 
 | **ADR-007-ssl-certificate.md** | Decision: SSL certificate strategy (manual Let's Encrypt via Docker). |
 | **ADR-008-docker-deployment.md** | Decision: Deployment strategy (Docker containers via GHCR). |
 | **ADR-009-extension-methods-pattern.md** | Decision: Code organization using extension methods pattern for startup configuration. |
+| **ADR-010-gdpr-session-management.md** | Decision: GDPR-compliant session management using server-side storage. |
 
 ---
 

@@ -34,9 +34,13 @@ Cosmos DB integrates directly with the .NET SDK and can be used without external
  
 ---
  
-**Risks / Mitigations:** 
-- Restrict external calls to the database via private networks and authentication. 
-- Ensure that only the API has permissions against Cosmos via Managed Identity. 
+## Risks / Mitigations
+
+- **Risk:** The database may be exposed externally due to incorrect configuration.  
+  **Mitigation:** Restrict external calls to the database via private networks and authentication. Ensure that only the API has permissions against Cosmos via Managed Identity.
+
+- **Risk:** Too high cost during load peaks.  
+  **Mitigation:** Implement request throttling (rate limiting) and telemetry monitoring to track usage patterns. 
  
 ---
  

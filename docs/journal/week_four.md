@@ -48,13 +48,16 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 ### System Architecture
 - **Code Organization:** Refactored `Program.cs` to use extension method pattern (reduced from 95 to 19 lines). Created extension methods for service registration, pipeline configuration, and configuration loading. Documented in ADR-009.
 - **Code Cleanup:** Removed debug logging and excessive comments, cleaned up verbose output while keeping essential validation logs, simplified error handling.
-- **Status:** Code is production-ready and clean, following ASP.NET Core best practices.
+- **GDPR-Compliant Session Management:** Implemented ASP.NET Core Session with server-side storage (in-memory, ready for Redis migration). Cookie contains only session ID (no personal data), session data stored server-side with 30-minute expiration. Configured secure cookie settings (HttpOnly, SameSite=Lax). Updated cookie authentication to 30-minute expiration with sliding expiration enabled. This approach ensures GDPR compliance by keeping personal data server-side and enabling easy session deletion.
+- **Status:** Code is production-ready and clean, following ASP.NET Core best practices. Session management is GDPR-compliant with automatic expiration and server-side data storage.
 
 ### Frontend & UI
 - **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page showing non-sensitive configuration status and Cosmos DB connection health with color-coded indicators.
 - **Login Page Enhancements:** Added functional login form with conditional Entra ID button, error/success message display, styled to match dark theme.
 - **Admin Landing Page:** Merged test pages into `AdminLandingPage.razor` displaying user information and booking management tools with logout functionality. Enhanced booking UI with table display for bookings and user-friendly success/error messages.
-- **CSS Refactoring:** Refactored `custom.css` to use CSS variables (custom properties) for all colors, spacing, and common values. Reorganized into component-based sections (Base Styles, Components, Layout, Page-Specific, Responsive) eliminating repetition and improving maintainability. Single-file approach chosen for project scale with clear structure for future expansion.
+- **Booking Page Separation:** Separated booking functionality into dedicated `Bookings.razor` page (`/bookings`) accessible from role-specific landing pages. Admin landing page now provides navigation buttons to Booking Management and Account Handling (future feature, currently disabled).
+- **Role-Based Navigation:** Created `NavigationHelper` utility to determine landing page URL based on user role (Admin → `/admin`, Inspector → `/inspector`, User → `/user`). Added "Back to Dashboard" button on Bookings page that routes users to their role-specific landing page.
+- **CSS Refactoring:** Refactored `custom.css` to use CSS variables (custom properties) for all colors, spacing, and common values. Reorganized into component-based sections (Base Styles, Components, Layout, Page-Specific, Responsive) eliminating repetition and improving maintainability. Single-file approach chosen for project scale with clear structure for future expansion. Added disabled button styling for future features.
 
 ### CI/CD Pipelines
 - **Workflow Cleanup:** Simplified workflows by removing unnecessary complexity, reverted to SHA-based tagging. CI pushes images with SHA and `latest` tags, CD extracts SHA and updates App Service.
@@ -76,6 +79,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Iterative Development:** The phased approach (Authentication → Data Operations → Secrets Management) worked well, allowing us to validate each component before moving to the next.
 - **Code Organization:** Refactoring `Program.cs` to use extension methods significantly improved code readability and maintainability. The separation of concerns makes the codebase easier to understand and modify. I want to highlight that this was the plan already from the start, but I do not start off by creating the extension methods until Program.c starts to become unreadable.
 - **CSS Architecture:** Refactoring CSS to use variables and component-based organization eliminated repetition and created a maintainable styling foundation. Theme changes can now be made by updating a few CSS variables at the top of the file.
+- **GDPR-Compliant Session Management:** Implementing ASP.NET Core Session with server-side storage provides a GDPR-compliant solution. The cookie-only-contains-session-ID approach ensures no personal data is stored client-side, and the 30-minute expiration with sliding expiration balances security and user experience.
 - **Cosmos DB Integration:** Successfully integrated Cosmos DB with proper serialization configuration. The camelCase naming policy automatically handles the `id` property requirement.
 - **Health Monitoring:** The health check endpoint and page proved great for diagnosing configuration issues in Azure, especially the missing RBAC permission.
 
@@ -88,12 +92,14 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Client Secret Requirement:** Azure AD requires client secret for authorization code flow. Initially missing client secret configuration caused authentication failures. Resolved by creating client secret in Azure AD and storing it in Key Vault.
 - **Redirect URI HTTPS Issue:** App Service behind load balancer was sending HTTP redirect URIs instead of HTTPS. Resolved by configuring forwarded headers middleware and explicitly setting HTTPS redirect URI in OpenID Connect events.
 - **Cookie Sign-In After OpenID Connect:** Users authenticated via Entra ID were not recognized as logged in because they were only authenticated via OpenID Connect scheme, not the default Cookie scheme. Resolved by implementing cookie sign-in in `OnTokenValidated` event.
+- **GDPR Compliance Considerations:** Evaluated cookie-based authentication for GDPR compliance. Implemented ASP.NET Core Session with server-side storage to ensure personal data remains on the server. Cookie contains only session ID, making it GDPR-compliant while maintaining functionality.
 
 ### Lessons Learned
 - **Always verify RBAC permissions:** When using managed identities with Key Vault, the role assignment must be explicitly granted. This should ideally be automated in Bicep or documented as a required manual step.
 - **Health checks are essential:** The health check endpoint quickly revealed the root cause of the Cosmos DB registration issue, saving significant debugging time.
 - **Configuration flexibility:** Supporting both `:` and `__` formats for configuration keys provides better compatibility between local development and Azure environments.
 - **Code cleanup matters:** Removing debug logging and excessive comments before production deployment improves code quality and maintainability.
+- **GDPR compliance requires server-side storage:** For European deployments, personal data should not be stored in cookies. ASP.NET Core Session with server-side storage provides a compliant solution where cookies only contain session IDs.
 
 ### Key Achievements
 - Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
@@ -104,6 +110,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices. Removed debug logging and unnecessary code.
 - CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
 - Dual authentication model: Foundation established for both Entra ID (admin/inspector) and local Identity (customers) as per ADR-002.
+- GDPR-compliant session management: Server-side session storage with 30-minute expiration ensures compliance while maintaining user experience. Role-based navigation system ready for multi-role support.
 
 ### What Could Be Improved
 - **Automate RBAC assignments:** Consider adding role assignments to Bicep templates or documenting them as required post-deployment steps.
@@ -119,6 +126,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Authentication UI:** Login page with conditional Entra ID button, admin landing page with user info and booking management, logout flow with success message.
 - **Error Handling:** Created Error page for proper error display. Improved authentication error handling with user-friendly error messages on login page.
 - **CSS Architecture:** Completed CSS refactoring with CSS variables and component-based organization. All styling now uses centralized design tokens, making theme changes and maintenance significantly easier.
+- **Page Structure:** Separated booking functionality into dedicated page for reuse across Admin, Inspector, and User roles. Implemented role-based navigation system with helper utility for determining landing pages.
 
 ---
 

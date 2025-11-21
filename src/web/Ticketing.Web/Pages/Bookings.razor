@@ -1,14 +1,26 @@
 @page "/bookings"
 @using System.Net.Http.Json
+@using System.Security.Claims
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Helpers
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @inject HttpClient Http
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Booking Management</PageTitle>
 
 <div class="container">
     <h1>Booking Management</h1>
+    
+    @{
+        var user = HttpContextAccessor.HttpContext?.User;
+        var landingPageUrl = NavigationHelper.GetLandingPageUrl(user);
+    }
+    
+    <div class="button-container" style="margin-bottom: var(--spacing-xl);">
+        <a href="@landingPageUrl" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
     
     <div class="booking-section">
         <div class="booking-form-container">
