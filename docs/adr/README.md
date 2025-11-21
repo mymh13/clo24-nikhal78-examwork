@@ -9,8 +9,8 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
 ---
  
 ## ADR Index 
- 
-Last updated: 2025-11-18  
+
+Last updated: 2025-11-21  
 
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -23,6 +23,7 @@ Last updated: 2025-11-18
 | ADR-007 | SSL Certificate: Manual Let's Encrypt on Free Tier | Accepted | 2025-11-12 | Cost-optimized SSL for custom domain |
 | ADR-008 | Deployment Strategy: Docker Containers via GHCR | Accepted | 2025-11-13 | Resolves Oryx auto-detection issues, reliable container deployment |
 | ADR-009 | Code Organization: Extension Methods Pattern | Accepted | 2025-11-18 | Improved readability and maintainability of startup configuration |
+| ADR-010 | GDPR-Compliant Session Management: Server-Side Session Storage | Accepted | 2025-11-21 | GDPR compliance with ITicketStore for enhanced security |
  
 ---
  

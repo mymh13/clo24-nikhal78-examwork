@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Ticketing.Web.Authentication;
 using Ticketing.Web.Services;
 
 namespace Ticketing.Web.Extensions;
@@ -13,10 +15,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add Application Insights
         services.AddApplicationInsightsTelemetry();
 
-        // Add Session (GDPR-compliant: cookie only contains session ID, data stored server-side)
         services.AddDistributedMemoryCache();
         services.AddSession(options =>
         {
@@ -25,6 +25,9 @@ public static class ServiceCollectionExtensions
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
         });
+
+        services.AddSingleton<ITicketStore, TicketStore>();
+        services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, CookieAuthenticationPostConfigureOptions>();
 
         var cosmosConnectionString = configuration["CosmosDb:ConnectionString"] 
             ?? configuration["CosmosDb--ConnectionString"];

@@ -49,7 +49,8 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Code Organization:** Refactored `Program.cs` to use extension method pattern (reduced from 95 to 19 lines). Created extension methods for service registration, pipeline configuration, and configuration loading. Documented in ADR-009.
 - **Code Cleanup:** Removed debug logging and excessive comments, cleaned up verbose output while keeping essential validation logs, simplified error handling.
 - **GDPR-Compliant Session Management:** Implemented ASP.NET Core Session with server-side storage (in-memory, ready for Redis migration). Cookie contains only session ID (no personal data), session data stored server-side with 30-minute expiration. Configured secure cookie settings (HttpOnly, SameSite=Lax). Updated cookie authentication to 30-minute expiration with sliding expiration enabled. This approach ensures GDPR compliance by keeping personal data server-side and enabling easy session deletion.
-- **Status:** Code is production-ready and clean, following ASP.NET Core best practices. Session management is GDPR-compliant with automatic expiration and server-side data storage.
+- **Authentication Ticket Store (ITicketStore):** Implemented `ITicketStore` interface to store authentication tickets server-side instead of in cookies. Cookie now contains only a session key (GUID) instead of the entire encrypted authentication ticket, significantly reducing cookie size and improving security. When users sign out, the server-side ticket entry is immediately deleted, making stolen cookies unusable even if copied before logout. Implementation uses `IDistributedCache` (same infrastructure as session storage) with ASP.NET Core's `TicketSerializer` and Data Protection API for secure serialization. Reference: [Improving ASP.NET Core Security By Putting Your Cookies On A Diet](https://nestenius.se/net/improving-asp-net-core-security-by-putting-your-cookies-on-a-diet/).
+- **Status:** Code is production-ready and clean, following ASP.NET Core best practices. Session management and authentication ticket storage are GDPR-compliant with automatic expiration and server-side data storage. Cookie size minimized for better performance and security.
 
 ### Frontend & UI
 - **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page showing non-sensitive configuration status and Cosmos DB connection health with color-coded indicators.
@@ -80,6 +81,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Code Organization:** Refactoring `Program.cs` to use extension methods significantly improved code readability and maintainability. The separation of concerns makes the codebase easier to understand and modify. I want to highlight that this was the plan already from the start, but I do not start off by creating the extension methods until Program.c starts to become unreadable.
 - **CSS Architecture:** Refactoring CSS to use variables and component-based organization eliminated repetition and created a maintainable styling foundation. Theme changes can now be made by updating a few CSS variables at the top of the file.
 - **GDPR-Compliant Session Management:** Implementing ASP.NET Core Session with server-side storage provides a GDPR-compliant solution. The cookie-only-contains-session-ID approach ensures no personal data is stored client-side, and the 30-minute expiration with sliding expiration balances security and user experience.
+- **Authentication Ticket Store:** Implementing `ITicketStore` further enhances security by storing authentication tickets server-side. Cookies now contain only session keys (GUIDs), not entire encrypted tickets, reducing cookie size and enabling immediate invalidation on logout. This addresses the security issue where stolen cookies could be reused until expiration.
 - **Cosmos DB Integration:** Successfully integrated Cosmos DB with proper serialization configuration. The camelCase naming policy automatically handles the `id` property requirement.
 - **Health Monitoring:** The health check endpoint and page proved great for diagnosing configuration issues in Azure, especially the missing RBAC permission.
 
@@ -100,6 +102,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Configuration flexibility:** Supporting both `:` and `__` formats for configuration keys provides better compatibility between local development and Azure environments.
 - **Code cleanup matters:** Removing debug logging and excessive comments before production deployment improves code quality and maintainability.
 - **GDPR compliance requires server-side storage:** For European deployments, personal data should not be stored in cookies. ASP.NET Core Session with server-side storage provides a compliant solution where cookies only contain session IDs.
+- **ITicketStore improves security beyond GDPR:** Implementing `ITicketStore` not only reduces cookie size but also enables immediate logout invalidation. Stolen cookies become useless immediately upon sign-out, addressing a significant security gap in default cookie authentication.
 
 ### Key Achievements
 - Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
@@ -110,7 +113,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - Production-ready code: Clean, well-organized codebase following ASP.NET Core best practices. Removed debug logging and unnecessary code.
 - CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
 - Dual authentication model: Foundation established for both Entra ID (admin/inspector) and local Identity (customers) as per ADR-002.
-- GDPR-compliant session management: Server-side session storage with 30-minute expiration ensures compliance while maintaining user experience. Role-based navigation system ready for multi-role support.
+- GDPR-compliant session management: Server-side session storage with 30-minute expiration ensures compliance while maintaining user experience. Authentication ticket store (`ITicketStore`) implemented to minimize cookie size and enable immediate logout invalidation. Role-based navigation system ready for multi-role support.
 
 ### What Could Be Improved
 - **Automate RBAC assignments:** Consider adding role assignments to Bicep templates or documenting them as required post-deployment steps.

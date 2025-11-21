@@ -14,17 +14,24 @@ The application requires session management to maintain user authentication stat
 
 ## Decision
 
-We implement **ASP.NET Core Session** with server-side storage for session management, using cookies only to store a session ID (no personal data). This approach ensures GDPR compliance by keeping all personal data server-side while maintaining seamless authentication functionality. Sessions expire after 30 minutes of inactivity with sliding expiration enabled. The implementation uses in-memory storage with a clear migration path to Azure Cache for Redis for production scalability.
+We implement **ASP.NET Core Session** with server-side storage for session management, using cookies only to store a session ID (no personal data). Additionally, we implement **ITicketStore** for cookie authentication to store authentication tickets server-side, with cookies containing only session keys (GUIDs) instead of entire encrypted tickets. This approach ensures GDPR compliance by keeping all personal data server-side while maintaining seamless authentication functionality. Sessions expire after 30 minutes of inactivity with sliding expiration enabled. The implementation uses in-memory storage with a clear migration path to Azure Cache for Redis for production scalability.
+
+**Implementation Details:**
+- ASP.NET Core Session middleware for general session data
+- `ITicketStore` implementation (`TicketStore`) for authentication tickets
+- Both use `IDistributedCache` (in-memory, ready for Redis migration)
+- Cookies contain only identifiers (session IDs and ticket keys), no personal data
 
 ---
 
 ## Consequences
 
 **Advantages:**
-- GDPR compliant – no personal data stored in cookies, only session IDs. Personal data remains on the server, making it easier to comply with data subject rights (access, deletion, portability).
-- Security – HttpOnly cookies prevent JavaScript access, reducing XSS attack surface. Server-side storage provides better control over session data.
+- GDPR compliant – no personal data stored in cookies, only session IDs and ticket keys. Personal data remains on the server, making it easier to comply with data subject rights (access, deletion, portability).
+- Security – HttpOnly cookies prevent JavaScript access, reducing XSS attack surface. Server-side storage provides better control over session data. `ITicketStore` enables immediate logout invalidation – stolen cookies become useless immediately upon sign-out, addressing a security gap in default cookie authentication.
+- Reduced cookie size – Authentication tickets stored server-side means cookies contain only session keys (GUIDs), not entire encrypted tickets. This reduces cookie size significantly, improving performance and avoiding cookie chunking issues.
 - Automatic expiration – 30-minute timeout with sliding expiration balances security and user experience.
-- Easy data management – Server-side storage enables immediate session deletion, essential for GDPR "right to be forgotten" requests.
+- Easy data management – Server-side storage enables immediate session and ticket deletion, essential for GDPR "right to be forgotten" requests.
 - Scalability path – In-memory storage can be migrated to Azure Cache for Redis for production scalability and persistence across app restarts.
 
 **Disadvantages:**
@@ -65,5 +72,6 @@ We implement **ASP.NET Core Session** with server-side storage for session manag
 - [GDPR - Data Minimization (Article 5)](https://gdpr-info.eu/art-5-gdpr/)
 - [Microsoft Docs - ASP.NET Core Session](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/app-state)
 - [Microsoft Docs - Cookie Authentication](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie)
+- [Improving ASP.NET Core Security By Putting Your Cookies On A Diet](https://nestenius.se/net/improving-asp-net-core-security-by-putting-your-cookies-on-a-diet/) – Blog post by Tore Nestenius explaining ITicketStore implementation and security benefits
 - [Week 4 Journal - GDPR-Compliant Session Management](../journal/week_four.md)
 
