@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
 
         var azureAdClientId = configuration["AzureAd:ClientId"];
         var azureAdTenantId = configuration["AzureAd:TenantId"];
+        var azureAdClientSecret = configuration["AzureAd:ClientSecret"];
         var azureAdInstance = configuration["AzureAd:Instance"] ?? "https://login.microsoftonline.com/";
         var azureAdCallbackPath = configuration["AzureAd:CallbackPath"] ?? "/signin-oidc";
 
@@ -80,6 +81,7 @@ public static class ServiceCollectionExtensions
                 {
                     options.Authority = $"{azureAdInstance}{azureAdTenantId}/v2.0";
                     options.ClientId = azureAdClientId;
+                    options.ClientSecret = azureAdClientSecret;
                     options.CallbackPath = azureAdCallbackPath;
                     options.ResponseType = OpenIdConnectResponseType.Code;
                     options.ResponseMode = OpenIdConnectResponseMode.Query;
