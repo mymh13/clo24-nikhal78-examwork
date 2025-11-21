@@ -1,5 +1,6 @@
 @page "/login"
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 
 <PageTitle>Login</PageTitle>
 
@@ -16,26 +17,58 @@
     else
     {
         <div class="login-form-container">
-            <form method="post" action="/api/auth/login" class="login-form">
-                <div class="form-group">
-                    <label for="username">Username or Email</label>
-                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter username or email" required autofocus />
+            @if (hasEntraId)
+            {
+                <div class="admin-login-section">
+                    <h2>Administrator Login</h2>
+                    <p>Login with Azure Entra ID (Microsoft Account)</p>
+                    <form method="post" action="/api/auth/login-entra">
+                        <button type="submit" class="btn btn-primary btn-login btn-entra">
+                            <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+                                <rect width="23" height="23" fill="#0078D4"/>
+                                <path d="M11.5 4L4 8.5V14.5L11.5 19L19 14.5V8.5L11.5 4Z" fill="white"/>
+                                <path d="M11.5 11.5L4 15.5V19L11.5 23L19 19V15.5L11.5 11.5Z" fill="#00A4EF"/>
+                            </svg>
+                            Sign in with Microsoft
+                        </button>
+                    </form>
                 </div>
                 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
+                <div class="login-divider">
+                    <span>or</span>
                 </div>
-                
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="error-message">
-                        <p>@errorMessage</p>
+            }
+            
+            <div class="standard-login-section">
+                <h2>@(hasEntraId ? "Standard Login" : "Login")</h2>
+                <form method="post" action="/api/auth/login" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Username or Email</label>
+                        <input type="text" id="username" name="username" class="form-input" placeholder="Enter username or email" required autofocus />
                     </div>
-                }
-                
-                <button type="submit" class="btn btn-primary btn-login">Login</button>
-            </form>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-message">
+                            <p>@errorMessage</p>
+                        </div>
+                    }
+                    
+                    @if (showLogoutMessage)
+                    {
+                        <div class="login-message">
+                            <p>You have successfully logged out. Welcome back!</p>
+                        </div>
+                    }
+                    
+                    <button type="submit" class="btn btn-primary btn-login">Login</button>
+                </form>
+            </div>
         </div>
     }
     
@@ -47,6 +80,8 @@
 @code {
     private bool isAuthenticated = false;
     private string errorMessage = string.Empty;
+    private bool showLogoutMessage = false;
+    private bool hasEntraId = false;
 
     protected override void OnInitialized()
     {
@@ -58,5 +93,14 @@
         {
             errorMessage = query["error"].ToString();
         }
+        
+        if (query?.ContainsKey("logout") == true && query["logout"].ToString() == "success")
+        {
+            showLogoutMessage = true;
+        }
+
+        var clientId = Configuration["AzureAd:ClientId"];
+        var tenantId = Configuration["AzureAd:TenantId"];
+        hasEntraId = !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(tenantId);
     }
 }

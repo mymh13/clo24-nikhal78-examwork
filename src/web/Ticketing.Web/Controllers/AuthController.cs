@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,7 +39,7 @@ public class AuthController : ControllerBase
                 IsPersistent = true
             };
 
-            await HttpContext.SignInAsync("Hardcoded", principal, authProperties);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
             return Redirect("/admin");
         }
@@ -45,12 +47,24 @@ public class AuthController : ControllerBase
         return Redirect("/login?error=Invalid username or password");
     }
 
+    [HttpPost("login-entra")]
+    [AllowAnonymous]
+    public IActionResult LoginEntra()
+    {
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = "/admin"
+        };
+        return Challenge(properties, OpenIdConnectDefaults.AuthenticationScheme);
+    }
+
     [HttpPost("logout")]
     [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync("Hardcoded");
-        return Redirect("/admin");
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+        return Redirect("/login?logout=success");
     }
 }
 

@@ -10,103 +10,48 @@ The goal was to create a minimal but functional chain for provisioning, authenti
 ## Completed Activities
 
 ### Infrastructure Setup
-- **Region:** Confirmed Sweden Central as primary region (sustainability and low latency focus).
-- **Resource Group:** Created `rg-examwork-dev` in Sweden Central.
-- **Bicep Structure:** Established modular architecture (`modules/`, `env/dev/`, `env/prod/`).
-- **App Service Module:** Created `infra/modules/appservice.bicep` and dev environment deployment.
-- **Cosmos DB Module:** Created `infra/modules/cosmosdb.bicep` with Serverless mode configuration.
-- **Application Insights Module:** Created `infra/modules/applicationinsights.bicep` for telemetry and monitoring.
+- **Region & Resource Group:** Confirmed Sweden Central as primary region, created `rg-examwork-dev`. Established modular Bicep architecture (`modules/`, `env/dev/`, `env/prod/`).
+- **Modules:** Created App Service, Cosmos DB (Serverless mode), and Application Insights Bicep modules following the modular pattern.
 
 ### App Service Deployment
-- **Deployment:** Successfully deployed App Service `examwork-web-dev` (Linux, .NET 8, Basic B1 tier).
-- **Tier Upgrade:** Upgraded from Free tier to Basic B1 to enable SSL certificate bindings.
-- **Custom Domain:** Configured `ticket.mymh.dev` with CNAME pointing to App Service.
-- **SSL Certificate:**
-  - Created ADR-007 documenting SSL certificate decision (manual Let's Encrypt via Docker).
-  - Added DNS TXT record `_acme-challenge.ticket.mymh.dev` for Let's Encrypt DNS-01 validation.
-  - Generated Let's Encrypt certificate using Certbot (Docker).
-  - Converted certificate to PFX format and uploaded to Azure App Service.
-  - Bound SSL certificate to custom domain via Azure Portal.
-  - Custom domain now accessible via HTTPS: `https://ticket.mymh.dev`.
+- **Deployment:** Successfully deployed App Service `examwork-web-dev` (Linux, .NET 8, Basic B1 tier). Upgraded from Free tier to enable SSL certificate bindings.
+- **Custom Domain & SSL:** Configured `ticket.mymh.dev` with CNAME, generated Let's Encrypt certificate via Docker (Certbot), converted to PFX, and bound to custom domain. Documented in ADR-007. Custom domain accessible via HTTPS.
 
 ### Cosmos DB Setup
-- **Account:** Deployed Cosmos DB account `examwork-cosmos-dev` in Sweden Central (Serverless mode).
-- **Database:** Created database `ticketing`.
-- **Container:** Created container `bookings` with partition key `/customerId`.
-- **Configuration:** Verified Serverless mode (pay-per-request, no fixed costs).
-- **Note:** Confirmed Free Tier is not applicable with Serverless mode (expected behavior).
+- **Deployment:** Deployed Cosmos DB account `examwork-cosmos-dev` in Serverless mode. Created `ticketing` database and `bookings` container with partition key `/customerId`. Verified pay-per-request pricing with no fixed costs.
 
 ### Application Insights Setup
-- **Resource:** Deployed Application Insights `examwork-insights-dev` in Sweden Central.
-- **Configuration:** Created Bicep module with Application Insights component (API version 2020-02-02).
-- **Integration:** Configured App Service with `APPLICATIONINSIGHTS_CONNECTION_STRING` environment variable.
-- **Application Code:** Added `Microsoft.ApplicationInsights.AspNetCore` NuGet package (v2.22.0) to Ticketing.Web.
-- **Telemetry:** Configured `AddApplicationInsightsTelemetry()` in `Program.cs` for automatic telemetry collection.
-- **Deployment Challenge:** Initial deployment attempts failed with Azure internal server error due to empty `WorkspaceResourceId` property in Bicep template. Resolved by removing the property, allowing successful deployment (~43 seconds).
-- **Storage:** Connection string stored in Azure App Service app settings (not stored locally, only in Azure).
+- **Deployment:** Deployed Application Insights `examwork-insights-dev`, created Bicep module, and integrated with App Service via connection string. Added Application Insights SDK to application code.
+- **Deployment Challenge:** Initial deployment failed due to empty `WorkspaceResourceId` property in Bicep template. Resolved by removing the property, deployment completed successfully.
 
 ### Azure Authentication (OIDC)
-- **App Registration:** Registered `github-oidc-examwork` in Entra ID.
-- **Federated Credentials:** Configured OIDC for GitHub Actions.
-- **Permissions:** Assigned Contributor role to service principal on resource group.
+- **Configuration:** Registered `github-oidc-examwork` in Entra ID, configured OIDC federated credentials for GitHub Actions, and assigned Contributor role to service principal on resource group.
 
 ### CI/CD Pipelines
-- **OIDC Verification:** Implemented and verified OIDC Smoke Test workflow (secretless Azure login).
-- **CI Workflow Optimizations:**
-  - Added path filters to reduce unnecessary runs (only triggers on code changes).
-  - Added concurrency control to cancel duplicate workflow runs.
-  - Implemented Git SHA-based versioning for all builds.
-  - Resolved .NET SDK version mismatch and assembly versioning issues.
-- **Deployment Strategy (ADR-008):**
-  - Initially attempted zip-deploy with Oryx build system.
-  - Encountered persistent issue: Oryx auto-detected PHP instead of .NET.
-  - Multiple troubleshooting attempts (app settings, manifest files, restarts) unsuccessful.
-  - Switched to Docker container deployment via GitHub Container Registry (GHCR).
-  - Created Dockerfile with multi-stage build for Blazor Server application.
-  - Updated CI workflow to build and push Docker images to GHCR (~43 seconds).
-  - Updated CD workflow to deploy container images to App Service (~44 seconds).
-  - Successfully deployed Blazor landing page to `https://ticket.mymh.dev`.
-- **CD Workflow:** Fixed to skip deployment gracefully when App Service doesn't exist yet.
+- **OIDC Verification:** Implemented and verified OIDC Smoke Test workflow for secretless Azure authentication.
+- **CI Workflow Optimizations:** Added path filters and concurrency control to reduce unnecessary runs, implemented Git SHA-based versioning, resolved .NET SDK version mismatch issues.
+- **Deployment Strategy (ADR-008):** Initially attempted zip-deploy with Oryx but encountered persistent PHP auto-detection issue. Switched to Docker container deployment via GHCR with multi-stage Dockerfile. CI builds and pushes images (~43 seconds), CD deploys to App Service (~44 seconds). Successfully deployed Blazor landing page to `https://ticket.mymh.dev`.
 
 ### Frontend & UI
-- **Landing Page Enhancement:**
-  - Added tech-overview section to landing page (`Index.razor`).
-  - Created custom CSS styling (`wwwroot/css/custom.css`) matching other project designs.
-  - Implemented dark theme with cyan accent color (#4ec9b0) for consistency.
-  - Tech-overview displays four categories: Infrastructure & Deployment, Application Stack, Data & Storage, Security & Authentication.
-  - Content reflects current deployed state and planned features (marked as "planned").
-  - Updated landing page to include Application Insights in Infrastructure & Deployment section.
-  - Removed Consistency detail from Data & Storage section (standard practice, not worth highlighting).
+- **Landing Page Enhancement:** Added tech-overview section to landing page with custom CSS styling, dark theme with cyan accent color (#4ec9b0). Displays four categories (Infrastructure & Deployment, Application Stack, Data & Storage, Security & Authentication) reflecting current state and planned features.
 
 ### Documentation
-- **Translation:** Translated all project documentation from Swedish to English (automated via LLMs).
-  - Updated all ADR files, journal entries, glossary, and README files.
-  - Maintained formatting and structure throughout.
-- **Architecture Decision Records:**
-  - Created ADR-007: SSL Certificate (manual Let's Encrypt via Docker).
-  - Created ADR-008: Deployment Strategy (Docker containers via GHCR).
+- **Translation:** Translated all project documentation from Swedish to English (automated via LLMs), updating ADR files, journal entries, glossary, and README files while maintaining formatting.
+- **Architecture Decision Records:** Created ADR-007 (SSL Certificate) and ADR-008 (Deployment Strategy).
 
 ---
 
 ## Reflection
 
-The work with OIDC provided a deeper understanding of how secretless authentication works in a modern GitHub Actions pipeline.
-It proved important to maintain a strict separation between Tenant ID, Subscription ID, and Client ID, especially when using student subscriptions in Azure.
+OIDC work provided deeper understanding of secretless authentication in GitHub Actions. Maintaining strict separation between Tenant ID, Subscription ID, and Client ID proved important, especially with student subscriptions.
 
-Optimizing the CI/CD workflows to reduce GitHub Actions minutes consumption was crucial given the 2000-minute monthly limit.
-Path filters and concurrency controls proved effective in preventing unnecessary workflow runs while maintaining full functionality.
+CI/CD workflow optimizations (path filters, concurrency controls) effectively reduced GitHub Actions minutes consumption. Git SHA-based versioning provides automatic traceability without manual version management.
 
-The Git SHA-based versioning approach provides automatic traceability without manual version management, which aligns well with the incremental development approach.
+Documentation translation to English improved accessibility. Originally thought Swedish was required, but English is acceptable and provides broader accessibility.
 
-Translating all documentation to English improves accessibility and aligns with professional development practices, while automated translation via LLMs made this really swift to do. Originally I thought all documentation had to be in Swedish given that this is a Swedish exam/thesis course, but I got updated information that English was fine. I see multiple benefits by documentation being accessible to everyone, so shifted to English then.
+Bicep modular structure with environment separation provides solid foundation for infrastructure automation. Cosmos DB and Application Insights successfully added using same pattern. Serverless mode ensures zero cost when idle, aligning with MVP cost optimization goals.
 
-Establishing the Bicep structure with modules and environment separation provides a solid foundation for infrastructure automation. The modular approach makes it easy to add new resources (Cosmos DB, Application Insights, Key Vault, etc.) as the project progresses. Both Cosmos DB and Application Insights were successfully added using the same modular pattern, demonstrating the flexibility of the infrastructure setup. The Serverless mode configuration ensures zero cost when idle, which aligns perfectly with the MVP phase and cost optimization goals.
-
-Application Insights was successfully integrated into the infrastructure. The deployment encountered an Azure internal server error initially, which was traced to an empty `WorkspaceResourceId` property in the Bicep template. Removing this property resolved the issue, and the deployment completed successfully. The connection string is stored in Azure App Service app settings (not locally), and the Application Insights SDK will automatically detect it when the application runs. This provides a foundation for monitoring, logging, and performance tracking as the application grows.
-
-The App Service is now deployed and accessible via both the default Azure URL and the custom domain. DNS propagation was faster than expected, allowing immediate configuration of the custom domain binding.
-
-SSL certificate configuration was completed using the Docker-based Let's Encrypt approach documented in ADR-007. The process involved adding a DNS TXT record at Loopia, generating the certificate via Certbot, converting to PFX format, and uploading to Azure. A key learning was that the Free tier does not support SSL certificate bindings - the Azure CLI commands failed silently without clear error messages, making it difficult to diagnose. The issue was only discovered when attempting to bind the certificate through the Azure Portal, which explicitly stated that Basic tier or higher is required. Upgrading to Basic B1 enabled the SSL binding functionality, and the certificate was successfully bound via the portal. The custom domain is now fully functional with HTTPS at `https://ticket.mymh.dev`.
+App Service deployed and accessible via custom domain. SSL certificate configuration completed via Docker-based Let's Encrypt (ADR-007). Key learning: Free tier doesn't support SSL bindings - Azure CLI failed silently, issue only discovered via Azure Portal requiring Basic tier or higher. Upgraded to Basic B1, certificate successfully bound. Custom domain fully functional with HTTPS.
 
 **Deployment Challenges and Resolution:**  
 The initial deployment approach using zip-deploy with Oryx encountered a critical issue: despite explicit configuration (`linuxFxVersion: 'DOTNET|8.0'`, `appCommandLine: 'dotnet Ticketing.Web.dll'`), Oryx consistently auto-detected PHP as the runtime. This persisted across multiple troubleshooting attempts including recreating the App Service, adding manifest files, and configuring app settings. The root cause appears to be Oryx's auto-detection logic running before files are fully deployed, or cached container image choices overriding explicit configuration.
