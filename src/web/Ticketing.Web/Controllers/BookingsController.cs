@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ticketing.Contracts.Bookings;
@@ -20,12 +21,14 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Inspector")]
     public async Task<ActionResult<Booking>> CreateBooking([FromBody] Booking booking, CancellationToken cancellationToken)
     {
         try
         {
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
-            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerId}", createdBooking.Id, createdBooking.CustomerId);
+            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerId} by user {UserId}", 
+                createdBooking.Id, createdBooking.CustomerId, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return CreatedAtAction(nameof(GetBookingsByCustomer), new { customerId = createdBooking.CustomerId }, createdBooking);
         }
         catch (Exception ex)
@@ -36,10 +39,17 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("customer/{customerId}")]
+    [Authorize(Roles = "Admin,Inspector")]
     public async Task<ActionResult<IEnumerable<Booking>>> GetBookingsByCustomer(string customerId, CancellationToken cancellationToken)
     {
         try
         {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            _logger.LogInformation("Bookings retrieved for customer {CustomerId} by user {UserId} with role {Role}", 
+                customerId, userId, userRole);
+            
             var bookings = await _bookingService.GetBookingsByCustomerIdAsync(customerId, cancellationToken);
             return Ok(bookings);
         }

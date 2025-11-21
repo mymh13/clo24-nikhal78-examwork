@@ -43,6 +43,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Configuration:** OpenID Connect configured with authorization code flow, client secret authentication, token validation, automatic Admin role mapping, and claims extraction. Secrets (Client ID, Tenant ID, Client Secret) stored in Key Vault, accessed via managed identity in Azure.
 - **Authentication Flow:** Fixed redirect URI to use HTTPS behind Azure App Service load balancer using forwarded headers. Implemented cookie sign-in after OpenID Connect token validation to ensure user is recognized as authenticated. Configured redirect to `/admin` after successful authentication.
 - **UI & Flow:** Login page conditionally shows "Sign in with Microsoft" button when Azure AD is configured. Logout redirects to login page with success message. Standard login form remains for future non-Entra ID users. Created Error page for proper error handling.
+- **Code Cleanup:** Removed hardcoded authentication credentials from `AuthController`. Standard login endpoint now returns appropriate message directing users to Entra ID for admin/inspector login.
 - **Status:** Azure Entra ID authentication fully implemented and working. Admin users can authenticate via Microsoft accounts with proper role mapping, cookie sign-in, and redirect flow. Authentication restricted to single tenant (only users in the Azure AD tenant can log in).
 
 ### System Architecture
@@ -50,7 +51,8 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Code Cleanup:** Removed debug logging and excessive comments, cleaned up verbose output while keeping essential validation logs, simplified error handling.
 - **GDPR-Compliant Session Management:** Implemented ASP.NET Core Session with server-side storage (in-memory, ready for Redis migration). Cookie contains only session ID (no personal data), session data stored server-side with 30-minute expiration. Configured secure cookie settings (HttpOnly, SameSite=Lax). Updated cookie authentication to 30-minute expiration with sliding expiration enabled. This approach ensures GDPR compliance by keeping personal data server-side and enabling easy session deletion.
 - **Authentication Ticket Store (ITicketStore):** Implemented `ITicketStore` interface to store authentication tickets server-side instead of in cookies. Cookie now contains only a session key (GUID) instead of the entire encrypted authentication ticket, significantly reducing cookie size and improving security. When users sign out, the server-side ticket entry is immediately deleted, making stolen cookies unusable even if copied before logout. Implementation uses `IDistributedCache` (same infrastructure as session storage) with ASP.NET Core's `TicketSerializer` and Data Protection API for secure serialization. Reference: [Improving ASP.NET Core Security By Putting Your Cookies On A Diet](https://nestenius.se/net/improving-asp-net-core-security-by-putting-your-cookies-on-a-diet/).
-- **Status:** Code is production-ready and clean, following ASP.NET Core best practices. Session management and authentication ticket storage are GDPR-compliant with automatic expiration and server-side data storage. Cookie size minimized for better performance and security.
+- **Role-Based Authorization:** Implemented role-specific authorization to protect against Broken Access Control vulnerabilities (OWASP Top 10 2025 #1). Added `[Authorize(Roles = "Admin")]` to AdminLandingPage, `[Authorize(Roles = "Admin,Inspector")]` to BookingsController endpoints and Bookings page. This prevents unauthorized access to administrative functions and ensures only authorized roles can create/view bookings. Added audit logging with user ID for booking operations.
+- **Status:** Code is production-ready and clean, following ASP.NET Core best practices. Session management and authentication ticket storage are GDPR-compliant with automatic expiration and server-side data storage. Cookie size minimized for better performance and security. Role-based authorization implemented to protect against access control vulnerabilities.
 
 ### Frontend & UI
 - **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page showing non-sensitive configuration status and Cosmos DB connection health with color-coded indicators.
@@ -103,6 +105,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Code cleanup matters:** Removing debug logging and excessive comments before production deployment improves code quality and maintainability.
 - **GDPR compliance requires server-side storage:** For European deployments, personal data should not be stored in cookies. ASP.NET Core Session with server-side storage provides a compliant solution where cookies only contain session IDs.
 - **ITicketStore improves security beyond GDPR:** Implementing `ITicketStore` not only reduces cookie size but also enables immediate logout invalidation. Stolen cookies become useless immediately upon sign-out, addressing a significant security gap in default cookie authentication.
+- **Role-based authorization is critical:** `[Authorize]` alone is not enough – role-specific authorization (`[Authorize(Roles = "...")]`) is essential to prevent Broken Access Control vulnerabilities. Regular users should not be able to access admin functions even if authenticated.
 
 ### Key Achievements
 - Complete infrastructure foundation: App Service, Cosmos DB, Application Insights, and Key Vault all deployed and integrated.
@@ -114,6 +117,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - CI/CD pipelines: Automated Docker builds and deployments working correctly with SHA-based versioning.
 - Dual authentication model: Foundation established for both Entra ID (admin/inspector) and local Identity (customers) as per ADR-002.
 - GDPR-compliant session management: Server-side session storage with 30-minute expiration ensures compliance while maintaining user experience. Authentication ticket store (`ITicketStore`) implemented to minimize cookie size and enable immediate logout invalidation. Role-based navigation system ready for multi-role support.
+- Security hardening: Removed hardcoded authentication credentials. Implemented role-based authorization on all protected endpoints and pages to prevent Broken Access Control vulnerabilities. All booking operations now require Admin or Inspector roles, with audit logging for security monitoring.
 
 ### What Could Be Improved
 - **Automate RBAC assignments:** Consider adding role assignments to Bicep templates or documenting them as required post-deployment steps.
