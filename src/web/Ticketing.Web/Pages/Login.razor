@@ -50,7 +50,7 @@
 
     protected override void OnInitialized()
     {
-        var user = HttpContextAccessor.HttpContext?.User;about:blank#blocked
+        var user = HttpContextAccessor.HttpContext?.User;
         isAuthenticated = user?.Identity?.IsAuthenticated == true;
         
         var query = HttpContextAccessor.HttpContext?.Request.Query;
