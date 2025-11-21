@@ -20,12 +20,12 @@
 
         <h3>Application Stack</h3>
         <p>
-            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) &nbsp;|&nbsp; <strong>API:</strong> ASP.NET Core Web API (Controller-based) &nbsp;|&nbsp; <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request) &nbsp;|&nbsp; <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) &nbsp;|&nbsp; <strong>Registry:</strong> GHCR (public, no auth) &nbsp;|&nbsp; <strong>Auth:</strong> Azure Entra ID (OpenID Connect) + Cookie-based (dual authentication model)
+            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) &nbsp;|&nbsp; <strong>API:</strong> ASP.NET Core Web API (Controller-based) &nbsp;|&nbsp; <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request) &nbsp;|&nbsp; <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) &nbsp;|&nbsp; <strong>Registry:</strong> GHCR (public, no auth) &nbsp;|&nbsp; <strong>Auth:</strong> Azure Entra ID (OpenID Connect) + Cookie-based (dual authentication model, ITicketStore for server-side ticket storage)
         </p>
 
         <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings, partition: /customerId) &nbsp;|&nbsp; <strong>Serialization:</strong> camelCase naming policy (CosmosPropertyNamingPolicy) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status)
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings, partition: /customerId) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status)
         </p>
     </div>
 
