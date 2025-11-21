@@ -112,7 +112,7 @@ public static class ServiceCollectionExtensions
                     options.SignedOutCallbackPath = "/signout-callback-oidc";
                     options.SignedOutRedirectUri = "/login?logout=success";
 
-                    options.Events.OnTokenValidated = context =>
+                    options.Events.OnTokenValidated = async context =>
                     {
                         var claimsIdentity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
                         if (claimsIdentity != null)
@@ -140,6 +140,25 @@ public static class ServiceCollectionExtensions
                             {
                                 claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin"));
                             }
+                        }
+                        
+                        if (context.Principal != null)
+                        {
+                            var cookieAuthProperties = new AuthenticationProperties
+                            {
+                                IsPersistent = true,
+                                AllowRefresh = true
+                            };
+                            
+                            await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, context.Principal, cookieAuthProperties);
+                        }
+                    };
+                    
+                    options.Events.OnAuthorizationCodeReceived = context =>
+                    {
+                        if (context.Properties != null)
+                        {
+                            context.Properties.RedirectUri = "/admin";
                         }
                         return Task.CompletedTask;
                     };
