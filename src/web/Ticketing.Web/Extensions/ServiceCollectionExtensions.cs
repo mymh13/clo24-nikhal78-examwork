@@ -96,6 +96,12 @@ public static class ServiceCollectionExtensions
                         {
                             context.ProtocolMessage.RedirectUri = $"https://{request.Host}{options.CallbackPath}";
                         }
+                        
+                        if (context.Properties != null && !context.Properties.Items.ContainsKey(".redirect"))
+                        {
+                            context.Properties.Items[".redirect"] = "/admin";
+                        }
+                        
                         return Task.CompletedTask;
                     };
 
@@ -114,52 +120,61 @@ public static class ServiceCollectionExtensions
 
                     options.Events.OnTokenValidated = async context =>
                     {
-                        var claimsIdentity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
-                        if (claimsIdentity != null)
+                        try
                         {
-                            var email = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-                            var name = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
-                                ?? context.Principal?.FindFirst("name")?.Value;
+                            var claimsIdentity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
+                            if (claimsIdentity != null)
+                            {
+                                var email = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                                var name = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
+                                    ?? context.Principal?.FindFirst("name")?.Value;
+                                
+                                if (!string.IsNullOrEmpty(email))
+                                {
+                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, email));
+                                }
+                                if (!string.IsNullOrEmpty(name))
+                                {
+                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, name));
+                                }
+
+                                var roles = context.Principal?.FindAll("roles")?.Select(c => c.Value) ?? Enumerable.Empty<string>();
+                                foreach (var role in roles)
+                                {
+                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
+                                }
+
+                                if (!roles.Any())
+                                {
+                                    claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin"));
+                                }
+                            }
                             
-                            if (!string.IsNullOrEmpty(email))
+                            if (context.Principal != null)
                             {
-                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, email));
-                            }
-                            if (!string.IsNullOrEmpty(name))
-                            {
-                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, name));
-                            }
-
-                            var roles = context.Principal?.FindAll("roles")?.Select(c => c.Value) ?? Enumerable.Empty<string>();
-                            foreach (var role in roles)
-                            {
-                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, role));
-                            }
-
-                            if (!roles.Any())
-                            {
-                                claimsIdentity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin"));
+                                var cookieAuthProperties = new AuthenticationProperties
+                                {
+                                    IsPersistent = true,
+                                    AllowRefresh = true,
+                                    RedirectUri = "/admin"
+                                };
+                                
+                                await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, context.Principal, cookieAuthProperties);
                             }
                         }
-                        
-                        if (context.Principal != null)
+                        catch (Exception ex)
                         {
-                            var cookieAuthProperties = new AuthenticationProperties
-                            {
-                                IsPersistent = true,
-                                AllowRefresh = true
-                            };
-                            
-                            await context.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, context.Principal, cookieAuthProperties);
+                            Console.WriteLine($"Error in OnTokenValidated: {ex.Message}");
+                            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                            throw;
                         }
                     };
                     
-                    options.Events.OnAuthorizationCodeReceived = context =>
+                    options.Events.OnRemoteFailure = context =>
                     {
-                        if (context.Properties != null)
-                        {
-                            context.Properties.RedirectUri = "/admin";
-                        }
+                        Console.WriteLine($"OpenID Connect remote failure: {context.Failure?.Message}");
+                        context.Response.Redirect("/login?error=Authentication failed. Please try again.");
+                        context.HandleResponse();
                         return Task.CompletedTask;
                     };
                 }
