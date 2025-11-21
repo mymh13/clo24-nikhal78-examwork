@@ -146,6 +146,20 @@ p {
     box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
 }
 
+.btn-disabled {
+    background: linear-gradient(135deg, #4a4a4a, #3a3a3a);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.btn-disabled:hover {
+    background: linear-gradient(135deg, #4a4a4a, #3a3a3a);
+    transform: none;
+    box-shadow: none;
+}
+
 .btn-entra {
     display: inline-flex;
     align-items: center;

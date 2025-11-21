@@ -53,7 +53,8 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 ### Frontend & UI
 - **Health Check Endpoint:** Created `/api/health` endpoint and `/health` page showing non-sensitive configuration status and Cosmos DB connection health with color-coded indicators.
 - **Login Page Enhancements:** Added functional login form with conditional Entra ID button, error/success message display, styled to match dark theme.
-- **Admin Landing Page:** Merged test pages into `AdminLandingPage.razor` displaying user information and booking management tools with logout functionality.
+- **Admin Landing Page:** Merged test pages into `AdminLandingPage.razor` displaying user information and booking management tools with logout functionality. Enhanced booking UI with table display for bookings and user-friendly success/error messages.
+- **CSS Refactoring:** Refactored `custom.css` to use CSS variables (custom properties) for all colors, spacing, and common values. Reorganized into component-based sections (Base Styles, Components, Layout, Page-Specific, Responsive) eliminating repetition and improving maintainability. Single-file approach chosen for project scale with clear structure for future expansion.
 
 ### CI/CD Pipelines
 - **Workflow Cleanup:** Simplified workflows by removing unnecessary complexity, reverted to SHA-based tagging. CI pushes images with SHA and `latest` tags, CD extracts SHA and updates App Service.
@@ -74,6 +75,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Infrastructure Expansion:** Successfully deployed Key Vault and integrated it with the application using managed identities and RBAC. The modern RBAC approach is cleaner than legacy access policies.
 - **Iterative Development:** The phased approach (Authentication → Data Operations → Secrets Management) worked well, allowing us to validate each component before moving to the next.
 - **Code Organization:** Refactoring `Program.cs` to use extension methods significantly improved code readability and maintainability. The separation of concerns makes the codebase easier to understand and modify. I want to highlight that this was the plan already from the start, but I do not start off by creating the extension methods until Program.c starts to become unreadable.
+- **CSS Architecture:** Refactoring CSS to use variables and component-based organization eliminated repetition and created a maintainable styling foundation. Theme changes can now be made by updating a few CSS variables at the top of the file.
 - **Cosmos DB Integration:** Successfully integrated Cosmos DB with proper serialization configuration. The camelCase naming policy automatically handles the `id` property requirement.
 - **Health Monitoring:** The health check endpoint and page proved great for diagnosing configuration issues in Azure, especially the missing RBAC permission.
 
@@ -116,6 +118,7 @@ During week 4, work focused on expanding the infrastructure foundation with Azur
 - **Landing Page Navigation:** Added functional buttons to home page for navigation to login and health check pages, styled to match dark theme.
 - **Authentication UI:** Login page with conditional Entra ID button, admin landing page with user info and booking management, logout flow with success message.
 - **Error Handling:** Created Error page for proper error display. Improved authentication error handling with user-friendly error messages on login page.
+- **CSS Architecture:** Completed CSS refactoring with CSS variables and component-based organization. All styling now uses centralized design tokens, making theme changes and maintenance significantly easier.
 
 ---
 
