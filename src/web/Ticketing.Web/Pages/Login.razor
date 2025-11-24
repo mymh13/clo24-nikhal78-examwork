@@ -44,16 +44,23 @@
             
             <div class="standard-login-section">
                 <h2>@(hasEntraId ? "Standard Login" : "Login")</h2>
-                <form method="post" action="/api/auth/login" class="login-form">
+                <form @onsubmit="HandleLogin" @onsubmit:preventDefault="true" class="login-form">
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required />
+                        <input type="email" id="email" @bind="loginEmail" class="form-input" placeholder="Enter your email" required />
                     </div>
                     
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
+                        <input type="password" id="password" @bind="loginPassword" class="form-input" placeholder="Enter password" required />
                     </div>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-message">
+                            <p>@errorMessage</p>
+                        </div>
+                    }
                     
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label">
@@ -143,7 +150,10 @@
     private string registerPassword = string.Empty;
     private string registerMessage = string.Empty;
     private string registerEmailError = string.Empty;
+    private string loginEmail = string.Empty;
+    private string loginPassword = string.Empty;
     private HttpClient? httpClient;
+    @inject NavigationManager Navigation
 
     protected override void OnInitialized()
     {
@@ -171,6 +181,52 @@
         if (firstRender)
         {
             httpClient = HttpClientFactory.CreateClient("BlazorServer");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = string.Empty;
+        showLogoutMessage = false;
+        
+        if (string.IsNullOrWhiteSpace(loginEmail) || string.IsNullOrWhiteSpace(loginPassword))
+        {
+            errorMessage = "Email and password are required.";
+            return;
+        }
+
+        try
+        {
+            var formData = new Dictionary<string, string>
+            {
+                { "email", loginEmail },
+                { "password", loginPassword }
+            };
+            var content = new FormUrlEncodedContent(formData);
+            var response = await httpClient!.PostAsync("/api/auth/login", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                // Redirect to the page specified in the response
+                var location = response.Headers.Location?.ToString();
+                if (!string.IsNullOrEmpty(location))
+                {
+                    Navigation.NavigateTo(location, forceLoad: true);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/admin", forceLoad: true);
+                }
+            }
+            else
+            {
+                var responseText = await response.Content.ReadAsStringAsync();
+                errorMessage = "Invalid email or password.";
+            }
+        }
+        catch
+        {
+            errorMessage = "An error occurred during login. Please try again.";
         }
     }
 

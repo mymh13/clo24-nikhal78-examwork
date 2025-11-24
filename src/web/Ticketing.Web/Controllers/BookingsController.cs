@@ -21,14 +21,24 @@ public class BookingsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Inspector")]
+    [Authorize(Roles = "Admin,Inspector,User")]
     public async Task<ActionResult<Booking>> CreateBooking([FromBody] Booking booking, CancellationToken cancellationToken)
     {
         try
         {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(ClaimTypes.Email);
+            
+            // Users can only create bookings for themselves
+            if (userRole == "User" && booking.CustomerId != userId)
+            {
+                _logger.LogWarning("User {UserId} attempted to create booking for different customer {CustomerId}", userId, booking.CustomerId);
+                return Forbid();
+            }
+            
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
-            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerId} by user {UserId}", 
-                createdBooking.Id, createdBooking.CustomerId, User.FindFirstValue(ClaimTypes.NameIdentifier));
+            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerId} by user {UserId} with role {Role}", 
+                createdBooking.Id, createdBooking.CustomerId, userId, userRole);
             return CreatedAtAction(nameof(GetBookingsByCustomer), new { customerId = createdBooking.CustomerId }, createdBooking);
         }
         catch (Exception ex)

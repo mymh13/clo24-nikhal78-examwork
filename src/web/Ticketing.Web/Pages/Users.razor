@@ -72,6 +72,56 @@
 
         <hr class="section-divider" />
 
+        @if (userToEdit != null)
+        {
+            <div class="booking-form-container">
+                <h3>Edit User: @userToEdit.Email</h3>
+                <form @onsubmit="UpdateUser" @onsubmit:preventDefault="true" class="booking-form">
+                    <div class="form-group">
+                        <label for="editEmail">Email:</label>
+                        <input id="editEmail" type="email" @bind="userToEdit.Email" class="form-input" disabled />
+                        <small style="color: var(--color-text-muted); font-size: 0.85em;">Email cannot be changed</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="editName">Name:</label>
+                        <input id="editName" type="text" @bind="userToEdit.Name" @bind:event="onchange" @bind:after="ValidateEditName" class="form-input" placeholder="Enter name" />
+                        @if (!string.IsNullOrEmpty(editNameError))
+                        {
+                            <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">@editNameError</span>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label for="editRole">Role:</label>
+                        <select id="editRole" @bind="userToEdit.Role" class="form-input">
+                            <option value="User">User</option>
+                            <option value="Inspector">Inspector</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPassword">New Password (leave empty to keep current):</label>
+                        <input id="editPassword" type="password" @bind="editPassword" class="form-input" placeholder="Enter new password" />
+                        @if (!string.IsNullOrEmpty(editPassword) && editPassword.Length < 6)
+                        {
+                            <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">Password must be at least 6 characters long</span>
+                        }
+                    </div>
+                    <div class="button-container" style="margin-top: var(--spacing-md);">
+                        <button type="submit" class="btn btn-primary">Update User</button>
+                        <button type="button" class="btn btn-secondary" @onclick="CancelEdit" style="margin-left: var(--spacing-md);">Cancel</button>
+                    </div>
+                </form>
+                @if (!string.IsNullOrEmpty(editResult))
+                {
+                    <div class="@(editResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-md);">
+                        <p>@editResult</p>
+                    </div>
+                }
+            </div>
+
+            <hr class="section-divider" />
+        }
+
         <div class="booking-form-container">
             <h3>All Users</h3>
             @if (users != null && users.Any())
@@ -135,6 +185,9 @@
     private string getResult = string.Empty;
     private List<User>? users = null;
     private User? userToEdit = null;
+    private string editPassword = string.Empty;
+    private string editNameError = string.Empty;
+    private string editResult = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,10 +322,95 @@
 
     private void EditUser(User user)
     {
-        userToEdit = user;
-        // TODO: Implement edit functionality
-        // For now, just show a message
-        createResult = $"Edit functionality for {user.Email} will be implemented in a later step.";
+        userToEdit = new User
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Name = user.Name,
+            Role = user.Role,
+            CreatedDate = user.CreatedDate
+        };
+        editPassword = string.Empty;
+        editNameError = string.Empty;
+        editResult = string.Empty;
+        createResult = string.Empty;
+    }
+
+    private void ValidateEditName()
+    {
+        editNameError = string.Empty;
+        if (!string.IsNullOrEmpty(userToEdit?.Name) && !IsValidName(userToEdit.Name))
+        {
+            editNameError = "Name must be at least 2 characters long and contain only letters, spaces, and hyphens.";
+        }
+    }
+
+    private void CancelEdit()
+    {
+        userToEdit = null;
+        editPassword = string.Empty;
+        editNameError = string.Empty;
+        editResult = string.Empty;
+    }
+
+    private async Task UpdateUser()
+    {
+        editResult = string.Empty;
+        editNameError = string.Empty;
+        
+        if (userToEdit == null)
+        {
+            editResult = "Error: No user selected for editing.";
+            return;
+        }
+
+        // Validate name if provided
+        if (!string.IsNullOrEmpty(userToEdit.Name) && !IsValidName(userToEdit.Name))
+        {
+            editNameError = "Name must be at least 2 characters long and contain only letters, spaces, and hyphens.";
+            editResult = "Error: Invalid name format.";
+            return;
+        }
+
+        // Validate password if provided
+        if (!string.IsNullOrEmpty(editPassword) && editPassword.Length < 6)
+        {
+            editResult = "Error: Password must be at least 6 characters long.";
+            return;
+        }
+
+        try
+        {
+            // If password is provided, set it (will be hashed in the service)
+            if (!string.IsNullOrEmpty(editPassword))
+            {
+                userToEdit.PasswordHash = editPassword;
+            }
+            else
+            {
+                // Keep existing password by setting to empty (service will preserve it)
+                userToEdit.PasswordHash = string.Empty;
+            }
+
+            var response = await Http.PutAsJsonAsync($"/api/users/{userToEdit.Id}", userToEdit);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                editResult = "Success: User updated successfully!";
+                userToEdit = null;
+                editPassword = string.Empty;
+                await LoadUsers(); // Refresh list
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                editResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            editResult = $"Error: An error occurred when trying to update the user. {ex.Message}";
+        }
     }
 
     private async Task DeleteUser(string userId)
