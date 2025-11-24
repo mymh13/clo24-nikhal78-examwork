@@ -60,7 +60,7 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = true,
@@ -74,9 +74,9 @@ public class AuthController : ControllerBase
 
             _logger.LogInformation("User logged in successfully: {Email} with role {Role}", user.Email, user.Role);
 
-            // Redirect to appropriate landing page based on role
+            // Return JSON with redirect URL for Blazor client-side navigation
             var redirectUrl = NavigationHelper.GetLandingPageUrl(new ClaimsPrincipal(claimsIdentity));
-            return Redirect(redirectUrl);
+            return Ok(new { redirectUrl = redirectUrl });
         }
         catch (Exception ex)
         {

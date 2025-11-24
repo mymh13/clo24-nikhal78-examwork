@@ -155,6 +155,11 @@
     private HttpClient? httpClient;
     @inject NavigationManager Navigation
 
+    private class LoginResponse
+    {
+        public string? RedirectUrl { get; set; }
+    }
+
     protected override void OnInitialized()
     {
         var user = HttpContextAccessor.HttpContext?.User;
@@ -207,16 +212,10 @@
             
             if (response.IsSuccessStatusCode)
             {
-                // Redirect to the page specified in the response
-                var location = response.Headers.Location?.ToString();
-                if (!string.IsNullOrEmpty(location))
-                {
-                    Navigation.NavigateTo(location, forceLoad: true);
-                }
-                else
-                {
-                    Navigation.NavigateTo("/admin", forceLoad: true);
-                }
+                // Get redirect URL from JSON response
+                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                var redirectUrl = result?.RedirectUrl ?? "/admin";
+                Navigation.NavigateTo(redirectUrl, forceLoad: true);
             }
             else
             {

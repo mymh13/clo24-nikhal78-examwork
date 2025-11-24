@@ -6,7 +6,7 @@ public static class NavigationHelper
 {
     public static string GetLandingPageUrl(ClaimsPrincipal? user)
     {
-        if (user == null || !user.Identity?.IsAuthenticated == true)
+        if (user == null || user.Identity?.IsAuthenticated != true)
         {
             return "/login";
         }
