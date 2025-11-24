@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Ticketing.Web.Services;
+using Ticketing.Web.Helpers;
+using BCrypt.Net;
 
 namespace Ticketing.Web.Controllers;
 
@@ -12,13 +15,74 @@ namespace Ticketing.Web.Controllers;
 [IgnoreAntiforgeryToken]
 public class AuthController : ControllerBase
 {
+    private readonly IUserService _userService;
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(IUserService userService, ILogger<AuthController> logger)
+    {
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     [HttpPost("login")]
     [AllowAnonymous]
-    public IActionResult Login([FromForm] string email, [FromForm] string password)
+    public async Task<IActionResult> Login([FromForm] string email, [FromForm] string password)
     {
-        // Standard login is not yet implemented.
-        // For now, redirect with an informative message.
-        return Redirect("/login?error=Standard login is not yet implemented. Administrators and inspectors should use Azure Entra ID login.");
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            return Redirect("/login?error=" + Uri.EscapeDataString("Email and password are required."));
+        }
+
+        try
+        {
+            // Get user by email
+            var user = await _userService.GetUserByEmailAsync(email);
+            
+            if (user == null)
+            {
+                _logger.LogWarning("Login attempt with non-existent email: {Email}", email);
+                return Redirect("/login?error=" + Uri.EscapeDataString("Invalid email or password."));
+            }
+
+            // Verify password using BCrypt
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                _logger.LogWarning("Failed login attempt for email: {Email}", email);
+                return Redirect("/login?error=" + Uri.EscapeDataString("Invalid email or password."));
+            }
+
+            // Create claims for the user
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Name ?? user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                AllowRefresh = true
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
+
+            _logger.LogInformation("User logged in successfully: {Email} with role {Role}", user.Email, user.Role);
+
+            // Redirect to appropriate landing page based on role
+            var redirectUrl = NavigationHelper.GetLandingPageUrl(new ClaimsPrincipal(claimsIdentity));
+            return Redirect(redirectUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during login for email: {Email}", email);
+            return Redirect("/login?error=" + Uri.EscapeDataString("An error occurred during login. Please try again."));
+        }
     }
 
     [HttpPost("forgot-password")]

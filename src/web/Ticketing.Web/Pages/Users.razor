@@ -46,7 +46,11 @@
                 </div>
                 <div class="form-group">
                     <label for="name">Name (optional):</label>
-                    <input id="name" type="text" @bind="newUser.Name" class="form-input" placeholder="Enter name" />
+                    <input id="name" type="text" @bind="newUser.Name" @bind:event="onchange" @bind:after="ValidateName" class="form-input" placeholder="Enter name" />
+                    @if (!string.IsNullOrEmpty(nameError))
+                    {
+                        <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">@nameError</span>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="role">Role:</label>
@@ -126,6 +130,7 @@
     private string password = string.Empty;
     private string confirmPassword = string.Empty;
     private string emailError = string.Empty;
+    private string nameError = string.Empty;
     private string createResult = string.Empty;
     private string getResult = string.Empty;
     private List<User>? users = null;
@@ -136,12 +141,33 @@
         await LoadUsers();
     }
 
+    private void ValidateName()
+    {
+        nameError = string.Empty;
+        if (!string.IsNullOrEmpty(newUser.Name) && !IsValidName(newUser.Name))
+        {
+            nameError = "Name must be at least 2 characters long and contain only letters, spaces, and hyphens.";
+        }
+    }
+    
+    private bool IsValidName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return true;
+        
+        if (name.Length < 2)
+            return false;
+
+        var namePattern = @"^[a-zA-Z\s\-]+$";
+        return System.Text.RegularExpressions.Regex.IsMatch(name, namePattern);
+    }
+
     private async Task CreateUser()
     {
         createResult = string.Empty;
         emailError = string.Empty;
+        nameError = string.Empty;
         
-        // Validate email format
         if (!IsValidEmail(newUser.Email))
         {
             emailError = "Please enter a valid email address with a domain (e.g., user@example.com)";
@@ -149,7 +175,13 @@
             return;
         }
         
-        // Validate passwords match
+        if (!string.IsNullOrEmpty(newUser.Name) && !IsValidName(newUser.Name))
+        {
+            nameError = "Name must be at least 2 characters long and contain only letters, spaces, and hyphens.";
+            createResult = "Error: Invalid name format.";
+            return;
+        }
+        
         if (password != confirmPassword)
         {
             createResult = "Error: Passwords do not match.";
@@ -164,7 +196,7 @@
         
         try
         {
-            newUser.PasswordHash = password; // Will be hashed in the service
+            newUser.PasswordHash = password;
             var response = await Http.PostAsJsonAsync("/api/users", newUser);
             
             if (response.IsSuccessStatusCode)
