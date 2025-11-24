@@ -16,9 +16,11 @@
     @if (user?.Identity?.IsAuthenticated == true)
     {
         <div class="user-info">
-            <p><strong>Authenticated as:</strong> @user.Identity.Name</p>
-            <p><strong>Role:</strong> @user.FindFirst(ClaimTypes.Role)?.Value</p>
-            <form method="post" action="/api/auth/logout" style="margin-top: 20px;">
+            <div class="user-info-text">
+                <p><strong>Authenticated as:</strong> @user.Identity.Name</p>
+                <p><strong>Role:</strong> @user.FindFirst(ClaimTypes.Role)?.Value</p>
+            </div>
+            <form method="post" action="/api/auth/logout" class="user-info-logout">
                 <button type="submit" class="btn btn-secondary">Logout</button>
             </form>
         </div>
@@ -26,43 +28,23 @@
         <hr class="section-divider" />
 
         <div class="dashboard-section">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" @bind="showUsers" />
-                    <span>View Users</span>
-                </label>
+            <div class="dashboard-expandable-section">
+                <p><strong>User Information:</strong> View user accounts. Modification is restricted to administrators.</p>
+                <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: var(--spacing-sm);">
+                    User viewing functionality will be implemented in a later step.
+                </p>
             </div>
-
-            @if (showUsers)
-            {
-                <div class="dashboard-expandable-section">
-                    <p><strong>User Information:</strong> View user accounts. Modification is restricted to administrators.</p>
-                    <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: var(--spacing-sm);">
-                        User viewing functionality will be implemented in a later step.
-                    </p>
-                </div>
-            }
         </div>
 
         <hr class="section-divider" />
 
         <div class="dashboard-section">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" @bind="showTickets" />
-                    <span>Ticket Inspection</span>
-                </label>
-            </div>
-
-            @if (showTickets)
-            {
-                <div class="dashboard-expandable-section">
-                    <p><strong>Ticket Management:</strong> View and create tickets. Delete functionality is restricted to administrators.</p>
-                    <div class="button-container" style="margin-top: var(--spacing-md);">
-                        <a href="/bookings" class="btn btn-primary">Go to Booking Management</a>
-                    </div>
+            <div class="dashboard-expandable-section">
+                <p><strong>Ticket Management:</strong> View and create tickets. Delete functionality is restricted to administrators.</p>
+                <div class="button-container" style="margin-top: var(--spacing-md);">
+                    <a href="/bookings" class="btn btn-primary">Go to Booking Management</a>
                 </div>
-            }
+            </div>
         </div>
     }
     else
@@ -71,8 +53,4 @@
     }
 </div>
 
-@code {
-    private bool showTickets = false;
-    private bool showUsers = false;
-}
 

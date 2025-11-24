@@ -362,6 +362,25 @@ p {
     border-left: 3px solid var(--color-primary);
     margin: var(--spacing-lg) 0;
     text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.user-info-text {
+    flex: 1;
+}
+
+.user-info-text p {
+    margin: var(--spacing-xs) 0;
+    font-size: 1em;
+}
+
+.user-info-logout {
+    display: flex;
+    align-items: center;
+    margin: 0;
 }
 
 .user-info p {
