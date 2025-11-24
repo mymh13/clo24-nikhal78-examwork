@@ -19,5 +19,20 @@
         <component type="typeof(Ticketing.Web.App)" render-mode="ServerPrerendered" />
     </div>
     <script src="_framework/blazor.server.js"></script>
+    <script>
+        // Remove focus from any element on page load to prevent white highlight box
+        window.addEventListener('load', function() {
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+        });
+        
+        // Also handle Blazor navigation
+        window.addEventListener('popstate', function() {
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+        });
+    </script>
 </body>
 </html>

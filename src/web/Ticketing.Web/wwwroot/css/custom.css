@@ -66,6 +66,19 @@ body {
     min-height: 100vh;
 }
 
+/* Remove focus outline on page load - prevents white box highlight on titles */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Remove focus outline from headings and containers on initial page load */
+h1:focus,
+h2:focus,
+h3:focus,
+.container:focus {
+    outline: none;
+}
+
 h1, h2, h3 {
     color: var(--color-primary);
 }

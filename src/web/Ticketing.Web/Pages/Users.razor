@@ -4,10 +4,12 @@
 @using Ticketing.Contracts.Users
 @using Ticketing.Web.Helpers
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
 @attribute [Authorize(Roles = "Admin")]
 @inject HttpClient Http
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>User Management</PageTitle>
 
@@ -24,11 +26,23 @@
             <form @onsubmit="CreateUser" @onsubmit:preventDefault="true" class="booking-form">
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input id="email" type="email" @bind="newUser.Email" class="form-input" placeholder="Enter email address" required />
+                    <input id="email" type="email" @bind="newUser.Email" @bind:event="onchange" @bind:after="ValidateEmail" class="form-input" placeholder="Enter email address" required />
+                    @if (!string.IsNullOrEmpty(emailError))
+                    {
+                        <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">@emailError</span>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <input id="password" type="password" @bind="newUser.PasswordHash" class="form-input" placeholder="Enter password" required />
+                    <input id="password" type="password" @bind="password" class="form-input" placeholder="Enter password" required />
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input id="confirmPassword" type="password" @bind="confirmPassword" class="form-input" placeholder="Re-enter password" required />
+                    @if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(confirmPassword) && password != confirmPassword)
+                    {
+                        <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">Passwords do not match</span>
+                    }
                 </div>
                 <div class="form-group">
                     <label for="name">Name (optional):</label>
@@ -109,6 +123,9 @@
 
 @code {
     private User newUser = new();
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+    private string emailError = string.Empty;
     private string createResult = string.Empty;
     private string getResult = string.Empty;
     private List<User>? users = null;
@@ -122,14 +139,40 @@
     private async Task CreateUser()
     {
         createResult = string.Empty;
+        emailError = string.Empty;
+        
+        // Validate email format
+        if (!IsValidEmail(newUser.Email))
+        {
+            emailError = "Please enter a valid email address with a domain (e.g., user@example.com)";
+            createResult = "Error: Invalid email format.";
+            return;
+        }
+        
+        // Validate passwords match
+        if (password != confirmPassword)
+        {
+            createResult = "Error: Passwords do not match.";
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(password) || password.Length < 6)
+        {
+            createResult = "Error: Password must be at least 6 characters long.";
+            return;
+        }
+        
         try
         {
+            newUser.PasswordHash = password; // Will be hashed in the service
             var response = await Http.PostAsJsonAsync("/api/users", newUser);
             
             if (response.IsSuccessStatusCode)
             {
                 createResult = "Success: User created successfully!";
                 newUser = new User(); // Reset form
+                password = string.Empty;
+                confirmPassword = string.Empty;
                 await LoadUsers(); // Refresh list
             }
             else
@@ -142,6 +185,25 @@
         {
             createResult = $"Error: An error occurred when trying to create the user. {ex.Message}";
         }
+    }
+    
+    private void ValidateEmail()
+    {
+        emailError = string.Empty;
+        if (!string.IsNullOrEmpty(newUser.Email) && !IsValidEmail(newUser.Email))
+        {
+            emailError = "Please enter a valid email address with a domain (e.g., user@example.com)";
+        }
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+            return false;
+        
+        // Check for basic email format with TLD
+        var emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        return System.Text.RegularExpressions.Regex.IsMatch(email, emailPattern);
     }
 
     private async Task LoadUsers()
@@ -183,8 +245,15 @@
 
     private async Task DeleteUser(string userId)
     {
-        // TODO: Add proper confirmation dialog
-        // For now, proceed with deletion
+        var userToDelete = users?.FirstOrDefault(u => u.Id == userId);
+        var userEmail = userToDelete?.Email ?? "this user";
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {userEmail}? This action cannot be undone.");
+        
+        if (!confirmed)
+        {
+            return;
+        }
 
         try
         {

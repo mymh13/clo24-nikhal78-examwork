@@ -47,7 +47,7 @@
                 <form method="post" action="/api/auth/login" class="login-form">
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required autofocus />
+                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required />
                     </div>
                     
                     <div class="form-group">
@@ -88,7 +88,11 @@
                     {
                         <div class="form-group register-section">
                             <label for="registerEmail">Email</label>
-                            <input type="email" id="registerEmail" @bind="registerEmail" class="form-input" placeholder="Enter your email" />
+                            <input type="email" id="registerEmail" @bind="registerEmail" @bind:event="onchange" @bind:after="ValidateRegisterEmail" class="form-input" placeholder="Enter your email" required />
+                            @if (!string.IsNullOrEmpty(registerEmailError))
+                            {
+                                <span class="error-message" style="display: block; margin-top: 5px; font-size: 0.9em;">@registerEmailError</span>
+                            }
                             <label for="registerPassword" style="margin-top: 15px;">Password</label>
                             <input type="password" id="registerPassword" @bind="registerPassword" class="form-input" placeholder="Enter password" />
                             <button type="button" class="btn btn-secondary" @onclick="HandleRegister" style="margin-top: 15px;">Register</button>
@@ -138,6 +142,7 @@
     private string registerEmail = string.Empty;
     private string registerPassword = string.Empty;
     private string registerMessage = string.Empty;
+    private string registerEmailError = string.Empty;
     private HttpClient? httpClient;
 
     protected override void OnInitialized()
@@ -202,11 +207,40 @@
         }
     }
 
+    private void ValidateRegisterEmail()
+    {
+        registerEmailError = string.Empty;
+        if (!string.IsNullOrEmpty(registerEmail) && !IsValidEmail(registerEmail))
+        {
+            registerEmailError = "Please enter a valid email address with a domain (e.g., user@example.com)";
+        }
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+            return false;
+        
+        // Check for basic email format with TLD
+        var emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        return System.Text.RegularExpressions.Regex.IsMatch(email, emailPattern);
+    }
+
     private async Task HandleRegister()
     {
+        registerEmailError = string.Empty;
+        
         if (string.IsNullOrWhiteSpace(registerEmail) || string.IsNullOrWhiteSpace(registerPassword))
         {
             registerMessage = "Error: Please enter both email and password.";
+            return;
+        }
+        
+        // Validate email format
+        if (!IsValidEmail(registerEmail))
+        {
+            registerEmailError = "Please enter a valid email address with a domain (e.g., user@example.com)";
+            registerMessage = "Error: Invalid email format.";
             return;
         }
 
