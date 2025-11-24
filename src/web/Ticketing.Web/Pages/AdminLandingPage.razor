@@ -26,43 +26,23 @@
         <hr class="section-divider" />
 
         <div class="dashboard-section">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" @bind="showUsers" />
-                    <span>Manage Users</span>
-                </label>
-            </div>
-
-            @if (showUsers)
-            {
-                <div class="dashboard-expandable-section">
-                    <p><strong>User Management:</strong> Create, view, edit, and delete user accounts.</p>
-                    <div class="button-container" style="margin-top: var(--spacing-md);">
-                        <a href="/users" class="btn btn-primary">Go to User Management</a>
-                    </div>
+            <div class="dashboard-expandable-section">
+                <p><strong>User Management:</strong> Create, view, edit, and delete user accounts.</p>
+                <div class="button-container" style="margin-top: var(--spacing-md);">
+                    <a href="/users" class="btn btn-primary">Go to User Management</a>
                 </div>
-            }
+            </div>
         </div>
 
         <hr class="section-divider" />
 
         <div class="dashboard-section">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" @bind="showTickets" />
-                    <span>Manage Tickets</span>
-                </label>
-            </div>
-
-            @if (showTickets)
-            {
-                <div class="dashboard-expandable-section">
-                    <p><strong>Ticket Management:</strong> Create, view, edit, and delete tickets for all users.</p>
-                    <div class="button-container" style="margin-top: var(--spacing-md);">
-                        <a href="/bookings" class="btn btn-primary">Go to Booking Management</a>
-                    </div>
+            <div class="dashboard-expandable-section">
+                <p><strong>Ticket Management:</strong> Create, view, edit, and delete tickets for all users.</p>
+                <div class="button-container" style="margin-top: var(--spacing-md);">
+                    <a href="/bookings" class="btn btn-primary">Go to Booking Management</a>
                 </div>
-            }
+            </div>
         </div>
 
 
@@ -73,8 +53,4 @@
     }
 </div>
 
-@code {
-    private bool showTickets = false;
-    private bool showUsers = false;
-}
 

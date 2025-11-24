@@ -61,8 +61,34 @@ public static class WebApplicationExtensions
                 {
                     await Task.Delay(500);
                     var database = cosmosClient.GetDatabase("ticketing");
-                    var container = database.GetContainer("bookings");
-                    await container.ReadContainerAsync();
+                    
+                    // Ensure bookings container exists
+                    try
+                    {
+                        var bookingsContainer = database.GetContainer("bookings");
+                        await bookingsContainer.ReadContainerAsync();
+                    }
+                    catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // Container doesn't exist, create it
+                        await database.CreateContainerIfNotExistsAsync(
+                            new ContainerProperties("bookings", "/customerId"));
+                        Console.WriteLine("Created 'bookings' container in Cosmos DB");
+                    }
+                    
+                    // Ensure users container exists
+                    try
+                    {
+                        var usersContainer = database.GetContainer("users");
+                        await usersContainer.ReadContainerAsync();
+                    }
+                    catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // Container doesn't exist, create it
+                        await database.CreateContainerIfNotExistsAsync(
+                            new ContainerProperties("users", "/email"));
+                        Console.WriteLine("Created 'users' container in Cosmos DB");
+                    }
                 }
                 catch (Exception ex)
                 {
