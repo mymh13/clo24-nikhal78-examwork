@@ -33,7 +33,7 @@
 
 ## Overview
 
-During week 5, work focused on completing login functionality for regular users and preparing the foundation for ticket management features. The goal was to establish a complete authentication system that supports both administrators (via Entra ID) and regular users (via email/password), while maintaining GDPR compliance and preventing bot registrations.
+During week 5, work focused on completing login functionality for regular users, creating role-based landing pages, and implementing user management for administrators. The goal was to establish a complete authentication and user management system that supports administrators (via Entra ID), inspectors, and regular users (via email/password), while maintaining GDPR compliance and preventing bot registrations.
 
 ---
 
@@ -42,10 +42,24 @@ During week 5, work focused on completing login functionality for regular users 
 ### User Login Functionality
 - **Email-Only Login:** Changed login form from "Username or Email" to "Email" only for simplicity and GDPR compliance (reduces personal data collection).
 - **Forgot Password Feature:** Added checkbox to toggle password reset form. Dummy implementation returns success message (functionality not yet implemented).
-- **Registration Feature:** Added checkbox to toggle registration form. Registration is currently blocked to prevent bot registrations - returns message directing users to contact support. User accounts will be managed by administrators in a later step.
+- **Registration Feature:** Added checkbox to toggle registration form. Registration is currently blocked to prevent bot registrations - returns message directing users to contact support. User accounts will be managed by administrators.
 - **Backend Endpoints:** Created `POST /api/auth/forgot-password` (dummy) and `POST /api/auth/register` (blocked) endpoints. Updated `POST /api/auth/login` to accept `email` parameter instead of `username`.
-- **UI Styling:** Added CSS for checkboxes and conditional sections (forgot-email-section, register-section) with dark theme styling. Sections appear with subtle background and border when toggled.
-- **Status:** Login page UI complete with all requested features. Standard login endpoint ready for actual authentication implementation in next step.
+- **UI Styling:** Added CSS for checkboxes and conditional sections with dark theme styling. Sections appear with subtle background and border when toggled.
+- **Status:** Login page UI complete with all requested features. Standard login endpoint ready for actual authentication implementation.
+
+### Role-Based Landing Pages
+- **Admin Landing Page:** Updated with expandable sections for ticket management and user management. Links to dedicated pages for bookings and users.
+- **User Landing Page:** Created `/user` page with expandable sections for "My Tickets" and "My Information". Restricted to User role with placeholders for future functionality.
+- **Inspector Landing Page:** Created `/inspector` page with expandable sections for ticket inspection (view/create, no delete) and user viewing (read-only). Restricted to Inspector role.
+- **Navigation:** All landing pages use expandable checkbox pattern to keep interface clean. Role-based routing via `NavigationHelper` utility.
+- **Status:** All three role-based landing pages implemented with consistent styling and expandable sections. Ready for functionality implementation.
+
+### User Management System
+- **User Service:** Created `IUserService` and `UserService` with CRUD operations for ticketing system users. Password hashing with BCrypt, email uniqueness validation, Cosmos DB storage with email as partition key.
+- **Users API:** Created `UsersController` with endpoints for create, read all, read by ID, update, and delete. All endpoints restricted to Admin role. Password hashes excluded from responses. Audit logging included.
+- **User Management UI:** Created `/users` page for admin user management. Create user form with email, password, name, and role selection (Admin, Inspector, User). Users table with delete functionality. Styled to match existing theme.
+- **Integration:** UserService registered in dependency injection. Admin landing page links to user management when "Manage Users" section is expanded.
+- **Status:** Complete user management system operational. Admins can create Inspector and User accounts for testing different role-based access.
 
 ---
 

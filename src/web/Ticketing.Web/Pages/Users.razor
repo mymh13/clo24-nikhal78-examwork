@@ -1,0 +1,210 @@
+@page "/users"
+@using System.Net.Http.Json
+@using System.Security.Claims
+@using Ticketing.Contracts.Users
+@using Ticketing.Web.Helpers
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject HttpClient Http
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+
+<PageTitle>User Management</PageTitle>
+
+<div class="container">
+    <h1>User Management</h1>
+    
+    <div class="back-link-container">
+        <a href="/admin" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+    
+    <div class="booking-section">
+        <div class="booking-form-container">
+            <h3>Create New User</h3>
+            <form @onsubmit="CreateUser" @onsubmit:preventDefault="true" class="booking-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input id="email" type="email" @bind="newUser.Email" class="form-input" placeholder="Enter email address" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input id="password" type="password" @bind="newUser.PasswordHash" class="form-input" placeholder="Enter password" required />
+                </div>
+                <div class="form-group">
+                    <label for="name">Name (optional):</label>
+                    <input id="name" type="text" @bind="newUser.Name" class="form-input" placeholder="Enter name" />
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select id="role" @bind="newUser.Role" class="form-input">
+                        <option value="User">User</option>
+                        <option value="Inspector">Inspector</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create User</button>
+            </form>
+            @if (!string.IsNullOrEmpty(createResult))
+            {
+                <div class="@(createResult.StartsWith("Success") ? "success-message" : "error-message")">
+                    <p>@createResult</p>
+                </div>
+            }
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="booking-form-container">
+            <h3>All Users</h3>
+            @if (users != null && users.Any())
+            {
+                <div class="bookings-table-container">
+                    <table class="bookings-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in users)
+                            {
+                                <tr>
+                                    <td>@user.Email</td>
+                                    <td>@(user.Name ?? "-")</td>
+                                    <td>@user.Role</td>
+                                    <td>@user.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>
+                                        <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em; margin-right: 5px;" @onclick="() => EditUser(user)">Edit</button>
+                                        <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em; background: var(--color-error);" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
+            {
+                <div class="error-message">
+                    <p>@getResult</p>
+                </div>
+            }
+            else if (users != null && !users.Any())
+            {
+                <div class="info-message">
+                    <p>No users found. Create your first user above.</p>
+                </div>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" @onclick="LoadUsers">Load Users</button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private User newUser = new();
+    private string createResult = string.Empty;
+    private string getResult = string.Empty;
+    private List<User>? users = null;
+    private User? userToEdit = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task CreateUser()
+    {
+        createResult = string.Empty;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/users", newUser);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                createResult = "Success: User created successfully!";
+                newUser = new User(); // Reset form
+                await LoadUsers(); // Refresh list
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                createResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            createResult = $"Error: An error occurred when trying to create the user. {ex.Message}";
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        getResult = string.Empty;
+        users = null;
+        
+        try
+        {
+            var response = await Http.GetAsync("/api/users");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                users = await response.Content.ReadFromJsonAsync<List<User>>();
+                
+                if (users == null || !users.Any())
+                {
+                    getResult = "No users found";
+                }
+            }
+            else
+            {
+                getResult = "Error: Unable to retrieve users. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            getResult = $"Error: Unable to retrieve users. {ex.Message}";
+        }
+    }
+
+    private void EditUser(User user)
+    {
+        userToEdit = user;
+        // TODO: Implement edit functionality
+        // For now, just show a message
+        createResult = $"Edit functionality for {user.Email} will be implemented in a later step.";
+    }
+
+    private async Task DeleteUser(string userId)
+    {
+        // TODO: Add proper confirmation dialog
+        // For now, proceed with deletion
+
+        try
+        {
+            var response = await Http.DeleteAsync($"/api/users/{userId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                createResult = "Success: User deleted successfully!";
+                await LoadUsers(); // Refresh list
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                createResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            createResult = $"Error: An error occurred when trying to delete the user. {ex.Message}";
+        }
+    }
+}
+
