@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Ticketing.Contracts.Bookings;
 using Ticketing.Contracts.Users;
 using Ticketing.Web.Services;
+using Ticketing.Web.Helpers;
 using TicketingUser = Ticketing.Contracts.Users.User;
 
 namespace Ticketing.Web.Controllers;
@@ -90,6 +91,15 @@ public class BookingsController : ControllerBase
             booking.CustomerId = targetUser.Id;
             booking.CustomerEmail = targetUser.Email;
             booking.CustomerName = targetUser.Name ?? targetUser.Email; // Always use user's actual name, ignore form input
+            
+            // Calculate price modifier based on user's age and student status
+            booking.PriceModifier = PriceCalculationHelper.CalculatePriceModifier(targetUser);
+            
+            // Calculate prices (base price per zone is 25 SEK, each zone = 1 ticket)
+            // For now, we'll assume 1 zone per booking (can be extended later)
+            int numberOfZones = string.IsNullOrEmpty(booking.Zone) ? 0 : 1; // Simple: 1 zone = 1 ticket
+            booking.BasePrice = 25.0m * numberOfZones; // Base price per zone
+            booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones);
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 

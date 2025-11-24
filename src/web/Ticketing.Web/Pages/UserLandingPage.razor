@@ -59,8 +59,9 @@
                                 <thead>
                                     <tr>
                                         <th>Booking ID</th>
-                                        <th>Customer Email</th>
-                                        <th>Customer Name</th>
+                                        <th>Zone</th>
+                                        <th>Price Modifier</th>
+                                        <th>Total Price</th>
                                         <th>Booking Date</th>
                                     </tr>
                                 </thead>
@@ -69,8 +70,9 @@
                                     {
                                         <tr>
                                             <td>@booking.Id</td>
-                                            <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
-                                            <td>@booking.CustomerName</td>
+                                            <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
+                                            <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
+                                            <td>@booking.TotalPrice.ToString("F2") SEK</td>
                                             <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                         </tr>
                                     }
@@ -92,6 +94,19 @@
                             <input type="text" value="@(user?.Identity?.Name ?? user?.FindFirstValue(ClaimTypes.Email) ?? "")" class="form-input" disabled style="opacity: 0.7; cursor: not-allowed;" />
                             <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
                                 Your name is taken from your account and cannot be changed here.
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="zone">Zone:</label>
+                            <select id="zone" @bind="newTicket.Zone" class="form-input" required>
+                                <option value="">Select a zone</option>
+                                <option value="Zone A">Zone A</option>
+                                <option value="Zone B">Zone B</option>
+                                <option value="Zone C">Zone C</option>
+                                <option value="Zone D">Zone D</option>
+                            </select>
+                            <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                                Each zone costs one ticket. Price is calculated based on your age and student status.
                             </small>
                         </div>
                         <button type="submit" class="btn btn-primary">Create Ticket</button>

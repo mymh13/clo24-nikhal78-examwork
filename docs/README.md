@@ -28,7 +28,8 @@ This directory contains all documentation related to the project – from early 
 | **ADR-008-docker-deployment.md** | Decision: Deployment strategy (Docker containers via GHCR). |
 | **ADR-009-extension-methods-pattern.md** | Decision: Code organization using extension methods pattern for startup configuration. |
 | **ADR-010-gdpr-session-management.md** | Decision: GDPR-compliant session management using server-side storage. |
-
+| **ADR-011-price-calculation-system.md** | Decision: Price calculation system with age-based and student discounts, zone pricing. |
+ 
 ---
 
 ### ./initial_outtakes/         Early drafts and plans that defined the project's direction.
@@ -49,7 +50,8 @@ This directory contains all documentation related to the project – from early 
 | **week_two.md**          | Week 2 – code structure and first runnable version. |
 | **week_three.md**        | Week 3 – infrastructure and CI/CD foundation. |
 | **week_four.md**         | Week 4 – infrastructure expansion and application integration. |
-
+| **week_five.md**         | Week 5 – feature development and ticket management. |
+ 
 ---
 
 > **Note:**  

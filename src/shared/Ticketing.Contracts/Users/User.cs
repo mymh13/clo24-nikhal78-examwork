@@ -19,6 +19,12 @@ public class User
     [JsonPropertyName("role")]
     public string Role { get; set; } = "User"; // Admin, Inspector, User
     
+    [JsonPropertyName("dateOfBirth")]
+    public DateTime? DateOfBirth { get; set; }
+    
+    [JsonPropertyName("isStudent")]
+    public bool IsStudent { get; set; } = false;
+    
     [JsonPropertyName("createdDate")]
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 }

@@ -60,6 +60,19 @@
                         <option value="Admin">Admin</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth (optional, but if you do not state an age you always pay full price):</label>
+                    <input id="dateOfBirth" type="date" @bind="newUser.DateOfBirth" class="form-input" />
+                    <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                        Used to calculate age-based pricing (child &lt;12 = free, pensioner 65+ = 50% discount)
+                    </small>
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="newUser.IsStudent" />
+                        <span>Student (50% discount)</span>
+                    </label>
+                </div>
                 <button type="submit" class="btn btn-primary">Create User</button>
             </form>
             @if (!string.IsNullOrEmpty(createResult))
@@ -97,6 +110,19 @@
                             <option value="Inspector">Inspector</option>
                             <option value="Admin">Admin</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDateOfBirth">Date of Birth (optional):</label>
+                        <input id="editDateOfBirth" type="date" @bind="userToEdit.DateOfBirth" class="form-input" />
+                        <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                            Used to calculate age-based pricing (child &lt;12 = free, pensioner 65+ = 50% discount)
+                        </small>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" @bind="userToEdit.IsStudent" />
+                            <span>Student (50% discount)</span>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label for="editPassword">New Password (leave empty to keep current):</label>

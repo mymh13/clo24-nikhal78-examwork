@@ -16,6 +16,21 @@ public class Booking
     [JsonPropertyName("customerName")]
     public string CustomerName { get; set; } = string.Empty;
     
+    [JsonPropertyName("zone")]
+    public string Zone { get; set; } = string.Empty; // Zone name (e.g., "Zone A", "Zone B")
+    
+    [JsonPropertyName("region")]
+    public string Region { get; set; } = string.Empty; // Region name (reserved for future use, empty for now)
+    
+    [JsonPropertyName("priceModifier")]
+    public decimal PriceModifier { get; set; } = 1.0m; // 0.0 (child), 0.5 (student/pensioner), 1.0 (standard)
+    
+    [JsonPropertyName("basePrice")]
+    public decimal BasePrice { get; set; } = 0m; // Base price per zone (will be calculated)
+    
+    [JsonPropertyName("totalPrice")]
+    public decimal TotalPrice { get; set; } = 0m; // Final calculated price
+    
     [JsonPropertyName("bookingDate")]
     public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 }
