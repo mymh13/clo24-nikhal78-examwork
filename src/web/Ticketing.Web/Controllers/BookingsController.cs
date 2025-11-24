@@ -35,13 +35,22 @@ public class BookingsController : ControllerBase
             
             // Determine customer email - use provided email or current user's email
             string customerEmail;
+            TicketingUser? targetUser = null;
+            
             if (userRole == "User")
             {
-                // Users can only create bookings for themselves
+                // Users can only create bookings for themselves - ignore any email/name from request
                 customerEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
                 if (string.IsNullOrEmpty(customerEmail))
                 {
                     return BadRequest(new { error = "User email not found in claims." });
+                }
+                
+                // Get the current user's account
+                targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
+                if (targetUser == null)
+                {
+                    return BadRequest(new { error = "User account not found." });
                 }
             }
             else
@@ -52,38 +61,35 @@ public class BookingsController : ControllerBase
                 {
                     return BadRequest(new { error = "Customer email is required." });
                 }
-            }
 
-            // Validate email format
-            if (!System.Text.RegularExpressions.Regex.IsMatch(customerEmail, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
-            {
-                return BadRequest(new { error = "Invalid email format." });
-            }
-
-            // Get or create user
-            var user = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
-            if (user == null)
-            {
-                // Create user if doesn't exist with temporary password
-                // Password will be hashed by UserService
-                var newUser = new TicketingUser
+                // Validate email format
+                if (!System.Text.RegularExpressions.Regex.IsMatch(customerEmail, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
                 {
-                    Email = customerEmail,
-                    Name = booking.CustomerName ?? customerEmail.Split('@')[0], // Use email prefix as name
-                    Role = "User",
-                    PasswordHash = "TempPassword123!" // Temporary password, admin should reset this
-                };
-                user = await _userService.CreateUserAsync(newUser, cancellationToken);
-                _logger.LogInformation("Auto-created user {Email} for booking. Admin should reset password.", customerEmail);
+                    return BadRequest(new { error = "Invalid email format." });
+                }
+
+                // Get or create user
+                targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
+                if (targetUser == null)
+                {
+                    // Create user if doesn't exist with temporary password
+                    // Password will be hashed by UserService
+                    var newUser = new TicketingUser
+                    {
+                        Email = customerEmail,
+                        Name = booking.CustomerName ?? customerEmail.Split('@')[0], // Use email prefix as name
+                        Role = "User",
+                        PasswordHash = "TempPassword123!" // Temporary password, admin should reset this
+                    };
+                    targetUser = await _userService.CreateUserAsync(newUser, cancellationToken);
+                    _logger.LogInformation("Auto-created user {Email} for booking. Admin should reset password.", customerEmail);
+                }
             }
 
-            // Set booking customer ID to user ID and email
-            booking.CustomerId = user.Id;
-            booking.CustomerEmail = user.Email;
-            if (string.IsNullOrEmpty(booking.CustomerName))
-            {
-                booking.CustomerName = user.Name ?? user.Email;
-            }
+            // Set booking customer ID to user ID and email - always use user's actual data
+            booking.CustomerId = targetUser.Id;
+            booking.CustomerEmail = targetUser.Email;
+            booking.CustomerName = targetUser.Name ?? targetUser.Email; // Always use user's actual name, ignore form input
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 
@@ -136,6 +142,32 @@ public class BookingsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all bookings");
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("my-bookings")]
+    [Authorize(Roles = "User")]
+    public async Task<ActionResult<IEnumerable<Booking>>> GetMyBookings(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(new { error = "User ID not found in claims." });
+            }
+            
+            _logger.LogInformation("Bookings retrieved for user {UserId} ({UserEmail})", userId, userEmail);
+            
+            var bookings = await _bookingService.GetBookingsByCustomerIdAsync(userId, cancellationToken);
+            return Ok(bookings);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving bookings for user {UserId}", User.FindFirstValue(ClaimTypes.NameIdentifier));
             return BadRequest(new { error = ex.Message });
         }
     }

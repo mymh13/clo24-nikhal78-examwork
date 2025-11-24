@@ -47,11 +47,52 @@
                 <p><strong>My Tickets:</strong> View and create your own tickets.</p>
                 
                 <div style="margin-top: var(--spacing-lg);">
-                    <h3 style="font-size: 1.2em; margin-bottom: var(--spacing-md);">Create New Ticket</h3>
+                    <h3 style="font-size: 1.2em; margin-bottom: var(--spacing-md);">My Existing Tickets</h3>
+                    @if (myBookings == null)
+                    {
+                        <p>Loading tickets...</p>
+                    }
+                    else if (myBookings.Any())
+                    {
+                        <div class="bookings-table-container" style="margin-bottom: var(--spacing-xl);">
+                            <table class="bookings-table">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Customer Email</th>
+                                        <th>Customer Name</th>
+                                        <th>Booking Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in myBookings)
+                                    {
+                                        <tr>
+                                            <td>@booking.Id</td>
+                                            <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
+                                            <td>@booking.CustomerName</td>
+                                            <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="info-message" style="margin-bottom: var(--spacing-xl);">
+                            <p>You don't have any tickets yet. Create your first ticket below.</p>
+                        </div>
+                    }
+                    
+                    <h3 style="font-size: 1.2em; margin-bottom: var(--spacing-md); margin-top: var(--spacing-xl);">Create New Ticket</h3>
                     <form @onsubmit="CreateTicket" @onsubmit:preventDefault="true" class="booking-form" style="max-width: 500px; margin: 0 auto;">
                         <div class="form-group">
-                            <label for="customerName">Your Name:</label>
-                            <input id="customerName" type="text" @bind="newTicket.CustomerName" class="form-input" placeholder="Enter your name" required />
+                            <label>Your Name:</label>
+                            <input type="text" value="@(user?.Identity?.Name ?? user?.FindFirstValue(ClaimTypes.Email) ?? "")" class="form-input" disabled style="opacity: 0.7; cursor: not-allowed;" />
+                            <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                                Your name is taken from your account and cannot be changed here.
+                            </small>
                         </div>
                         <button type="submit" class="btn btn-primary">Create Ticket</button>
                     </form>
@@ -74,42 +115,50 @@
 @code {
     private Booking newTicket = new();
     private string ticketResult = string.Empty;
+    private List<Booking>? myBookings = null;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated == true)
+        await LoadMyBookings();
+    }
+
+    private async Task LoadMyBookings()
+    {
+        try
         {
-            var userEmail = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
-            newTicket.CustomerEmail = userEmail;
-            newTicket.CustomerName = user.Identity.Name ?? userEmail;
+            var response = await Http.GetAsync("/api/bookings/my-bookings");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                myBookings = await response.Content.ReadFromJsonAsync<List<Booking>>();
+            }
+        }
+        catch
+        {
+            // Silently fail - tickets will just not be displayed
+            myBookings = new List<Booking>();
         }
     }
 
     private async Task CreateTicket()
     {
         ticketResult = string.Empty;
-        
-        if (string.IsNullOrWhiteSpace(newTicket.CustomerName))
-        {
-            ticketResult = "Error: Please enter your name.";
-            return;
-        }
 
         try
         {
-            var response = await Http.PostAsJsonAsync("/api/bookings", newTicket);
+            // Create empty booking - controller will fill in user's actual data
+            var bookingToCreate = new Booking
+            {
+                CustomerEmail = string.Empty, // Will be set by controller from user's claims
+                CustomerName = string.Empty   // Will be set by controller from user's account
+            };
+            
+            var response = await Http.PostAsJsonAsync("/api/bookings", bookingToCreate);
             
             if (response.IsSuccessStatusCode)
             {
                 ticketResult = "Success: Ticket created successfully!";
-                var user = HttpContextAccessor.HttpContext?.User;
-                var userEmail = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
-                newTicket = new Booking
-                {
-                    CustomerEmail = userEmail,
-                    CustomerName = user?.Identity?.Name ?? userEmail
-                };
+                await LoadMyBookings(); // Refresh ticket list
             }
             else
             {
