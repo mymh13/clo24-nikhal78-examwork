@@ -88,5 +88,21 @@ public class BookingService : IBookingService
 
         return bookings;
     }
+
+    public async Task DeleteBookingAsync(string bookingId, string customerId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(bookingId))
+            throw new ArgumentException("BookingId is required", nameof(bookingId));
+
+        if (string.IsNullOrEmpty(customerId))
+            throw new ArgumentException("CustomerId is required", nameof(customerId));
+
+        var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
+
+        await container.DeleteItemAsync<Booking>(
+            bookingId,
+            new PartitionKey(customerId),
+            cancellationToken: cancellationToken);
+    }
 }
 

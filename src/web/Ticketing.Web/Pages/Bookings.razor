@@ -4,9 +4,11 @@
 @using Ticketing.Contracts.Bookings
 @using Ticketing.Web.Helpers
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
 @attribute [Authorize(Roles = "Admin,Inspector")]
 @inject HttpClient Http
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Booking Management</PageTitle>
 
@@ -79,6 +81,10 @@
                                 <th>Customer Name</th>
                                 <th>Booking ID</th>
                                 <th>Booking Date</th>
+                                @if (user?.IsInRole("Admin") == true)
+                                {
+                                    <th>Actions</th>
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -90,6 +96,12 @@
                                     <td>@booking.CustomerName</td>
                                     <td>@booking.Id</td>
                                     <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    @if (user?.IsInRole("Admin") == true)
+                                    {
+                                        <td>
+                                            <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">Delete</button>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         </tbody>
@@ -108,6 +120,12 @@
                     <p>No bookings found for this customer ID.</p>
                 </div>
             }
+            @if (!string.IsNullOrEmpty(deleteResult))
+            {
+                <div class="@(deleteResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-md);">
+                    <p>@deleteResult</p>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -119,6 +137,7 @@
     private string createResult = string.Empty;
     private string getResult = string.Empty;
     private List<Booking>? bookings = null;
+    private string deleteResult = string.Empty;
 
     private async Task CreateBooking()
     {
@@ -184,6 +203,40 @@
         catch (Exception ex)
         {
             getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
+        }
+    }
+
+    private async Task DeleteBooking(string bookingId, string customerId)
+    {
+        deleteResult = string.Empty;
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to delete booking {bookingId}? This action cannot be undone.");
+        
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var response = await Http.DeleteAsync($"/api/bookings/{bookingId}?customerId={Uri.EscapeDataString(customerId)}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                deleteResult = "Success: Booking deleted successfully!";
+                // Refresh the bookings list
+                await GetBookings();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                deleteResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            deleteResult = $"Error: An error occurred when trying to delete the booking. {ex.Message}";
         }
     }
 }

@@ -70,6 +70,12 @@ During week 5, work focused on completing login functionality for regular users,
 - **UI Improvements:** Removed expandable checkboxes from all landing pages - sections now always visible with direct links. Fixed focus highlight issue on page load by adding CSS and JavaScript to blur focused elements. Logout buttons aligned consistently to the right.
 - **Status:** Complete user management system operational. Admins can create, edit, and delete user accounts with proper validation and confirmation dialogs.
 
+### Ticket Management Enhancements
+- **Ticket Viewing for Users:** Added `GET /api/bookings/my-bookings` endpoint (User role only) to retrieve user's own tickets. Updated User landing page to display tickets in a table format with booking ID, customer email, customer name, and booking date. Tickets automatically load on page initialization and refresh after creating new tickets. Shows informative message when no tickets exist.
+- **Ticket Creation Security:** Fixed ticket creation to prevent users from modifying their name or email. Name field in ticket creation form is now read-only and displays user's actual name from their account. `CreateBooking` endpoint enforces that users can only create tickets for themselves, always using their account data (ID, email, name) regardless of form input. Admin/Inspector roles can still create tickets for any user.
+- **Ticket Deletion for Admins:** Added `DELETE /api/bookings/{bookingId}?customerId={customerId}` endpoint restricted to Admin role. Implemented `DeleteBookingAsync` in `BookingService` for Cosmos DB deletion using partition key. Added "Actions" column to bookings table on `/bookings` page (visible only to Admins). Delete button with JavaScript confirmation dialog. Automatically refreshes bookings list after successful deletion. Enables cleanup of errant tickets with incorrect user IDs.
+- **Status:** Complete ticket viewing and management functionality. Users can view their own tickets, and admins can delete tickets with proper confirmation.
+
 ---
 
 ## Reflection
@@ -98,7 +104,9 @@ During week 5, work focused on completing login functionality for regular users,
 ### Key Achievements
 - **Complete User Management:** Full CRUD system for users with proper validation, password hashing, and role-based access control. Edit functionality fully implemented.
 - **Standard Login Implementation:** Email/password authentication working for users and inspectors. BCrypt password verification, proper cookie-based session management, role-based redirects.
-- **Ticket Creation for Users:** Users can create tickets from their landing page. Form auto-fills with user information. Security check ensures users can only create tickets for themselves.
+- **Ticket Creation for Users:** Users can create tickets from their landing page. Form auto-fills with user information. Security check ensures users can only create tickets for themselves. Name field is read-only to prevent tampering.
+- **Ticket Viewing for Users:** Users can now view all their existing tickets in a table format on their landing page. Tickets automatically refresh after creation.
+- **Ticket Deletion for Admins:** Admins can delete tickets with confirmation dialogs. Enables cleanup of errant tickets and testing of deletion functionality.
 - **Email Validation:** Strict email format validation prevents invalid data entry across all user creation and registration forms.
 - **Password Security:** Password confirmation and length validation ensure users create secure accounts without typos.
 - **Improved UX:** Fixed focus issues, login error message persistence, and streamlined all landing pages for better user experience. Consistent logout button positioning.
@@ -108,20 +116,20 @@ During week 5, work focused on completing login functionality for regular users,
 - **Password Strength Requirements:** Currently only validates minimum length. Could add complexity requirements (uppercase, numbers, special characters) for production.
 - **Email Uniqueness Feedback:** Could provide more immediate feedback when checking if an email already exists (e.g., on blur event).
 - **Container Creation in Bicep:** Consider adding `users` container to Cosmos DB Bicep template for infrastructure-as-code approach instead of runtime creation.
-- **Ticket Viewing:** Users can create tickets but cannot yet view their own tickets. Should add ticket listing functionality to "My Tickets" section.
+- **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page for better ticket discovery.
 
 ---
 
 ## Ongoing Work
 
-- **Ticket Viewing:** Users can create tickets but need ability to view their own tickets in the "My Tickets" section.
+- **Ticket Search:** Add search and filtering functionality to the admin booking management page for better ticket discovery.
 
 ---
 
 ## Next Steps
 
-1. **Ticket Viewing for Users:** Add functionality to display user's own tickets in "My Tickets" section with ability to view ticket details.
-2. **Ticket Attributes:** Begin implementing ticket attributes (regions, zones, age, price) as outlined in brainstorming section.
-3. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
-4. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
+1. **Ticket Attributes:** Begin implementing ticket attributes (regions, zones, age, price) as outlined in brainstorming section.
+2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
+3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
+4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
 

@@ -9,5 +9,7 @@ public interface IBookingService
     Task<IEnumerable<Booking>> GetBookingsByCustomerIdAsync(string customerId, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<Booking>> GetAllBookingsAsync(CancellationToken cancellationToken = default);
+    
+    Task DeleteBookingAsync(string bookingId, string customerId, CancellationToken cancellationToken = default);
 }
 

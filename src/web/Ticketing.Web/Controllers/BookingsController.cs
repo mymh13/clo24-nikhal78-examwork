@@ -171,5 +171,43 @@ public class BookingsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpDelete("{bookingId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteBooking(string bookingId, [FromQuery] string customerId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(bookingId))
+            {
+                return BadRequest(new { error = "Booking ID is required." });
+            }
+
+            if (string.IsNullOrEmpty(customerId))
+            {
+                return BadRequest(new { error = "Customer ID is required." });
+            }
+
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            _logger.LogInformation("Booking deletion requested: {BookingId} for customer {CustomerId} by admin {AdminId}", 
+                bookingId, customerId, adminId);
+            
+            await _bookingService.DeleteBookingAsync(bookingId, customerId, cancellationToken);
+            
+            _logger.LogInformation("Booking deleted: {BookingId} by admin {AdminId}", bookingId, adminId);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Booking deletion failed: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting booking {BookingId}", bookingId);
+            return BadRequest(new { error = "An unexpected error occurred." });
+        }
+    }
 }
 
