@@ -1,6 +1,9 @@
 @page "/login"
+@using System.Net.Http
+@using System.Net.Http.Json
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
+@inject IHttpClientFactory HttpClientFactory
 
 <PageTitle>Login</PageTitle>
 
@@ -43,14 +46,60 @@
                 <h2>@(hasEntraId ? "Standard Login" : "Login")</h2>
                 <form method="post" action="/api/auth/login" class="login-form">
                     <div class="form-group">
-                        <label for="username">Username or Email</label>
-                        <input type="text" id="username" name="username" class="form-input" placeholder="Enter username or email" required autofocus />
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required autofocus />
                     </div>
                     
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required />
                     </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" @bind="showForgotEmail" />
+                            <span>Forgot email</span>
+                        </label>
+                    </div>
+                    
+                    @if (showForgotEmail)
+                    {
+                        <div class="form-group forgot-email-section">
+                            <label for="forgotEmail">Enter your email to reset password</label>
+                            <input type="email" id="forgotEmail" @bind="forgotEmailAddress" class="form-input" placeholder="Enter your email" />
+                            <button type="button" class="btn btn-secondary" @onclick="HandleForgotEmail">Reset Password</button>
+                            @if (!string.IsNullOrEmpty(forgotEmailMessage))
+                            {
+                                <div class="@(forgotEmailMessage.StartsWith("Success") ? "info-message" : "error-message")" style="margin-top: 10px;">
+                                    <p>@forgotEmailMessage</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" @bind="showRegister" />
+                            <span>Register new account</span>
+                        </label>
+                    </div>
+                    
+                    @if (showRegister)
+                    {
+                        <div class="form-group register-section">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" @bind="registerEmail" class="form-input" placeholder="Enter your email" />
+                            <label for="registerPassword" style="margin-top: 15px;">Password</label>
+                            <input type="password" id="registerPassword" @bind="registerPassword" class="form-input" placeholder="Enter password" />
+                            <button type="button" class="btn btn-secondary" @onclick="HandleRegister" style="margin-top: 15px;">Register</button>
+                            @if (!string.IsNullOrEmpty(registerMessage))
+                            {
+                                <div class="@(registerMessage.StartsWith("Registration") ? "info-message" : "error-message")" style="margin-top: 10px;">
+                                    <p>@registerMessage</p>
+                                </div>
+                            }
+                        </div>
+                    }
                     
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
@@ -82,6 +131,14 @@
     private string errorMessage = string.Empty;
     private bool showLogoutMessage = false;
     private bool hasEntraId = false;
+    private bool showForgotEmail = false;
+    private bool showRegister = false;
+    private string forgotEmailAddress = string.Empty;
+    private string forgotEmailMessage = string.Empty;
+    private string registerEmail = string.Empty;
+    private string registerPassword = string.Empty;
+    private string registerMessage = string.Empty;
+    private HttpClient? httpClient;
 
     protected override void OnInitialized()
     {
@@ -102,5 +159,83 @@
         var clientId = Configuration["AzureAd:ClientId"];
         var tenantId = Configuration["AzureAd:TenantId"];
         hasEntraId = !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(tenantId);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            httpClient = HttpClientFactory.CreateClient("BlazorServer");
+        }
+    }
+
+    private async Task HandleForgotEmail()
+    {
+        if (string.IsNullOrWhiteSpace(forgotEmailAddress))
+        {
+            forgotEmailMessage = "Error: Please enter your email address.";
+            return;
+        }
+
+        try
+        {
+            var formData = new Dictionary<string, string>
+            {
+                { "email", forgotEmailAddress }
+            };
+            var content = new FormUrlEncodedContent(formData);
+            var response = await httpClient!.PostAsync("/api/auth/forgot-password", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                forgotEmailMessage = "Success: Password reset email sent (dummy functionality - not implemented yet).";
+                forgotEmailAddress = string.Empty;
+            }
+            else
+            {
+                forgotEmailMessage = "Error: Unable to process password reset request.";
+            }
+        }
+        catch
+        {
+            forgotEmailMessage = "Error: Unable to process password reset request.";
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        if (string.IsNullOrWhiteSpace(registerEmail) || string.IsNullOrWhiteSpace(registerPassword))
+        {
+            registerMessage = "Error: Please enter both email and password.";
+            return;
+        }
+
+        try
+        {
+            var formData = new Dictionary<string, string>
+            {
+                { "email", registerEmail },
+                { "password", registerPassword }
+            };
+            var content = new FormUrlEncodedContent(formData);
+            var response = await httpClient!.PostAsync("/api/auth/register", content);
+            
+            var responseText = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                registerMessage = responseText;
+                registerEmail = string.Empty;
+                registerPassword = string.Empty;
+            }
+            else
+            {
+                registerMessage = responseText;
+            }
+        }
+        catch
+        {
+            registerMessage = "Error: Unable to process registration request.";
+        }
     }
 }
