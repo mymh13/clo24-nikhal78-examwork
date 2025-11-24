@@ -8,7 +8,10 @@ public class Booking
     public string Id { get; set; } = Guid.NewGuid().ToString();
     
     [JsonPropertyName("customerId")]
-    public string CustomerId { get; set; } = string.Empty;
+    public string CustomerId { get; set; } = string.Empty; // User's email or ID
+    
+    [JsonPropertyName("customerEmail")]
+    public string CustomerEmail { get; set; } = string.Empty; // User's email for display
     
     [JsonPropertyName("customerName")]
     public string CustomerName { get; set; } = string.Empty;

@@ -27,11 +27,14 @@
             <h3>Create Booking</h3>
             <form @onsubmit="CreateBooking" @onsubmit:preventDefault="true" class="booking-form">
                 <div class="form-group">
-                    <label for="customerId">Customer ID:</label>
-                    <input id="customerId" type="text" @bind="newBooking.CustomerId" class="form-input" placeholder="Enter customer ID" />
+                    <label for="customerEmail">Customer Email:</label>
+                    <input id="customerEmail" type="email" @bind="newBooking.CustomerEmail" class="form-input" placeholder="Enter customer email" required />
+                    <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                        User will be created automatically if they don't exist.
+                    </small>
                 </div>
                 <div class="form-group">
-                    <label for="customerName">Customer Name:</label>
+                    <label for="customerName">Customer Name (optional):</label>
                     <input id="customerName" type="text" @bind="newBooking.CustomerName" class="form-input" placeholder="Enter customer name" />
                 </div>
                 <button type="submit" class="btn btn-primary">Create Booking</button>
@@ -47,11 +50,21 @@
         <hr class="section-divider" />
 
         <div class="booking-form-container">
-            <h3>Get Bookings by Customer</h3>
+            <h3>Get Bookings</h3>
             <form @onsubmit="GetBookings" @onsubmit:preventDefault="true" class="booking-form">
                 <div class="form-group">
-                    <label for="searchCustomerId">Customer ID:</label>
-                    <input id="searchCustomerId" type="text" @bind="searchCustomerId" class="form-input" placeholder="Enter customer ID to search" />
+                    <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                        <div style="flex: 1;">
+                            <label for="searchCustomerId">Customer ID (User ID):</label>
+                            <input id="searchCustomerId" type="text" @bind="searchCustomerId" class="form-input" placeholder="Enter customer ID to search" disabled="@listAll" />
+                        </div>
+                        <div class="form-group checkbox-group" style="margin-top: 25px;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="listAll" />
+                                <span>List All</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Get Bookings</button>
             </form>
@@ -61,9 +74,10 @@
                     <table class="bookings-table">
                         <thead>
                             <tr>
-                                <th>Booking ID</th>
                                 <th>Customer ID</th>
+                                <th>Customer Email</th>
                                 <th>Customer Name</th>
+                                <th>Booking ID</th>
                                 <th>Booking Date</th>
                             </tr>
                         </thead>
@@ -71,9 +85,10 @@
                             @foreach (var booking in bookings)
                             {
                                 <tr>
-                                    <td>@booking.Id</td>
                                     <td>@booking.CustomerId</td>
+                                    <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
                                     <td>@booking.CustomerName</td>
+                                    <td>@booking.Id</td>
                                     <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 </tr>
                             }
@@ -100,6 +115,7 @@
 @code {
     private Booking newBooking = new();
     private string searchCustomerId = string.Empty;
+    private bool listAll = false;
     private string createResult = string.Empty;
     private string getResult = string.Empty;
     private List<Booking>? bookings = null;
@@ -134,7 +150,21 @@
         
         try
         {
-            var response = await Http.GetAsync($"/api/bookings/customer/{searchCustomerId}");
+            HttpResponseMessage response;
+            
+            if (listAll)
+            {
+                response = await Http.GetAsync("/api/bookings/all");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(searchCustomerId))
+                {
+                    getResult = "Error: Please enter a customer ID or select 'List All'.";
+                    return;
+                }
+                response = await Http.GetAsync($"/api/bookings/customer/{searchCustomerId}");
+            }
             
             if (response.IsSuccessStatusCode)
             {
@@ -147,12 +177,13 @@
             }
             else
             {
-                getResult = "Error: Unable to retrieve bookings. Please try again.";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                getResult = $"Error: {errorContent}";
             }
         }
-        catch
+        catch (Exception ex)
         {
-            getResult = "Error: Unable to retrieve bookings. Please try again.";
+            getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
         }
     }
 }

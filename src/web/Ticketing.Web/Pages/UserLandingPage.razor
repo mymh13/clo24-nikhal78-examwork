@@ -80,9 +80,9 @@
         var user = HttpContextAccessor.HttpContext?.User;
         if (user?.Identity?.IsAuthenticated == true)
         {
-            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue(ClaimTypes.Email);
-            newTicket.CustomerId = userId ?? string.Empty;
-            newTicket.CustomerName = user.Identity.Name ?? user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            var userEmail = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            newTicket.CustomerEmail = userEmail;
+            newTicket.CustomerName = user.Identity.Name ?? userEmail;
         }
     }
 
@@ -103,12 +103,12 @@
             if (response.IsSuccessStatusCode)
             {
                 ticketResult = "Success: Ticket created successfully!";
+                var user = HttpContextAccessor.HttpContext?.User;
+                var userEmail = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
                 newTicket = new Booking
                 {
-                    CustomerId = HttpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier) 
-                        ?? HttpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-                    CustomerName = HttpContextAccessor.HttpContext?.User?.Identity?.Name 
-                        ?? HttpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty
+                    CustomerEmail = userEmail,
+                    CustomerName = user?.Identity?.Name ?? userEmail
                 };
             }
             else

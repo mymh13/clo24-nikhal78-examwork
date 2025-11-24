@@ -74,9 +74,9 @@ public class AuthController : ControllerBase
 
             _logger.LogInformation("User logged in successfully: {Email} with role {Role}", user.Email, user.Role);
 
-            // Return JSON with redirect URL for Blazor client-side navigation
+            // Redirect to appropriate landing page based on role
             var redirectUrl = NavigationHelper.GetLandingPageUrl(new ClaimsPrincipal(claimsIdentity));
-            return Ok(new { redirectUrl = redirectUrl });
+            return Redirect(redirectUrl);
         }
         catch (Exception ex)
         {

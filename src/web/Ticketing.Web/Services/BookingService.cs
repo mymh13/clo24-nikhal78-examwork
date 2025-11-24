@@ -69,5 +69,24 @@ public class BookingService : IBookingService
 
         return bookings;
     }
+
+    public async Task<IEnumerable<Booking>> GetAllBookingsAsync(CancellationToken cancellationToken = default)
+    {
+        var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
+
+        var query = new QueryDefinition("SELECT * FROM c ORDER BY c.bookingDate DESC");
+
+        var iterator = container.GetItemQueryIterator<Booking>(query);
+
+        var bookings = new List<Booking>();
+
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync(cancellationToken);
+            bookings.AddRange(response);
+        }
+
+        return bookings;
+    }
 }
 
