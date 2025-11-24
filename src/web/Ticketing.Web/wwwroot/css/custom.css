@@ -468,7 +468,6 @@ p {
 .admin-login-section {
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-xl);
-    border-bottom: 2px solid var(--color-bg-tertiary);
 }
 
 .admin-login-section h2 {
@@ -549,6 +548,28 @@ p {
     color: var(--color-primary);
     font-weight: 600;
     font-size: 0.95em;
+}
+
+.dashboard-section {
+    margin: var(--spacing-lg) 0;
+}
+
+.dashboard-expandable-section {
+    background: var(--color-bg-secondary);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-primary);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.dashboard-expandable-section p {
+    margin: var(--spacing-xs) 0;
+    text-align: left;
+}
+
+.dashboard-expandable-section p:first-child {
+    margin-top: 0;
 }
 
 .standard-login-section h2 {

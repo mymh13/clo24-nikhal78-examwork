@@ -33,13 +33,19 @@
 
 ## Overview
 
-[To be filled in as work progresses]
+During week 5, work focused on completing login functionality for regular users and preparing the foundation for ticket management features. The goal was to establish a complete authentication system that supports both administrators (via Entra ID) and regular users (via email/password), while maintaining GDPR compliance and preventing bot registrations.
 
 ---
 
 ## Completed Activities
 
-[To be filled in as work progresses]
+### User Login Functionality
+- **Email-Only Login:** Changed login form from "Username or Email" to "Email" only for simplicity and GDPR compliance (reduces personal data collection).
+- **Forgot Password Feature:** Added checkbox to toggle password reset form. Dummy implementation returns success message (functionality not yet implemented).
+- **Registration Feature:** Added checkbox to toggle registration form. Registration is currently blocked to prevent bot registrations - returns message directing users to contact support. User accounts will be managed by administrators in a later step.
+- **Backend Endpoints:** Created `POST /api/auth/forgot-password` (dummy) and `POST /api/auth/register` (blocked) endpoints. Updated `POST /api/auth/login` to accept `email` parameter instead of `username`.
+- **UI Styling:** Added CSS for checkboxes and conditional sections (forgot-email-section, register-section) with dark theme styling. Sections appear with subtle background and border when toggled.
+- **Status:** Login page UI complete with all requested features. Standard login endpoint ready for actual authentication implementation in next step.
 
 ---
 

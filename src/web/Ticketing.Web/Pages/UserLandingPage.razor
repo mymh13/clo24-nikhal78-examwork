@@ -1,0 +1,79 @@
+@page "/user"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "User")]
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>User Dashboard</PageTitle>
+
+<div class="container">
+    <h1>User Dashboard</h1>
+    
+    @{
+        var user = HttpContextAccessor.HttpContext?.User;
+        var userId = user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? user?.FindFirstValue(ClaimTypes.Email);
+    }
+    
+    @if (user?.Identity?.IsAuthenticated == true)
+    {
+        <div class="user-info">
+            <p><strong>Authenticated as:</strong> @user.Identity.Name</p>
+            <p><strong>Email:</strong> @user.FindFirstValue(ClaimTypes.Email)</p>
+            <form method="post" action="/api/auth/logout" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-secondary">Logout</button>
+            </form>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="dashboard-section">
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" @bind="showMyTickets" />
+                    <span>My Tickets</span>
+                </label>
+            </div>
+
+        <div class="dashboard-section">
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" @bind="showMyInfo" />
+                    <span>My Information</span>
+                </label>
+            </div>
+
+            @if (showMyInfo)
+            {
+                <div class="dashboard-expandable-section">
+                    <p><strong>My Information:</strong> View and update your account information.</p>
+                    <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: var(--spacing-sm);">
+                        Account information management will be implemented in a later step.
+                    </p>
+                </div>
+            }
+        </div>
+
+        <hr class="section-divider" />
+
+            @if (showMyTickets)
+            {
+                <div class="dashboard-expandable-section">
+                    <p><strong>My Tickets:</strong> View and create your own tickets.</p>
+                    <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: var(--spacing-sm);">
+                        Ticket viewing and creation functionality will be implemented in a later step.
+                    </p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Not authenticated. <a href="/login">Go to login page</a> to authenticate.</p>
+    }
+</div>
+
+@code {
+    private bool showMyTickets = false;
+    private bool showMyInfo = false;
+}
+

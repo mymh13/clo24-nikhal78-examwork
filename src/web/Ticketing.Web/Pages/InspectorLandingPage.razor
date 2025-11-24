@@ -1,13 +1,13 @@
-@page "/admin"
+@page "/inspector"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Inspector")]
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Admin Dashboard</PageTitle>
+<PageTitle>Inspector Dashboard</PageTitle>
 
 <div class="container">
-    <h1>Admin Dashboard</h1>
+    <h1>Inspector Dashboard</h1>
     
     @{
         var user = HttpContextAccessor.HttpContext?.User;
@@ -29,16 +29,16 @@
             <div class="form-group checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" @bind="showUsers" />
-                    <span>Manage Users</span>
+                    <span>View Users</span>
                 </label>
             </div>
 
             @if (showUsers)
             {
                 <div class="dashboard-expandable-section">
-                    <p><strong>User Management:</strong> Create, view, edit, and delete user accounts.</p>
+                    <p><strong>User Information:</strong> View user accounts. Modification is restricted to administrators.</p>
                     <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: var(--spacing-sm);">
-                        User management functionality will be implemented in a later step.
+                        User viewing functionality will be implemented in a later step.
                     </p>
                 </div>
             }
@@ -50,22 +50,20 @@
             <div class="form-group checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" @bind="showTickets" />
-                    <span>Manage Tickets</span>
+                    <span>Ticket Inspection</span>
                 </label>
             </div>
 
             @if (showTickets)
             {
                 <div class="dashboard-expandable-section">
-                    <p><strong>Ticket Management:</strong> Create, view, edit, and delete tickets for all users.</p>
+                    <p><strong>Ticket Management:</strong> View and create tickets. Delete functionality is restricted to administrators.</p>
                     <div class="button-container" style="margin-top: var(--spacing-md);">
                         <a href="/bookings" class="btn btn-primary">Go to Booking Management</a>
                     </div>
                 </div>
             }
         </div>
-
-
     }
     else
     {
