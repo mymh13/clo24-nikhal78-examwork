@@ -13,6 +13,12 @@
     },
     "keyVaultName": {
       "value": "examwork-kv-dev"
+    },
+    "appConfigName": {
+      "value": "examwork-appconfig-dev"
+    },
+    "serviceBusNamespaceName": {
+      "value": "examwork-sb-dev"
     }
   }
 }

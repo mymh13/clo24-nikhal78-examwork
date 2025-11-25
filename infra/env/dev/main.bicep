@@ -13,6 +13,9 @@ param keyVaultName string = 'examwork-kv-dev'
 @description('Name of the App Configuration resource')
 param appConfigName string = 'examwork-appconfig-dev'
 
+@description('Name of the Service Bus namespace')
+param serviceBusNamespaceName string = 'examwork-sb-dev'
+
 @description('Location for all resources')
 param location string = 'swedencentral'
 
@@ -70,7 +73,22 @@ module appConfiguration '../../modules/appconfiguration.bicep' = {
   }
   dependsOn: [
     keyVault
-    appService
+  ]
+}
+
+// Deploy Service Bus using the module
+module serviceBus '../../modules/servicebus.bicep' = {
+  name: 'serviceBus-deployment'
+  params: {
+    serviceBusNamespaceName: serviceBusNamespaceName
+    location: location
+    keyVaultName: keyVaultName
+    appServicePrincipalId: appService.outputs.managedIdentityPrincipalId
+    sku: 'Basic'  // Basic tier for dev environment
+    bookingEventsQueueName: 'booking-events'
+  }
+  dependsOn: [
+    keyVault
   ]
 }
 
@@ -88,4 +106,7 @@ output keyVaultUri string = keyVault.outputs.keyVaultUri
 output appConfigName string = appConfiguration.outputs.appConfigName
 output appConfigEndpoint string = appConfiguration.outputs.appConfigEndpoint
 output appConfigEndpointSecretName string = appConfiguration.outputs.endpointSecretName
+output serviceBusNamespaceName string = serviceBus.outputs.serviceBusNamespaceName
+output serviceBusEndpoint string = serviceBus.outputs.serviceBusEndpoint
+output bookingEventsQueueName string = serviceBus.outputs.bookingEventsQueueName
 

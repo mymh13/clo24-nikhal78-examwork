@@ -31,7 +31,17 @@ After deployment, configure the GitHub Actions variables:
 
 ## Structure
 
-- `modules/` - Reusable Bicep modules (appservice, cosmos, etc.)
+- `modules/` - Reusable Bicep modules (appservice, cosmos, appconfiguration, servicebus, etc.)
 - `env/dev/` - Development environment deployments
 - `env/prod/` - Production environment deployments (future)
 - `policies/` - APIM policies (future)
+
+## Resources Deployed
+
+The infrastructure includes:
+- **App Service** - Hosts the Blazor Server application
+- **Cosmos DB** - Serverless NoSQL database
+- **Application Insights** - Monitoring and telemetry
+- **Key Vault** - Secrets management (RBAC, managed identity)
+- **App Configuration** - Feature flags and configuration (managed identity)
+- **Service Bus** - Message queue for event-driven architecture (managed identity)

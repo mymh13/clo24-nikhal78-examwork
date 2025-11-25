@@ -13,12 +13,6 @@ param keyVaultName string
 @description('Principal ID of the App Service managed identity (for RBAC access)')
 param appServicePrincipalId string = ''
 
-@description('Enable soft delete (recommended for data protection)')
-param enableSoftDelete bool = true
-
-@description('Soft delete retention period in days (1-7 for Free tier, 1-90 for Standard)')
-param softDeleteRetentionInDays int = 7
-
 // App Configuration
 resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
   name: appConfigName
@@ -59,6 +53,7 @@ resource appConfigNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
 }
 
 // Grant App Service managed identity access to App Configuration (if principal ID provided)
+// Using subscriptionResourceId for built-in role: App Configuration Data Reader
 resource appConfigDataReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(appServicePrincipalId)) {
   name: guid(appConfiguration.id, appServicePrincipalId, 'App Configuration Data Reader')
   scope: appConfiguration
