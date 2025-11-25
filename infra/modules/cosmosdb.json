@@ -1,0 +1,174 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "1376927512566869531"
+    }
+  },
+  "parameters": {
+    "cosmosAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Cosmos DB account"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "swedencentral",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "ticketing",
+      "metadata": {
+        "description": "Database name"
+      }
+    },
+    "bookingsContainerName": {
+      "type": "string",
+      "defaultValue": "bookings",
+      "metadata": {
+        "description": "Container name for bookings"
+      }
+    },
+    "outboxContainerName": {
+      "type": "string",
+      "defaultValue": "outbox",
+      "metadata": {
+        "description": "Container name for outbox events"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2023-09-15",
+      "name": "[parameters('cosmosAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "databaseAccountOfferType": "Standard",
+        "enableAutomaticFailover": false,
+        "capabilities": [
+          {
+            "name": "EnableServerless"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2023-09-15",
+      "name": "[format('{0}/{1}', parameters('cosmosAccountName'), parameters('databaseName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('databaseName')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2023-09-15",
+      "name": "[format('{0}/{1}/{2}', parameters('cosmosAccountName'), parameters('databaseName'), parameters('bookingsContainerName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('bookingsContainerName')]",
+          "partitionKey": {
+            "paths": [
+              "/customerId"
+            ],
+            "kind": "Hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "includedPaths": [
+              {
+                "path": "/*"
+              }
+            ],
+            "excludedPaths": [
+              {
+                "path": "/\"_etag\"/?"
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosAccountName'), parameters('databaseName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2023-09-15",
+      "name": "[format('{0}/{1}/{2}', parameters('cosmosAccountName'), parameters('databaseName'), parameters('outboxContainerName'))]",
+      "properties": {
+        "resource": {
+          "id": "[parameters('outboxContainerName')]",
+          "partitionKey": {
+            "paths": [
+              "/status"
+            ],
+            "kind": "Hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "includedPaths": [
+              {
+                "path": "/*"
+              }
+            ],
+            "excludedPaths": [
+              {
+                "path": "/\"_etag\"/?"
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosAccountName'), parameters('databaseName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "cosmosAccountName": {
+      "type": "string",
+      "value": "[parameters('cosmosAccountName')]"
+    },
+    "cosmosEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName')), '2023-09-15').documentEndpoint]"
+    },
+    "databaseName": {
+      "type": "string",
+      "value": "[parameters('databaseName')]"
+    },
+    "bookingsContainerName": {
+      "type": "string",
+      "value": "[parameters('bookingsContainerName')]"
+    },
+    "outboxContainerName": {
+      "type": "string",
+      "value": "[parameters('outboxContainerName')]"
+    }
+  }
+}

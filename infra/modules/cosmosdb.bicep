@@ -10,6 +10,9 @@ param databaseName string = 'ticketing'
 @description('Container name for bookings')
 param bookingsContainerName string = 'bookings'
 
+@description('Container name for outbox events')
+param outboxContainerName string = 'outbox'
+
 // Cosmos DB Account - Serverless mode
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-09-15' = {
   name: cosmosAccountName
@@ -77,9 +80,41 @@ resource bookingsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/c
   }
 }
 
+// Cosmos DB Container for Outbox Events
+// Partition key is /status for efficient querying of pending events
+resource outboxContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-09-15' = {
+  parent: cosmosDatabase
+  name: outboxContainerName
+  properties: {
+    resource: {
+      id: outboxContainerName
+      partitionKey: {
+        paths: [
+          '/status'
+        ]
+        kind: 'Hash'
+      }
+      indexingPolicy: {
+        indexingMode: 'consistent'
+        includedPaths: [
+          {
+            path: '/*'
+          }
+        ]
+        excludedPaths: [
+          {
+            path: '/"_etag"/?'
+          }
+        ]
+      }
+    }
+  }
+}
+
 // Outputs
 output cosmosAccountName string = cosmosAccount.name
 output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint
 output databaseName string = databaseName
 output bookingsContainerName string = bookingsContainerName
+output outboxContainerName string = outboxContainerName
 

@@ -25,10 +25,22 @@
 
         <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin via Entra ID/OpenID Connect, Inspector/User via cookie-based with BCrypt) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status) &nbsp;|&nbsp; <strong>Event-Driven:</strong> Roadmap in progress (Service Bus, Azure Functions, Outbox Pattern - dual-system coexistence)
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email, outbox partition: /status) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin via Entra ID/OpenID Connect, Inspector/User via cookie-based with BCrypt) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status) &nbsp;|&nbsp; <strong>Event-Driven:</strong> Phase 1 & 2 complete (Service Bus, Azure Functions infrastructure, event contracts, Outbox Pattern data models - dual-system coexistence)
         </p>
     </div>
 
-    <p class="text-muted">Version status: Week 5 complete - User management, ticket management, multi-zone selection, price calculation system.
-        <br>Event-driven architecture infrastructure: App Configuration and Service Bus deployed (Phase 1.1 & 1.2 complete).</p>
+    <p class="text-muted">Version status: Week 5 - User management, ticket management, multi-zone selection, price calculation system = complete.
+        <br>Event-driven architecture: Phase 1 (Infrastructure & Foundation) and Phase 2 (Event Contracts & Data Models) complete.</p>
+    
+    <div class="text-muted">
+        <strong>Next Steps:</strong>
+        <ul>
+            <li><strong>Event-Driven Architecture:</strong> Continue with Phase 3 (Outbox Pattern Implementation) to Phase 10 (Future Enhancements).</li>
+            <li><strong>Ticket Activation:</strong> Implement ticket activation timer with dual triggers (manual and QR code scan).</li>
+            <li><strong>QR Code Generation:</strong> Generate QR codes for tickets to enable scanning functionality.</li>
+            <li><strong>Ticket Search Functionality:</strong> Add search and filtering capabilities to the admin booking management page.</li>
+            <li><strong>Shopping Cart (Bonus F):</strong> Implement shopping cart functionality to allow users to add multiple tickets before payment.</li>
+            <li><strong>Price Configuration:</strong> Move base price to configuration for runtime adjustment without code deployment.</li>
+        </ul>
+    </div>
 </div>

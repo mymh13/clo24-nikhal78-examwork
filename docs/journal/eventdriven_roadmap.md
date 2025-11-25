@@ -71,20 +71,25 @@
   - **Status:** Complete - Packages added and project builds successfully. Ready for App Configuration integration in Phase 4.
 
 ### Phase 2: Event Contracts & Data Models
-- [ ] **2.1** Create event contracts in `Ticketing.Contracts`
-  - `BookingCreated` event class
-  - `BookingCancelled` event class (future)
-  - Base `Event` class with common properties (Id, Timestamp, EventType)
-  - Event versioning strategy
+- [x] **2.1** Create event contracts in `Ticketing.Contracts`
+  - Created base `Event` class with common properties (Id, Timestamp, EventType, Version, Source)
+  - Created `BookingCreated` event class with all booking properties and `FromBooking()` factory method
+  - Created `BookingCancelled` event class (for future use) with cancellation details
+  - Event versioning strategy: Version property in base Event class (defaults to "1.0")
+  - All events use JSON property naming for serialization
 
-- [ ] **2.2** Create Outbox entity model
-  - `OutboxEvent` class in Contracts
-  - Properties: Id, EventType, EventData (JSON), Status, CreatedAt, ProcessedAt
-  - Partition key strategy for Cosmos DB
+- [x] **2.2** Create Outbox entity model
+  - Created `OutboxEvent` class in `Ticketing.Contracts.Outbox` namespace
+  - Properties: Id, EventType, EventData (JSON string), Status, CreatedAt, ProcessedAt, RetryCount, ErrorMessage
+  - Created `OutboxEventStatus` enum (Pending, Processed, Failed)
+  - Partition key strategy: Uses `Status` as partition key for efficient querying of pending events
 
-- [ ] **2.3** Create Outbox container in Cosmos DB
-  - Add `outbox` container to Bicep or auto-create logic
-  - Configure partition key (e.g., `/status` or `/eventType`)
+- [x] **2.3** Create Outbox container in Cosmos DB
+  - Added `outboxContainerName` parameter to `infra/modules/cosmosdb.bicep` (default: "outbox")
+  - Created outbox container with partition key `/status` for efficient querying
+  - Configured consistent indexing policy
+  - Added output for outbox container name
+  - **Status:** Complete - Container will be created on next infrastructure deployment
 
 ### Phase 3: Outbox Pattern Implementation
 - [ ] **3.1** Create `IOutboxService` interface
