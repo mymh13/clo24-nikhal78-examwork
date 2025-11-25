@@ -20,29 +20,21 @@
 - [x] **1.1** Create Azure App Configuration resource via Bicep
   - Added App Configuration module (`infra/modules/appconfiguration.bicep`)
   - Created App Configuration instance with Free tier for dev
-  - Configured managed identity access (App Service gets "App Configuration Data Reader" role)
+  - Configured managed identity access (App Service gets "App Configuration Data Reader" role via RBAC)
   - Store endpoint in Key Vault (`AppConfiguration--Endpoint` and `AppConfiguration--Name` secrets)
   - Integrated into main deployment (`infra/env/dev/main.bicep`)
+  - Fixed role definition ID (correct ID: `516239f1-63e1-4d78-a4de-a74fb236a071`)
   - **Note:** This is infrastructure - flag values will be managed in App Configuration UI
-  - **Verification Steps:**
-    1. Deploy infrastructure: `az deployment group create --resource-group rg-examwork-dev --template-file infra/env/dev/main.bicep --parameters @infra/env/dev/main.parameters.json`
-    2. Verify App Configuration exists: `az appconfig show -n examwork-appconfig-dev -g rg-examwork-dev`
-    3. Check Key Vault secrets: `az keyvault secret show --vault-name examwork-kv-dev --name AppConfiguration--Endpoint`
-    4. Verify RBAC role: Check Azure Portal → App Configuration → Access control (IAM) → Role assignments (should see App Service with "App Configuration Data Reader")
+  - **Status:** Verified - App Configuration exists, Key Vault secrets created, RBAC role assigned manually (role definition ID corrected in Bicep for future deployments)
 
 - [x] **1.2** Create Azure Service Bus namespace and queue via Bicep
   - Added Service Bus module (`infra/modules/servicebus.bicep`)
   - Created Service Bus namespace with Basic tier for dev
-  - Created `booking-events` queue with dead letter queue enabled
-  - Configured managed identity access (App Service gets "Azure Service Bus Data Owner" role)
+  - Created `booking-events` queue with dead letter queue enabled (14-day TTL, 1-minute lock duration, max 10 delivery attempts)
+  - Configured managed identity access (App Service gets "Azure Service Bus Data Owner" role via RBAC)
   - Store endpoint and namespace name in Key Vault (`ServiceBus--Endpoint` and `ServiceBus--NamespaceName` secrets)
   - Integrated into main deployment (`infra/env/dev/main.bicep`)
-  - **Verification Steps:**
-    1. Deploy infrastructure (same command as 1.1)
-    2. Verify Service Bus namespace exists: `az servicebus namespace show -n examwork-sb-dev -g rg-examwork-dev`
-    3. Verify queue exists: `az servicebus queue show --namespace-name examwork-sb-dev --resource-group rg-examwork-dev --name booking-events`
-    4. Check Key Vault secrets: `az keyvault secret show --vault-name examwork-kv-dev --name ServiceBus--Endpoint`
-    5. Verify RBAC role: Check Azure Portal → Service Bus → Access control (IAM) → Role assignments
+  - **Status:** Verified - Service Bus namespace exists, queue created and configured, Key Vault secrets created, RBAC role assigned
 
 - [ ] **1.3** Create Azure Function App via Bicep
   - Add Function App module to infrastructure
