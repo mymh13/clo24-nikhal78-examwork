@@ -50,9 +50,10 @@
   - **Note:** Role assignment name in Bicep must use `functionApp.name` in `guid()` instead of `functionApp.identity.principalId` because principalId is not available at deployment start
   - **Status:** Verified - Function App exists, Storage Account created, RBAC roles assigned, app settings configured. Function code deployment will be handled separately (Phase 6).
 
-- [ ] **1.4** Add Service Bus NuGet packages to API project
-  - `Azure.Messaging.ServiceBus` package
-  - Update project dependencies
+- [x] **1.4** Add Service Bus NuGet packages to API project
+  - Added `Azure.Messaging.ServiceBus` package (version 7.20.1) to `Ticketing.Api` project
+  - Package includes dependencies: Azure.Core, Microsoft.Azure.Amqp, System.ClientModel
+  - **Status:** Complete - Package added and dependencies restored
 
 - [ ] **1.5** Add Azure Functions NuGet packages to Functions project
   - `Microsoft.Azure.Functions.Worker`

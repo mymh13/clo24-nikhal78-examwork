@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\shared\Ticketing.Contracts\Ticketing.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
+  </ItemGroup>
+
 </Project>
