@@ -55,11 +55,14 @@
   - Package includes dependencies: Azure.Core, Microsoft.Azure.Amqp, System.ClientModel
   - **Status:** Complete - Package added and dependencies restored
 
-- [ ] **1.5** Add Azure Functions NuGet packages to Functions project
-  - `Microsoft.Azure.Functions.Worker`
-  - `Microsoft.Azure.Functions.Worker.Sdk`
-  - `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus`
-  - `Microsoft.ApplicationInsights.WorkerService`
+- [x] **1.5** Add Azure Functions NuGet packages to Functions project
+  - Created Functions project structure (`src/functions/Ticketing.Functions`) - early implementation of Phase 6.1
+  - Added `Microsoft.Azure.Functions.Worker` (version 2.51.0) - included in template
+  - Added `Microsoft.Azure.Functions.Worker.Sdk` (version 2.0.7) - included in template
+  - Added `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` (version 5.24.0) - added manually
+  - Added `Microsoft.ApplicationInsights.WorkerService` (version 2.23.0) - included in template
+  - Added project reference to `Ticketing.Contracts` for event contracts
+  - **Status:** Complete - All required packages installed, project builds successfully
 
 - [ ] **1.6** Add App Configuration NuGet packages to API project
   - `Microsoft.Extensions.Configuration.AzureAppConfiguration` package
