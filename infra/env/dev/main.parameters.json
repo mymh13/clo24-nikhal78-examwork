@@ -19,6 +19,12 @@
     },
     "serviceBusNamespaceName": {
       "value": "examwork-sb-dev"
+    },
+    "functionAppName": {
+      "value": "examwork-functions-dev"
+    },
+    "functionAppStorageAccountName": {
+      "value": "examworkfuncstoragedev"
     }
   }
 }

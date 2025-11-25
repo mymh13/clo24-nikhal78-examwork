@@ -10,7 +10,7 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
 
-Last updated: 2025-11-24  
+Last updated: 2025-11-25  
 
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -25,6 +25,7 @@ Last updated: 2025-11-24
 | ADR-009 | Code Organization: Extension Methods Pattern | Accepted | 2025-11-18 | Improved readability and maintainability of startup configuration |
 | ADR-010 | GDPR-Compliant Session Management: Server-Side Session Storage | Accepted | 2025-11-21 | GDPR compliance with ITicketStore for enhanced security |
 | ADR-011 | Price Calculation System: Age-Based and Student Discounts with Zone Pricing | Accepted | 2025-11-24 | Flexible pricing model with price modifiers for discounts and zone-based pricing |
+| ADR-012 | Azure App Configuration for Feature Flags: Dual-System Coexistence | Accepted | 2025-11-25 | Runtime feature flag management for permanent dual-system architecture |
  
 ---
  

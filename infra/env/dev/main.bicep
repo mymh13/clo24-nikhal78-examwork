@@ -16,6 +16,12 @@ param appConfigName string = 'examwork-appconfig-dev'
 @description('Name of the Service Bus namespace')
 param serviceBusNamespaceName string = 'examwork-sb-dev'
 
+@description('Name of the Function App')
+param functionAppName string = 'examwork-functions-dev'
+
+@description('Name of the Storage Account for Function App')
+param functionAppStorageAccountName string = 'examworkfuncstoragedev'
+
 @description('Location for all resources')
 param location string = 'swedencentral'
 
@@ -92,6 +98,25 @@ module serviceBus '../../modules/servicebus.bicep' = {
   ]
 }
 
+// Deploy Function App using the module
+module functionApp '../../modules/functionapp.bicep' = {
+  name: 'functionApp-deployment'
+  params: {
+    functionAppName: functionAppName
+    location: location
+    appInsightsConnectionString: appInsights.outputs.connectionString
+    keyVaultName: keyVaultName
+    serviceBusNamespaceName: serviceBusNamespaceName
+    cosmosAccountName: cosmosAccountName
+    storageAccountName: functionAppStorageAccountName
+    functionAppPlanSku: 'B1'
+  }
+  dependsOn: [
+    cosmosDb
+    serviceBus
+  ]
+}
+
 // Outputs
 output appServiceUrl string = appService.outputs.appServiceUrl
 output appServiceName string = appService.outputs.appServiceName
@@ -109,4 +134,7 @@ output appConfigEndpointSecretName string = appConfiguration.outputs.endpointSec
 output serviceBusNamespaceName string = serviceBus.outputs.serviceBusNamespaceName
 output serviceBusEndpoint string = serviceBus.outputs.serviceBusEndpoint
 output bookingEventsQueueName string = serviceBus.outputs.bookingEventsQueueName
+output functionAppName string = functionApp.outputs.functionAppName
+output functionAppUrl string = functionApp.outputs.functionAppUrl
+output functionAppManagedIdentityPrincipalId string = functionApp.outputs.managedIdentityPrincipalId
 

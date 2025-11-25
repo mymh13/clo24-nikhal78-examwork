@@ -29,6 +29,7 @@ This directory contains all documentation related to the project – from early 
 | **ADR-009-extension-methods-pattern.md** | Decision: Code organization using extension methods pattern for startup configuration. |
 | **ADR-010-gdpr-session-management.md** | Decision: GDPR-compliant session management using server-side storage. |
 | **ADR-011-price-calculation-system.md** | Decision: Price calculation system with age-based and student discounts, zone pricing. |
+| **ADR-012-azure-app-configuration.md** | Decision: Azure App Configuration for feature flags to support permanent dual-system coexistence. |
  
 ---
 

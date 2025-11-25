@@ -131,7 +131,7 @@ During week 5, work focused on completing login functionality for regular users,
 
 ## Ongoing Work
 
-- **Event-Driven Architecture Infrastructure:** Phase 1.1 and 1.2 complete - App Configuration and Service Bus infrastructure deployed and verified.
+- **Event-Driven Architecture Infrastructure:** Phase 1.1, 1.2, and 1.3 complete - App Configuration, Service Bus, and Function App infrastructure deployed and verified.
 
 ---
 
@@ -140,14 +140,15 @@ During week 5, work focused on completing login functionality for regular users,
 ### Infrastructure Setup
 - **App Configuration:** Created Azure App Configuration resource via Bicep (Free tier for dev). Configured managed identity access with "App Configuration Data Reader" role for App Service. Endpoint stored in Key Vault. Role definition ID corrected (`516239f1-63e1-4d78-a4de-a74fb236a071`). Resource verified and operational.
 - **Service Bus:** Created Azure Service Bus namespace and `booking-events` queue via Bicep (Basic tier for dev). Queue configured with dead letter queue, 14-day TTL, and proper retry settings. Configured managed identity access with "Azure Service Bus Data Owner" role for App Service. Endpoint and namespace name stored in Key Vault. Resources verified and operational.
-- **Infrastructure Modules:** Created reusable Bicep modules following existing patterns. Both modules integrated into main deployment with proper dependencies and outputs.
-- **Status:** Phase 1.1 and 1.2 complete. Infrastructure ready for event-driven architecture implementation. Next: Phase 1.3 (Azure Function App) or Phase 1.4 (NuGet packages).
+- **Function App:** Created Azure Function App via Bicep with Basic (B1) plan (Linux dynamic workers not available in resource group, so using B1 instead of Consumption Y1). Storage Account created for Function App. Configured managed identity with RBAC roles: "Azure Service Bus Data Receiver" for Service Bus queue access and "DocumentDB Account Contributor" for Cosmos DB access. App settings configured for Service Bus (managed identity), Cosmos DB, Key Vault, and Application Insights. Note: Role assignment name in Bicep must use `functionApp.name` in `guid()` instead of `functionApp.identity.principalId` because principalId is not available at deployment start. Resources verified and operational.
+- **Infrastructure Modules:** Created reusable Bicep modules following existing patterns. All modules integrated into main deployment with proper dependencies and outputs.
+- **Status:** Phase 1.1, 1.2, and 1.3 complete. Infrastructure ready for event-driven architecture implementation. Next: Phase 1.4 (NuGet packages) or Phase 2 (Event Contracts).
 
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 1.3 (Azure Function App) or Phase 1.4 (NuGet packages for Service Bus and App Configuration).
+1. **Event-Driven Architecture:** Continue with Phase 1.4 (NuGet packages for Service Bus, App Configuration, and Azure Functions) or Phase 2 (Event Contracts & Data Models).
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.

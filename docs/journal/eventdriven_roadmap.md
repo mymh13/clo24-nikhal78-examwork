@@ -36,11 +36,19 @@
   - Integrated into main deployment (`infra/env/dev/main.bicep`)
   - **Status:** Verified - Service Bus namespace exists, queue created and configured, Key Vault secrets created, RBAC role assigned
 
-- [ ] **1.3** Create Azure Function App via Bicep
-  - Add Function App module to infrastructure
-  - Configure Service Bus trigger binding
-  - Set up connection to Service Bus and Cosmos DB
-  - Configure Application Insights integration
+- [x] **1.3** Create Azure Function App via Bicep
+  - Added Function App module (`infra/modules/functionapp.bicep`)
+  - Created Function App with Basic (B1) plan (Linux dynamic workers not available in resource group, using B1 instead of Consumption Y1)
+  - Created Storage Account for Function App (required for Azure Functions)
+  - Configured Service Bus connection with managed identity authentication
+  - Configured Cosmos DB connection via app settings
+  - Configured Application Insights integration
+  - Set up managed identity with RBAC roles:
+    - "Azure Service Bus Data Receiver" role for Service Bus queue access
+    - "DocumentDB Account Contributor" role for Cosmos DB access (Cosmos DB Built-in Data Contributor role not available as Azure RBAC)
+  - Integrated into main deployment (`infra/env/dev/main.bicep`)
+  - **Note:** Role assignment name in Bicep must use `functionApp.name` in `guid()` instead of `functionApp.identity.principalId` because principalId is not available at deployment start
+  - **Status:** Verified - Function App exists, Storage Account created, RBAC roles assigned, app settings configured. Function code deployment will be handled separately (Phase 6).
 
 - [ ] **1.4** Add Service Bus NuGet packages to API project
   - `Azure.Messaging.ServiceBus` package
