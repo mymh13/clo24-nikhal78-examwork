@@ -54,11 +54,12 @@ resource appConfigNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
 
 // Grant App Service managed identity access to App Configuration (if principal ID provided)
 // Using subscriptionResourceId for built-in role: App Configuration Data Reader
+// Note: Role definition ID verified: 516239f1-63e1-4d78-a4de-a74fb236a071
 resource appConfigDataReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(appServicePrincipalId)) {
   name: guid(appConfiguration.id, appServicePrincipalId, 'App Configuration Data Reader')
   scope: appConfiguration
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a67d9b4-7176-4a24-b441-57c4c4d8cbfc') // App Configuration Data Reader
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '516239f1-63e1-4d78-a4de-a74fb236a071') // App Configuration Data Reader
     principalId: appServicePrincipalId
     principalType: 'ServicePrincipal'
   }
