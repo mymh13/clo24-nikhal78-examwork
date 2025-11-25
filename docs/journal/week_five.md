@@ -17,6 +17,8 @@
 - **Bonus C:** Feature flags (evaluate Bicep vs Config-based approach, document in ADR)
 - **Bonus D:** Railway-oriented build patterns (Task/Result) - can complement Bonus A
 - **Bonus E:** Add unit and/or integration testing
+- **Bonus F:** Shopping cart functionality - allow users to add (one or multiple) tickets before payment
+- **Bonus G:** Multi-zone ticket selection - select multiple zones for a single ticket purchase
 
 ### Additional Considerations & Suggestions
 - **Ticket validation service** - separate service/endpoint for QR code validation with rate limiting

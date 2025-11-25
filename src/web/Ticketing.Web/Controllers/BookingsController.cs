@@ -95,11 +95,13 @@ public class BookingsController : ControllerBase
             // Calculate price modifier based on user's age and student status
             booking.PriceModifier = PriceCalculationHelper.CalculatePriceModifier(targetUser);
             
-            // Calculate prices (base price per zone is 25 SEK, each zone = 1 ticket)
-            // For now, we'll assume 1 zone per booking (can be extended later)
-            int numberOfZones = string.IsNullOrEmpty(booking.Zone) ? 0 : 1; // Simple: 1 zone = 1 ticket
-            booking.BasePrice = 25.0m * numberOfZones; // Base price per zone
-            booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones);
+            // Calculate prices (base price per zone is 20 SEK)
+            // Zone can be comma-separated list (e.g., "Zone A, Zone B")
+            int numberOfZones = string.IsNullOrEmpty(booking.Zone) 
+                ? 0 
+                : booking.Zone.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+            booking.BasePrice = 20.0m * numberOfZones; // Base price per zone (20 SEK)
+            booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones, 20.0m);
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 

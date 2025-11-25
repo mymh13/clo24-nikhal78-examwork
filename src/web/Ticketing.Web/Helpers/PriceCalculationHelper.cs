@@ -50,9 +50,9 @@ public static class PriceCalculationHelper
 
     /// <summary>
     /// Calculates the total price for a ticket based on price modifier and number of zones.
-    /// Base price per zone is configurable (default: 25 SEK).
+    /// Base price per zone is configurable (default: 20 SEK).
     /// </summary>
-    public static decimal CalculateTotalPrice(decimal priceModifier, int numberOfZones, decimal basePricePerZone = 25.0m)
+    public static decimal CalculateTotalPrice(decimal priceModifier, int numberOfZones, decimal basePricePerZone = 20.0m)
     {
         if (numberOfZones <= 0)
         {
