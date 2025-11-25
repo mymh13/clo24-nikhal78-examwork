@@ -15,7 +15,7 @@
     <div class="tech-overview">
         <h3>Infrastructure & Deployment</h3>
         <p>
-            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, B1 tier, Sweden Central) &nbsp;|&nbsp; <strong>IaC:</strong> Bicep modules (env-specific deployments) &nbsp;|&nbsp; <strong>CI/CD:</strong> GitHub Actions → Docker → GHCR → App Service &nbsp;|&nbsp; <strong>Domain:</strong> ticket.mymh.dev (Let's Encrypt SSL, DNS-01) &nbsp;|&nbsp; <strong>Monitoring:</strong> Application Insights (telemetry, logging, performance) &nbsp;|&nbsp; <strong>Secrets:</strong> Key Vault (RBAC, managed identity)
+            <strong>Hosting:</strong> Azure App Service (Linux, .NET 8, B1 tier, Sweden Central) &nbsp;|&nbsp; <strong>IaC:</strong> Bicep modules (env-specific deployments) &nbsp;|&nbsp; <strong>CI/CD:</strong> GitHub Actions → Docker → GHCR → App Service &nbsp;|&nbsp; <strong>Domain:</strong> ticket.mymh.dev (Let's Encrypt SSL, DNS-01) &nbsp;|&nbsp; <strong>Monitoring:</strong> Application Insights (telemetry, logging, performance) &nbsp;|&nbsp; <strong>Secrets:</strong> Key Vault (RBAC, managed identity) &nbsp;|&nbsp; <strong>Configuration:</strong> App Configuration (feature flags, managed identity)
         </p>
 
         <h3>Application Stack</h3>
@@ -25,9 +25,9 @@
 
         <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin, Inspector, User) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status)
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService), Dependency Injection (scoped/singleton) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin via Entra ID/OpenID Connect, Inspector/User via cookie-based with BCrypt) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (non-sensitive status) &nbsp;|&nbsp; <strong>Event-Driven:</strong> Roadmap in progress (Service Bus, Azure Functions, Outbox Pattern - dual-system coexistence)
         </p>
     </div>
 
-    <p class="text-muted">Version status: / Currently on week 5 of the Exam Project</p>
+    <p class="text-muted">Version status: Week 5 complete - User management, ticket management, multi-zone selection, price calculation system. Event-driven architecture roadmap started (Phase 1.1: App Configuration infrastructure deployed).</p>
 </div>

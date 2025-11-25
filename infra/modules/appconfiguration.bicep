@@ -1,0 +1,77 @@
+@description('Name of the App Configuration resource (must be globally unique, 5-50 characters, alphanumeric, hyphens, and underscores only)')
+param appConfigName string
+
+@description('Location for all resources')
+param location string = 'swedencentral'
+
+@description('SKU for App Configuration - Free tier for dev, Standard for production')
+param sku string = 'Free'
+
+@description('Name of the Key Vault to store connection string')
+param keyVaultName string
+
+@description('Principal ID of the App Service managed identity (for RBAC access)')
+param appServicePrincipalId string = ''
+
+@description('Enable soft delete (recommended for data protection)')
+param enableSoftDelete bool = true
+
+@description('Soft delete retention period in days (1-7 for Free tier, 1-90 for Standard)')
+param softDeleteRetentionInDays int = 7
+
+// App Configuration
+resource appConfiguration 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
+  name: appConfigName
+  location: location
+  sku: {
+    name: sku
+  }
+  properties: {
+    enablePurgeProtection: false  // Set to true for production if needed
+  }
+}
+
+// Get reference to Key Vault
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+}
+
+// Get the connection string from App Configuration
+// Note: Connection string is available via listKeys operation, but we'll store the endpoint
+// and let the application construct the connection string using managed identity instead
+resource appConfigEndpoint 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'AppConfiguration--Endpoint'
+  properties: {
+    value: appConfiguration.properties.endpoint
+    contentType: 'App Configuration Endpoint URL'
+  }
+}
+
+// Store App Configuration name for reference
+resource appConfigNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'AppConfiguration--Name'
+  properties: {
+    value: appConfiguration.name
+    contentType: 'App Configuration Resource Name'
+  }
+}
+
+// Grant App Service managed identity access to App Configuration (if principal ID provided)
+resource appConfigDataReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(appServicePrincipalId)) {
+  name: guid(appConfiguration.id, appServicePrincipalId, 'App Configuration Data Reader')
+  scope: appConfiguration
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5a67d9b4-7176-4a24-b441-57c4c4d8cbfc') // App Configuration Data Reader
+    principalId: appServicePrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Outputs
+output appConfigName string = appConfiguration.name
+output appConfigEndpoint string = appConfiguration.properties.endpoint
+output endpointSecretName string = 'AppConfiguration--Endpoint'
+output nameSecretName string = 'AppConfiguration--Name'
+

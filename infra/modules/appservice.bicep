@@ -69,7 +69,8 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
   }
 }
 
-// Output the default URL
+// Output the default URL and managed identity principal ID
 output appServiceUrl string = 'https://${appService.properties.defaultHostName}'
 output appServiceName string = appService.name
+output managedIdentityPrincipalId string = appService.identity.principalId
 

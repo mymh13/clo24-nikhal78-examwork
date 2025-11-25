@@ -10,6 +10,9 @@ param appInsightsName string = 'examwork-insights-dev'
 @description('Name of the Key Vault resource')
 param keyVaultName string = 'examwork-kv-dev'
 
+@description('Name of the App Configuration resource')
+param appConfigName string = 'examwork-appconfig-dev'
+
 @description('Location for all resources')
 param location string = 'swedencentral'
 
@@ -34,7 +37,7 @@ module cosmosDb '../../modules/cosmosdb.bicep' = {
   }
 }
 
-// Deploy Key Vault using the module
+// Deploy Key Vault using the module (must be before App Configuration)
 module keyVault '../../modules/keyvault.bicep' = {
   name: 'keyVault-deployment'
   params: {
@@ -43,7 +46,7 @@ module keyVault '../../modules/keyvault.bicep' = {
   }
 }
 
-// Deploy App Service using the module
+// Deploy App Service using the module (must be before App Configuration for managed identity)
 module appService '../../modules/appservice.bicep' = {
   name: 'appService-deployment'
   params: {
@@ -53,6 +56,22 @@ module appService '../../modules/appservice.bicep' = {
     appInsightsConnectionString: appInsights.outputs.connectionString
     keyVaultName: keyVaultName
   }
+}
+
+// Deploy App Configuration using the module
+module appConfiguration '../../modules/appconfiguration.bicep' = {
+  name: 'appConfiguration-deployment'
+  params: {
+    appConfigName: appConfigName
+    location: location
+    keyVaultName: keyVaultName
+    appServicePrincipalId: appService.outputs.managedIdentityPrincipalId
+    sku: 'Free'  // Free tier for dev environment
+  }
+  dependsOn: [
+    keyVault
+    appService
+  ]
 }
 
 // Outputs
@@ -66,4 +85,7 @@ output appInsightsName string = appInsights.outputs.appInsightsName
 output appInsightsConnectionString string = appInsights.outputs.connectionString
 output keyVaultName string = keyVault.outputs.keyVaultName
 output keyVaultUri string = keyVault.outputs.keyVaultUri
+output appConfigName string = appConfiguration.outputs.appConfigName
+output appConfigEndpoint string = appConfiguration.outputs.appConfigEndpoint
+output appConfigEndpointSecretName string = appConfiguration.outputs.endpointSecretName
 

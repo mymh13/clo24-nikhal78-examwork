@@ -76,7 +76,10 @@ During week 5, work focused on completing login functionality for regular users,
 - **Ticket Viewing for Users:** Added `GET /api/bookings/my-bookings` endpoint (User role only) to retrieve user's own tickets. Updated User landing page to display tickets in a table format with booking ID, customer email, customer name, and booking date. Tickets automatically load on page initialization and refresh after creating new tickets. Shows informative message when no tickets exist.
 - **Ticket Creation Security:** Fixed ticket creation to prevent users from modifying their name or email. Name field in ticket creation form is now read-only and displays user's actual name from their account. `CreateBooking` endpoint enforces that users can only create tickets for themselves, always using their account data (ID, email, name) regardless of form input. Admin/Inspector roles can still create tickets for any user.
 - **Ticket Deletion for Admins:** Added `DELETE /api/bookings/{bookingId}?customerId={customerId}` endpoint restricted to Admin role. Implemented `DeleteBookingAsync` in `BookingService` for Cosmos DB deletion using partition key. Added "Actions" column to bookings table on `/bookings` page (visible only to Admins). Delete button with JavaScript confirmation dialog. Automatically refreshes bookings list after successful deletion. Enables cleanup of errant tickets with incorrect user IDs.
-- **Status:** Complete ticket viewing and management functionality. Users can view their own tickets, and admins can delete tickets with proper confirmation.
+- **Multi-Zone Ticket Selection:** Replaced zone dropdown with checkbox selection allowing users to select multiple zones per ticket. Zones are stored as comma-separated values (e.g., "Zone A, Zone B"). Updated both admin booking form (`/bookings`) and user landing page (`/user`) with checkbox interface. Added real-time price display showing base price calculation (20 SEK × number of zones). Validation ensures at least one zone is selected before ticket creation.
+- **Price Calculation Updates:** Updated base price from 25 SEK to 20 SEK per zone. Price calculation now multiplies base price by number of zones before applying discount modifier. Total price formula: `(20 SEK × numberOfZones) × priceModifier`. Updated `PriceCalculationHelper` default parameter and `BookingsController` calculation logic. Booking table displays both total price and base price for transparency.
+- **UI Container Width:** Increased container max-width from 900px to 1300px (44% wider) to improve booking table readability. Table now displays all columns (Customer ID, Email, Zone, Price Modifier, Total Price, Booking ID, Date, Actions) without crowding. Better suited for multi-zone ticket information display.
+- **Status:** Complete ticket viewing and management functionality. Users can view their own tickets, and admins can delete tickets with proper confirmation. Multi-zone selection and improved pricing calculation fully operational.
 
 ---
 
@@ -109,9 +112,11 @@ During week 5, work focused on completing login functionality for regular users,
 - **Ticket Creation for Users:** Users can create tickets from their landing page. Form auto-fills with user information. Security check ensures users can only create tickets for themselves. Name field is read-only to prevent tampering.
 - **Ticket Viewing for Users:** Users can now view all their existing tickets in a table format on their landing page. Tickets automatically refresh after creation.
 - **Ticket Deletion for Admins:** Admins can delete tickets with confirmation dialogs. Enables cleanup of errant tickets and testing of deletion functionality.
+- **Multi-Zone Ticket Selection:** Implemented checkbox-based zone selection allowing multiple zones per ticket. Real-time price calculation and validation. Zones stored as comma-separated values for flexibility.
+- **Price Calculation System:** Updated pricing model to 20 SEK per zone with automatic calculation based on user attributes (age, student status). Price modifier system (0.0 for children, 0.5 for students/pensioners, 1.0 for standard) applied after base price calculation.
 - **Email Validation:** Strict email format validation prevents invalid data entry across all user creation and registration forms.
 - **Password Security:** Password confirmation and length validation ensure users create secure accounts without typos.
-- **Improved UX:** Fixed focus issues, login error message persistence, and streamlined all landing pages for better user experience. Consistent logout button positioning.
+- **Improved UX:** Fixed focus issues, login error message persistence, and streamlined all landing pages for better user experience. Consistent logout button positioning. Wider container for better table readability.
 - **Resilient Infrastructure:** Auto-creation of Cosmos DB containers prevents deployment failures and improves system reliability.
 
 ### What Could Be Improved
@@ -119,6 +124,8 @@ During week 5, work focused on completing login functionality for regular users,
 - **Email Uniqueness Feedback:** Could provide more immediate feedback when checking if an email already exists (e.g., on blur event).
 - **Container Creation in Bicep:** Consider adding `users` container to Cosmos DB Bicep template for infrastructure-as-code approach instead of runtime creation.
 - **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page for better ticket discovery.
+- **Price Configuration:** Base price (20 SEK) is currently hardcoded. Could be moved to configuration (appsettings.json or Azure App Configuration) for easier adjustment without code deployment.
+- **Zone Data Model:** Zones are currently stored as comma-separated strings. Consider creating a proper zone data model or array structure for better type safety and validation.
 
 ---
 
@@ -130,8 +137,10 @@ During week 5, work focused on completing login functionality for regular users,
 
 ## Next Steps
 
-1. **Ticket Attributes:** Begin implementing ticket attributes (regions, zones, age, price) as outlined in brainstorming section.
-2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
-3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
-4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
+1. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
+2. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
+3. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
+4. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.
+5. **Price Configuration:** Move base price to configuration for runtime adjustment without code deployment.
 
+---
