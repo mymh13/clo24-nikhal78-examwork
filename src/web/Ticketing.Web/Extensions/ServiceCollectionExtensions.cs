@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
                     PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
                 }
             };
+            cosmosClientOptions.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             services.AddSingleton<CosmosClient>(sp => new CosmosClient(cosmosConnectionString, cosmosClientOptions));
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IUserService, UserService>();
