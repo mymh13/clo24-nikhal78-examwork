@@ -14,6 +14,7 @@ public class OutboxEvent
     public string EventData { get; set; } = string.Empty;
     
     [JsonPropertyName("status")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public OutboxEventStatus Status { get; set; } = OutboxEventStatus.Pending;
     
     [JsonPropertyName("createdAt")]

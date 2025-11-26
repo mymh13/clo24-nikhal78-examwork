@@ -41,7 +41,7 @@ public class OutboxService : IOutboxService
 
         var response = await container.CreateItemAsync(
             outboxEvent,
-            new PartitionKey(((int)outboxEvent.Status).ToString()),
+            new PartitionKey(outboxEvent.Status.ToString()),
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Outbox event created: {EventId} of type {EventType} with status {Status}",
@@ -55,7 +55,7 @@ public class OutboxService : IOutboxService
         var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
 
         var query = new QueryDefinition("SELECT * FROM c WHERE c.status = @status ORDER BY c.createdAt")
-            .WithParameter("@status", (int)OutboxEventStatus.Pending);
+            .WithParameter("@status", OutboxEventStatus.Pending.ToString());
 
         var iterator = container.GetItemQueryIterator<OutboxEvent>(
             query,
@@ -84,7 +84,7 @@ public class OutboxService : IOutboxService
 
         var readResponse = await container.ReadItemAsync<OutboxEvent>(
             eventId,
-            new PartitionKey(((int)OutboxEventStatus.Pending).ToString()),
+            new PartitionKey(OutboxEventStatus.Pending.ToString()),
             cancellationToken: cancellationToken);
 
         var outboxEvent = readResponse.Resource;
@@ -95,12 +95,12 @@ public class OutboxService : IOutboxService
         // Cosmos DB doesn't allow changing partition key - must delete and recreate
         await container.DeleteItemAsync<OutboxEvent>(
             eventId,
-            new PartitionKey(((int)OutboxEventStatus.Pending).ToString()),
+            new PartitionKey(OutboxEventStatus.Pending.ToString()),
             cancellationToken: cancellationToken);
 
         await container.CreateItemAsync(
             outboxEvent,
-            new PartitionKey(((int)outboxEvent.Status).ToString()), // Now uses "Processed" as partition key
+            new PartitionKey(outboxEvent.Status.ToString()), // Now uses "Processed" as partition key
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Outbox event marked as processed: {EventId}", eventId);
