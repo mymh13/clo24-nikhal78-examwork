@@ -46,8 +46,11 @@ We use **Azure App Configuration** for managing feature flag values, with the Ap
 - **Application Integration:**
   - `Microsoft.Extensions.Configuration.AzureAppConfiguration` NuGet package
   - Configured in `Program.cs` with managed identity authentication
+  - **Sentinel key pattern** for hot-reload (no restart required)
+    - Sentinel key (e.g., `Settings:Sentinel`) created in App Configuration
+    - Configuration refresh watches sentinel key: when value changes, all configuration refreshes
+    - Enables runtime feature flag toggling without service restart
   - Fallback to `appsettings.json` for local development
-  - Hot-reload support for configuration changes (if supported)
 - **Dual-System Architecture:**
   - **Synchronous path (flag = false):** Bookings work as before, chained API calls
   - **Event-driven path (flag = true):** Events published to Service Bus, processed by Azure Functions

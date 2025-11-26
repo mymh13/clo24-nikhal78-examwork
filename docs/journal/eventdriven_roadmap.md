@@ -135,6 +135,11 @@
   - Add `Microsoft.Extensions.Configuration.AzureAppConfiguration` NuGet package
   - Configure App Configuration connection in `Program.cs`
   - Set up feature flag provider
+  - **Implement sentinel key pattern** for hot-reload (no restart required)
+    - Create sentinel key (e.g., `Settings:Sentinel`) in App Configuration
+    - Configure `Refresh()` with sentinel key watch: `.ConfigureRefresh(refresh => refresh.Register("Settings:Sentinel", refreshAll: true))`
+    - When sentinel key value changes, all configuration (including feature flags) refreshes automatically
+    - This enables runtime feature flag toggling without service restart
   - Add fallback to appsettings.json for local development
 
 - [ ] **4.3** Create feature flag configuration
@@ -150,7 +155,7 @@
   - Always write to outbox (for audit and future activation)
   - Log feature flag status and which path was taken
   - **Both paths must work independently** - no breaking changes to existing flow
-  - Support hot-reload of configuration (if supported)
+  - **Hot-reload via sentinel key** - Update sentinel key in App Configuration to refresh feature flags without restart
 
 - [ ] **4.5** Design dual-system architecture
   - Ensure synchronous flow remains fully functional when events are disabled
