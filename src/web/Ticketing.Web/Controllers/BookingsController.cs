@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ticketing.Contracts.Bookings;
+using Ticketing.Contracts.Events;
 using Ticketing.Contracts.Users;
 using Ticketing.Web.Services;
 using Ticketing.Web.Helpers;
@@ -16,12 +17,18 @@ public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
     private readonly IUserService _userService;
+    private readonly IOutboxService _outboxService;
     private readonly ILogger<BookingsController> _logger;
 
-    public BookingsController(IBookingService bookingService, IUserService userService, ILogger<BookingsController> logger)
+    public BookingsController(
+        IBookingService bookingService, 
+        IUserService userService, 
+        IOutboxService outboxService,
+        ILogger<BookingsController> logger)
     {
         _bookingService = bookingService ?? throw new ArgumentNullException(nameof(bookingService));
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -87,16 +94,13 @@ public class BookingsController : ControllerBase
                 }
             }
 
-            // Set booking customer ID to user ID and email - always use user's actual data
             booking.CustomerId = targetUser.Id;
             booking.CustomerEmail = targetUser.Email;
-            booking.CustomerName = targetUser.Name ?? targetUser.Email; // Always use user's actual name, ignore form input
+            booking.CustomerName = targetUser.Name ?? targetUser.Email;
             
             // Calculate price modifier based on user's age and student status
             booking.PriceModifier = PriceCalculationHelper.CalculatePriceModifier(targetUser);
             
-            // Calculate prices (base price per zone is 20 SEK)
-            // Zone can be comma-separated list (e.g., "Zone A, Zone B")
             int numberOfZones = string.IsNullOrEmpty(booking.Zone) 
                 ? 0 
                 : booking.Zone.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
@@ -104,6 +108,21 @@ public class BookingsController : ControllerBase
             booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones, 20.0m);
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
+            
+            try
+            {
+                var bookingCreatedEvent = BookingCreated.FromBooking(createdBooking);
+                var outboxEvent = await _outboxService.AddEventAsync(bookingCreatedEvent, cancellationToken);
+                _logger.LogInformation("Outbox event created: {OutboxEventId} for booking {BookingId} (EventType: {EventType})",
+                    outboxEvent.Id, createdBooking.Id, outboxEvent.EventType);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the booking creation
+                // In production, consider whether to rollback booking or handle outbox failure differently
+                _logger.LogError(ex, "Failed to create outbox event for booking {BookingId}. Booking was created successfully.", createdBooking.Id);
+            }
+            
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 
                 createdBooking.Id, createdBooking.CustomerEmail, createdBooking.CustomerId, userId, userRole);
             return CreatedAtAction(nameof(GetBookingsByCustomer), new { customerId = createdBooking.CustomerId }, createdBooking);

@@ -92,28 +92,33 @@
   - **Status:** Complete - Container will be created on next infrastructure deployment
 
 ### Phase 3: Outbox Pattern Implementation
-- [ ] **3.1** Create `IOutboxService` interface
-  - `AddEventAsync<T>(T eventData)` method
-  - `GetPendingEventsAsync()` method
-  - `MarkAsProcessedAsync(string eventId)` method
+- [x] **3.1** Create `IOutboxService` interface
+  - Created `IOutboxService` interface with `AddEventAsync<T>()`, `GetPendingEventsAsync()`, and `MarkAsProcessedAsync()` methods
+  - Interface defined in `src/web/Ticketing.Web/Services/IOutboxService.cs`
+  - **Status:** Complete
 
-- [ ] **3.2** Implement `OutboxService` class
-  - Cosmos DB integration for storing events
-  - JSON serialization of event data
-  - Transaction support (if using same container as bookings)
+- [x] **3.2** Implement `OutboxService` class
+  - Implemented `OutboxService` class with Cosmos DB integration
+  - JSON serialization of event data using System.Text.Json
+  - Handles partition key changes when marking events as processed (delete from Pending partition, create in Processed partition)
+  - Uses outbox container with partition key `/status` for efficient querying
+  - **Status:** Complete
 
-- [ ] **3.3** Integrate Outbox into `BookingsController`
-  - After successful booking creation, add event to outbox
-  - Use same transaction/operation context as booking creation
-  - Log outbox event creation
+- [x] **3.3** Integrate Outbox into `BookingsController`
+  - Added `IOutboxService` dependency injection to `BookingsController`
+  - After successful booking creation, creates `BookingCreated` event and adds to outbox
+  - Logs outbox event creation with event ID and type
+  - Error handling: logs outbox failures but doesn't fail booking creation (for MVP - can be enhanced with transactional batch in future)
+  - **Status:** Complete
 
-- [ ] **3.4** Register `OutboxService` in dependency injection
-  - Add to `ServiceCollectionExtensions`
-  - Configure as scoped service
+- [x] **3.4** Register `OutboxService` in dependency injection
+  - Added `IOutboxService` and `OutboxService` registration to `ServiceCollectionExtensions`
+  - Configured as scoped service (matches `IBookingService` and `IUserService` lifecycle)
+  - **Status:** Complete
 
 ### Phase 4: Feature Flag Integration (Permanent Dual-System Support)
 
-**Recommendation: Use Azure App Configuration (not Bicep) for feature flags**
+**Use Azure App Configuration (not Bicep) for feature flags**
 
 **Why App Configuration over Bicep:**
 - **Runtime configuration changes** - Toggle between modes without redeployment (critical for demonstrations)

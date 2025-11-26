@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<CosmosClient>(sp => new CosmosClient(cosmosConnectionString, cosmosClientOptions));
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IOutboxService, OutboxService>();
         }
 
         var azureAdClientId = configuration["AzureAd:ClientId"];
