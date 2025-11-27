@@ -164,13 +164,17 @@
   - **Design for permanence:** Service designed to allow permanent switching between architectures via App Configuration
   - **Status:** Complete - Service ready for integration. Flag value to be set in App Configuration UI (default: false for synchronous mode)
 
-- [ ] **4.4** Integrate feature flag check in booking flow
-  - **Synchronous path (default):** When flag is `false`, bookings work as before (chained API)
-  - **Event-driven path:** When flag is `true`, events are published to Service Bus
-  - Always write to outbox (for audit and future activation)
-  - Log feature flag status and which path was taken
-  - **Both paths must work independently** - no breaking changes to existing flow
-  - **Hot-reload via sentinel key** - Update sentinel key in App Configuration to refresh feature flags without restart
+- [x] **4.4** Integrate feature flag check in booking flow
+  - Injected `IFeatureFlagService` into `BookingsController`
+  - Added feature flag check in `CreateBooking` method
+  - **Synchronous path (default):** When flag is `false`, bookings work as before (chained API) - no breaking changes
+  - **Event-driven path:** When flag is `true`, logs that Service Bus publishing will be implemented in Phase 5
+  - Always write to outbox (for audit and future activation) - already implemented
+  - Logs feature flag status and which architecture path was taken (Synchronous vs Event-Driven)
+  - Logs include architecture path in all relevant log messages for observability
+  - **Both paths work independently** - synchronous flow remains fully functional when events are disabled
+  - **Hot-reload support:** Feature flags refresh automatically via sentinel key pattern (no restart required)
+  - **Status:** Complete - Feature flag integration ready. Service Bus publishing placeholder added for Phase 5
 
 - [ ] **4.5** Design dual-system architecture
   - Ensure synchronous flow remains fully functional when events are disabled

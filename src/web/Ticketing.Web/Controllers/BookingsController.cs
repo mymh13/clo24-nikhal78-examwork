@@ -18,17 +18,20 @@ public class BookingsController : ControllerBase
     private readonly IBookingService _bookingService;
     private readonly IUserService _userService;
     private readonly IOutboxService _outboxService;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<BookingsController> _logger;
 
     public BookingsController(
         IBookingService bookingService, 
         IUserService userService, 
         IOutboxService outboxService,
+        IFeatureFlagService featureFlagService,
         ILogger<BookingsController> logger)
     {
         _bookingService = bookingService ?? throw new ArgumentNullException(nameof(bookingService));
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
+        _featureFlagService = featureFlagService ?? throw new ArgumentNullException(nameof(featureFlagService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -41,7 +44,6 @@ public class BookingsController : ControllerBase
             var userRole = User.FindFirstValue(ClaimTypes.Role);
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(ClaimTypes.Email);
             
-            // Determine customer email - use provided email or current user's email
             string customerEmail;
             TicketingUser? targetUser = null;
             
@@ -54,7 +56,6 @@ public class BookingsController : ControllerBase
                     return BadRequest(new { error = "User email not found in claims." });
                 }
                 
-                // Get the current user's account
                 targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
                 if (targetUser == null)
                 {
@@ -70,18 +71,15 @@ public class BookingsController : ControllerBase
                     return BadRequest(new { error = "Customer email is required." });
                 }
 
-                // Validate email format
                 if (!System.Text.RegularExpressions.Regex.IsMatch(customerEmail, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
                 {
                     return BadRequest(new { error = "Invalid email format." });
                 }
 
-                // Get or create user
                 targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
                 if (targetUser == null)
                 {
                     // Create user if doesn't exist with temporary password
-                    // Password will be hashed by UserService
                     var newUser = new TicketingUser
                     {
                         Email = customerEmail,
@@ -98,36 +96,51 @@ public class BookingsController : ControllerBase
             booking.CustomerEmail = targetUser.Email;
             booking.CustomerName = targetUser.Name ?? targetUser.Email;
             
-            // Calculate price modifier based on user's age and student status
             booking.PriceModifier = PriceCalculationHelper.CalculatePriceModifier(targetUser);
             
             int numberOfZones = string.IsNullOrEmpty(booking.Zone) 
                 ? 0 
                 : booking.Zone.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
-            booking.BasePrice = 20.0m * numberOfZones; // Base price per zone (20 SEK)
+            booking.BasePrice = 20.0m * numberOfZones;
             booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones, 20.0m);
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             
-            _logger.LogInformation("Attempting to create outbox event for booking {BookingId}", createdBooking.Id);
+            // Check feature flag to determine which path to take
+            var isEventDrivenEnabled = await _featureFlagService.IsBookingEventsEnabledAsync(cancellationToken);
+            var architecturePath = isEventDrivenEnabled ? "Event-Driven" : "Synchronous";
+            
+            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}. Architecture: {ArchitecturePath}",
+                createdBooking.Id, createdBooking.CustomerEmail, createdBooking.CustomerId, userId, userRole, architecturePath);
+            
+            // Always write to outbox for audit and future activation (dual-system coexistence)
+            _logger.LogInformation("Creating outbox event for booking {BookingId} (Architecture: {ArchitecturePath})", createdBooking.Id, architecturePath);
             try
             {
                 var bookingCreatedEvent = BookingCreated.FromBooking(createdBooking);
-                _logger.LogInformation("BookingCreated event created from booking {BookingId}, calling OutboxService", createdBooking.Id);
                 var outboxEvent = await _outboxService.AddEventAsync(bookingCreatedEvent, cancellationToken);
-                _logger.LogInformation("Outbox event created successfully: {OutboxEventId} for booking {BookingId} (EventType: {EventType})",
-                    outboxEvent.Id, createdBooking.Id, outboxEvent.EventType);
+                _logger.LogInformation("Outbox event created: {OutboxEventId} for booking {BookingId} (EventType: {EventType}, Architecture: {ArchitecturePath})",
+                    outboxEvent.Id, createdBooking.Id, outboxEvent.EventType, architecturePath);
+                
+                // Event-driven path: Publish to Service Bus when feature flag is enabled
+                // TODO: Phase 5 - Implement Service Bus publishing
+                if (isEventDrivenEnabled)
+                {
+                    _logger.LogInformation("Event-driven architecture enabled - Service Bus publishing will be implemented in Phase 5");
+                    // Phase 5: await _eventPublisher.PublishEventAsync(bookingCreatedEvent, cancellationToken);
+                }
+                else
+                {
+                    _logger.LogInformation("Synchronous architecture - booking processed via chained API calls");
+                }
             }
             catch (Exception ex)
             {
                 // Log error but don't fail the booking creation
                 // In production, consider whether to rollback booking or handle outbox failure differently
-                _logger.LogError(ex, "Failed to create outbox event for booking {BookingId}. Booking was created successfully. Error: {ErrorMessage}", 
-                    createdBooking.Id, ex.Message);
+                _logger.LogError(ex, "Failed to create outbox event for booking {BookingId}. Booking was created successfully. Architecture: {ArchitecturePath}. Error: {ErrorMessage}", 
+                    createdBooking.Id, architecturePath, ex.Message);
             }
-            
-            _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 
-                createdBooking.Id, createdBooking.CustomerEmail, createdBooking.CustomerId, userId, userRole);
             return CreatedAtAction(nameof(GetBookingsByCustomer), new { customerId = createdBooking.CustomerId }, createdBooking);
         }
         catch (Exception ex)
