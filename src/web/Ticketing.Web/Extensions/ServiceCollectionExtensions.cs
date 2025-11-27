@@ -20,6 +20,8 @@ public static class ServiceCollectionExtensions
         services.AddApplicationInsightsTelemetry();
 
         services.AddFeatureManagement();
+        services.AddScoped<IFeatureFlagService, FeatureFlagService>();
+        
         services.AddDistributedMemoryCache();
         services.AddSession(options =>
         {

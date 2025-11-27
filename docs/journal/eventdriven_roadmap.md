@@ -154,12 +154,15 @@
   - Added `Settings:Sentinel` key to appsettings.json with initial value "1"
   - **Status:** Complete - App Configuration integrated with hot-reload support via sentinel key pattern
 
-- [ ] **4.3** Create feature flag configuration
-  - Add `BookingEvents:Enabled` flag to App Configuration
-  - Set initial value to `false` (synchronous mode by default)
-  - Create `IFeatureFlagService` interface
-  - Implement feature flag service with App Configuration integration
-  - **Design for permanence:** Flags will remain in system to allow switching between architectures
+- [x] **4.3** Create feature flag configuration
+  - Created `IFeatureFlagService` interface with `IsBookingEventsEnabledAsync()` method
+  - Implemented `FeatureFlagService` class using `IFeatureManager` from Microsoft.FeatureManagement
+  - Service checks `BookingEvents:Enabled` feature flag from App Configuration
+  - Defaults to `false` (synchronous mode) if flag check fails or flag doesn't exist (ensures system remains functional)
+  - Registered as scoped service in dependency injection
+  - **Note:** The actual `BookingEvents:Enabled` flag value will be set in Azure App Configuration UI (not in code)
+  - **Design for permanence:** Service designed to allow permanent switching between architectures via App Configuration
+  - **Status:** Complete - Service ready for integration. Flag value to be set in App Configuration UI (default: false for synchronous mode)
 
 - [ ] **4.4** Integrate feature flag check in booking flow
   - **Synchronous path (default):** When flag is `false`, bookings work as before (chained API)
