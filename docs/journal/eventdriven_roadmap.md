@@ -185,12 +185,15 @@
   - **Documentation:** Updated ADR-006 with dual-system architecture details, implementation flow, performance characteristics, and risk mitigations
   - **Status:** Complete - Dual-system architecture designed, implemented, and documented. Ready for Phase 5 (Service Bus Integration)
 
-- [ ] **4.6** Document feature flag usage in ADR-006
-  - Update ADR-006 with implementation details
-  - Document how to enable/disable event flow via App Configuration
-  - Explain permanent dual-system approach
-  - Document use cases for each mode (demonstration, testing, production)
-  - Add instructions for switching modes during demonstrations
+- [x] **4.6** Document feature flag usage in ADR-006
+  - Updated ADR-006 with comprehensive feature flag usage documentation
+  - Documented how to enable/disable event flow via Azure Portal and Azure CLI
+  - Explained permanent dual-system approach and flag lifecycle
+  - Documented use cases for each mode (synchronous vs event-driven) with scenarios
+  - Added step-by-step instructions for switching modes during demonstrations
+  - Included verification steps and important notes about hot-reload
+  - Referenced ADR-014 (Sentinel Key Pattern) for hot-reload mechanism
+  - **Status:** Complete - Feature flag usage fully documented with operational instructions
 
 ### Phase 5: Service Bus Integration
 - [ ] **5.1** Create `IEventPublisher` interface

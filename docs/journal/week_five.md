@@ -137,6 +137,7 @@ During week 5, work focused on completing login functionality for regular users,
 - **Event-Driven Architecture Infrastructure:** Phase 1 complete - App Configuration, Service Bus, Function App infrastructure deployed, and all NuGet packages added.
 - **Event-Driven Architecture Contracts:** Phase 2 complete - Event contracts, Outbox model, and Cosmos DB container configured.
 - **Outbox Pattern Implementation:** Phase 3 complete - Outbox service implemented, integrated into booking creation, custom Cosmos serializer created for enum string serialization. Events successfully stored in outbox container with "Pending" status.
+- **Feature Flag Integration:** Phase 4 complete - Azure App Configuration integrated with hot-reload via sentinel key pattern, feature flag service created, booking flow integrated with dual-system architecture support, and comprehensive documentation added to ADR-006.
 
 ---
 
@@ -151,13 +152,16 @@ Infrastructure setup for event-driven architecture. Created Azure App Configurat
 Created event contracts and data models for the event-driven system. Implemented base `Event` class and `BookingCreated`/`BookingCancelled` event classes in `Ticketing.Contracts.Events`. Created `OutboxEvent` model with `OutboxEventStatus` enum for the Outbox Pattern. Added outbox container to Cosmos DB Bicep template with partition key `/status`. All contracts ready for Outbox Pattern implementation.
 
 ### Phase 3: Outbox Pattern Implementation (Complete)
-Implemented the Transactional Outbox Pattern to ensure reliable event publishing. Created `IOutboxService` and `OutboxService` with methods to add events, retrieve pending events, and mark events as processed. Integrated outbox event creation into `BookingsController.CreateBooking` - after successful booking creation, a `BookingCreated` event is automatically added to the outbox. Created custom `CosmosJsonSerializer` in Helpers directory to handle enum serialization as strings (required for partition key matching). Events are successfully stored in the outbox container with `status: "Pending"` and can be queried. Next step: Create Azure Function to process pending events and publish to Service Bus.
+Implemented the Transactional Outbox Pattern to ensure reliable event publishing. Created `IOutboxService` and `OutboxService` with methods to add events, retrieve pending events, and mark events as processed. Integrated outbox event creation into `BookingsController.CreateBooking` - after successful booking creation, a `BookingCreated` event is automatically added to the outbox. Created custom `CosmosJsonSerializer` in Helpers directory to handle enum serialization as strings (required for partition key matching). Events are successfully stored in the outbox container with `status: "Pending"` and can be queried.
+
+### Phase 4: Feature Flag Integration (Complete)
+Implemented permanent dual-system coexistence using Azure App Configuration feature flags. Integrated App Configuration with hot-reload support via sentinel key pattern (`Settings:Sentinel`) - configuration refreshes automatically within 1 minute without service restart. Created `IFeatureFlagService` and `FeatureFlagService` to check `BookingEvents:Enabled` flag. Integrated feature flag check into booking flow - when disabled (default), system operates in synchronous mode (chained API calls); when enabled, system operates in event-driven mode (Service Bus publishing in Phase 5). Both paths coexist permanently, allowing runtime switching without code changes. Outbox always writes events regardless of flag state for audit purposes. Enhanced health endpoint to display App Configuration status and feature flag values. Comprehensive feature flag usage documentation added to ADR-006, including operational instructions, use cases, and demonstration guide. Dual-system architecture designed and documented - ready for Phase 5 (Service Bus Integration).
 
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 4 (Event Processing) - Create Azure Function to process pending outbox events and publish to Service Bus.
+1. **Event-Driven Architecture:** Continue with Phase 5 (Service Bus Integration) - Create `IEventPublisher` interface, implement `ServiceBusEventPublisher` class, create background service for processing outbox, and register Service Bus services in dependency injection.
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.

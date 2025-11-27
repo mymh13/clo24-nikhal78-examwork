@@ -122,6 +122,112 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 - **Service Bus publish:** Only when flag enabled (Phase 5)
 - **No blocking:** All event operations are fire-and-forget, don't block booking creation
 
+### Feature Flag Usage
+
+#### How to Enable/Disable Event Flow
+
+**Via Azure Portal:**
+1. Navigate to Azure Portal → App Configuration → `examwork-appconfig-dev`
+2. Go to **Feature Manager** → **Feature flags**
+3. Find or create feature flag: `BookingEvents:Enabled`
+4. Set value:
+   - **`false`** = Synchronous mode (chained API calls, no Service Bus publishing)
+   - **`true`** = Event-driven mode (events published to Service Bus)
+5. **Update sentinel key** to trigger hot-reload:
+   - Go to **Configuration explorer** → **Create** → Key: `Settings:Sentinel`
+   - Set value to increment (e.g., "1" → "2" → "3")
+   - This triggers automatic refresh of all configuration within 1 minute
+6. Verify in application:
+   - Check `/api/health` endpoint - `FeatureFlagTest` shows current flag value
+   - Create a booking and check logs - should show "Synchronous" or "Event-Driven" architecture path
+
+**Via Azure CLI:**
+```bash
+# Set feature flag to enabled (event-driven mode)
+az appconfig feature set \
+  --name examwork-appconfig-dev \
+  --feature BookingEvents:Enabled \
+  --yes
+
+# Update sentinel key to trigger refresh
+az appconfig kv set \
+  --name examwork-appconfig-dev \
+  --key Settings:Sentinel \
+  --value "2"
+```
+
+#### Use Cases for Each Mode
+
+**Synchronous Mode (`BookingEvents:Enabled = false`):**
+- **Development:** Default mode during initial development and testing
+- **Cost Optimization:** No Service Bus message costs, Functions not triggered
+- **Simplified Debugging:** All operations synchronous, easier to trace
+- **Legacy Compatibility:** Matches original chained API architecture
+- **Low Load Scenarios:** Sufficient for small-scale operations
+- **Testing:** Verify core booking functionality without event complexity
+
+**Event-Driven Mode (`BookingEvents:Enabled = true`):**
+- **Demonstrations:** Show event-driven architecture capabilities
+- **Production:** Scalable architecture for high-load scenarios
+- **Integration Testing:** Test Service Bus and Function integration
+- **Performance Testing:** Measure event-driven flow performance
+- **Gradual Migration:** Test event-driven path alongside synchronous
+- **Future Features:** Enable new features that depend on events
+
+#### Switching Modes During Demonstrations
+
+**Step-by-Step Instructions:**
+
+1. **Prepare:**
+   - Ensure App Configuration is accessible
+   - Have Azure Portal open to App Configuration resource
+   - Have application health endpoint ready (`/api/health`)
+
+2. **Switch to Event-Driven Mode:**
+   - Azure Portal → App Configuration → Feature Manager → Feature flags
+   - Set `BookingEvents:Enabled` to `true` (or create if doesn't exist)
+   - Configuration explorer → Update `Settings:Sentinel` value (increment: "1" → "2")
+   - Wait up to 1 minute for automatic refresh
+   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents:Enabled = true`
+   - Create booking - logs should show "Event-Driven" architecture path
+
+3. **Switch Back to Synchronous Mode:**
+   - Azure Portal → App Configuration → Feature Manager → Feature flags
+   - Set `BookingEvents:Enabled` to `false`
+   - Configuration explorer → Update `Settings:Sentinel` value (increment: "2" → "3")
+   - Wait up to 1 minute for automatic refresh
+   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents:Enabled = false`
+   - Create booking - logs should show "Synchronous" architecture path
+
+4. **Verify Both Modes:**
+   - Create bookings in both modes
+   - Check Application Insights logs - should see architecture path in log messages
+   - Verify outbox container - events should be created in both modes
+   - Compare performance and behavior between modes
+
+**Important Notes:**
+- **No service restart required** - sentinel key pattern enables hot-reload
+- **Zero downtime** - switching happens without interrupting service
+- **Outbox always writes** - events are stored regardless of mode (for audit)
+- **Service Bus publishing** - only happens in event-driven mode (Phase 5)
+- **Logging** - all operations log which architecture path was taken
+
+#### Permanent Dual-System Approach
+
+The feature flags are **permanent** and will remain in the system indefinitely. This enables:
+- **Runtime Flexibility:** Switch between architectures without code changes
+- **A/B Testing:** Compare both approaches with real traffic
+- **Gradual Migration:** Migrate users or features gradually
+- **Rollback Capability:** Quickly revert to synchronous mode if issues arise
+- **Demonstration Value:** Show both architectures side-by-side
+
+**Flag Lifecycle:**
+- Flags are created in App Configuration (not in code)
+- Flags persist across deployments
+- Flags can be environment-specific (dev vs prod)
+- Flags support hot-reload via sentinel key pattern
+- Flags default to safe mode (`false`) if check fails
+
 ## References
 - [Architecture overview](../initial_outtakes/architecture.md)  
 - [System overview](../initial_outtakes/system_overview.md)  
@@ -130,5 +236,6 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 - [Microsoft Docs – Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-overview)  
 - [Transactional outbox pattern with Azure Cosmos DB](https://learn.microsoft.com/sv-se/azure/architecture/databases/guide/transactional-outbox-cosmos)
 - [ADR-012: Azure App Configuration](../adr/ADR-012-azure-app-configuration.md)
-- [ADR-013: Outbox Pattern](../adr/ADR-013-outbox-pattern.md)  
+- [ADR-013: Outbox Pattern](../adr/ADR-013-outbox-pattern.md)
+- [ADR-014: Sentinel Key Pattern](../adr/ADR-014-sentinel-key-pattern.md)  
   
