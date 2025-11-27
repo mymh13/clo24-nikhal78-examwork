@@ -69,6 +69,48 @@
                         <span style="color: #ff6b6b;">✗ Not configured</span>
                     }
                 </p>
+                <p><strong>App Configuration: </strong> 
+                    @if (healthStatus.Configuration.AppConfigurationConfigured)
+                    {
+                        <span style="color: #4ec9b0;">✓ Configured</span> <text>(@healthStatus.Configuration.AppConfigurationName)</text>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not configured</span>
+                    }
+                </p>
+                <p><strong>Feature Manager: </strong> 
+                    @if (healthStatus.Configuration.FeatureManagerAvailable)
+                    {
+                        <span style="color: #4ec9b0;">✓ Available</span>
+                        @if (!string.IsNullOrEmpty(healthStatus.Configuration.FeatureFlagTest) && healthStatus.Configuration.FeatureFlagTest != "Not tested")
+                        {
+                            <text> - @healthStatus.Configuration.FeatureFlagTest</text>
+                        }
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not available</span>
+                    }
+                </p>
+                <p><strong>Outbox Service: </strong> 
+                    @if (healthStatus.Configuration.OutboxServiceRegistered)
+                    {
+                        <span style="color: #4ec9b0;">✓ Registered</span>
+                        @if (!string.IsNullOrEmpty(healthStatus.Configuration.OutboxServiceStatus) && healthStatus.Configuration.OutboxServiceStatus != "Not tested")
+                        {
+                            <text> - @healthStatus.Configuration.OutboxServiceStatus</text>
+                            @if (healthStatus.Configuration.OutboxServiceStatus == "Operational")
+                            {
+                                <text> (@healthStatus.Configuration.OutboxPendingEventsCount pending events)</text>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not registered</span>
+                    }
+                </p>
             </div>
         </div>
 
@@ -116,6 +158,16 @@
         public bool CosmosDbClientRegistered { get; set; }
         public string CosmosDbConnectionStatus { get; set; } = string.Empty;
         public bool ApplicationInsightsConfigured { get; set; }
+        public string AppConfigurationEndpoint { get; set; } = string.Empty;
+        public string AppConfigurationName { get; set; } = string.Empty;
+        public bool AppConfigurationConfigured { get; set; }
+        public string SentinelValue { get; set; } = string.Empty;
+        public bool FeatureManagerAvailable { get; set; }
+        public bool? FeatureFlagValue { get; set; }
+        public string FeatureFlagTest { get; set; } = string.Empty;
+        public bool OutboxServiceRegistered { get; set; }
+        public string OutboxServiceStatus { get; set; } = string.Empty;
+        public int OutboxPendingEventsCount { get; set; }
     }
 }
 

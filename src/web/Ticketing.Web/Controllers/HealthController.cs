@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.FeatureManagement;
+using Ticketing.Web.Services;
 
 namespace Ticketing.Web.Controllers;
 
@@ -12,6 +13,7 @@ public class HealthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly CosmosClient? _cosmosClient;
     private readonly IFeatureManager? _featureManager;
+    private readonly IOutboxService? _outboxService;
     private readonly ILogger<HealthController> _logger;
 
     public HealthController(
@@ -22,6 +24,7 @@ public class HealthController : ControllerBase
         _configuration = configuration;
         _cosmosClient = serviceProvider.GetService<CosmosClient>();
         _featureManager = serviceProvider.GetService<IFeatureManager>();
+        _outboxService = serviceProvider.GetService<IOutboxService>();
         _logger = logger;
     }
 
@@ -54,8 +57,10 @@ public class HealthController : ControllerBase
                     ApplicationInsightsConfigured = !string.IsNullOrEmpty(_configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]),
                     AppConfigurationEndpoint = appConfigEndpoint,
                     AppConfigurationName = appConfigName,
+                    AppConfigurationConfigured = !string.IsNullOrEmpty(appConfigEndpoint) && appConfigEndpoint != "Not configured",
                     SentinelValue = sentinelValue,
-                    FeatureManagerAvailable = _featureManager != null
+                    FeatureManagerAvailable = _featureManager != null,
+                    OutboxServiceRegistered = _outboxService != null
                 }
             };
             
@@ -65,11 +70,28 @@ public class HealthController : ControllerBase
                 try
                 {
                     var testFlag = await _featureManager.IsEnabledAsync("BookingEvents:Enabled");
+                    health.Configuration.FeatureFlagValue = testFlag;
                     health.Configuration.FeatureFlagTest = $"BookingEvents:Enabled = {testFlag}";
                 }
                 catch (Exception ex)
                 {
                     health.Configuration.FeatureFlagTest = $"Error: {ex.Message}";
+                }
+            }
+            
+            // Test outbox service if available
+            if (_outboxService != null)
+            {
+                try
+                {
+                    var pendingEvents = await _outboxService.GetPendingEventsAsync();
+                    health.Configuration.OutboxPendingEventsCount = pendingEvents.Count;
+                    health.Configuration.OutboxServiceStatus = "Operational";
+                }
+                catch (Exception ex)
+                {
+                    health.Configuration.OutboxServiceStatus = $"Error: {ex.Message}";
+                    health.Status = "Degraded";
                 }
             }
 
@@ -120,8 +142,13 @@ public class ConfigurationStatus
     public bool ApplicationInsightsConfigured { get; set; }
     public string AppConfigurationEndpoint { get; set; } = string.Empty;
     public string AppConfigurationName { get; set; } = string.Empty;
+    public bool AppConfigurationConfigured { get; set; }
     public string SentinelValue { get; set; } = string.Empty;
     public bool FeatureManagerAvailable { get; set; }
+    public bool? FeatureFlagValue { get; set; }
     public string FeatureFlagTest { get; set; } = "Not tested";
+    public bool OutboxServiceRegistered { get; set; }
+    public string OutboxServiceStatus { get; set; } = "Not tested";
+    public int OutboxPendingEventsCount { get; set; }
 }
 
