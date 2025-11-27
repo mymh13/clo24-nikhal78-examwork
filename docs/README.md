@@ -28,6 +28,7 @@ docs/
 │  ├─ ADR-011-price-calculation-system.md       # Decision: Price calculation system with discounts
 │  ├─ ADR-012-azure-app-configuration.md        # Decision: Azure App Configuration for feature flags
 │  ├─ ADR-013-outbox-pattern.md                 # Decision: Outbox Pattern for data integrity in dual writes
+│  ├─ ADR-014-sentinel-key-pattern.md           # Decision: Sentinel Key Pattern for hot-reload configuration
 │  └─ archive/                                  # Archive for older or replaced ADR documents (currently empty)
 │
 ├─ initial_outtakes/                            # Early drafts and plans that defined the project's direction
@@ -84,6 +85,7 @@ Documents design and architectural decisions following the ADR format.
 | **ADR-011-price-calculation-system.md** | Decision: Price calculation system with age-based and student discounts, zone pricing |
 | **ADR-012-azure-app-configuration.md** | Decision: Azure App Configuration for feature flags to support permanent dual-system coexistence |
 | **ADR-013-outbox-pattern.md** | Decision: Outbox Pattern for securing data integrity in dual write operations (Cosmos DB + Service Bus) |
+| **ADR-014-sentinel-key-pattern.md** | Decision: Sentinel Key Pattern for hot-reloading configuration without service restart |
 | **archive/**             | Archive for older or replaced ADR documents (currently empty) |
 
 ---

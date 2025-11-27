@@ -10,7 +10,7 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
 
-Last updated: 2025-11-25  
+Last updated: 2025-11-27  
 
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -19,7 +19,7 @@ Last updated: 2025-11-25
 | ADR-003 | Infrastructure as Code (IaC) – tool choice: Bicep               | Accepted | 2025-10-30 | Easy integration in Azure DevOps |
 | ADR-004 | Frontend choice: .NET 8 Blazor Server                           | Accepted | 2025-10-30 | Full .NET stack and easy hosting |
 | ADR-005 | Cloud services choice: App Service, App Config, Key Vault, App Insights and APIM | Accepted | 2025-10-30 | Core Azure components for operations |
-| ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Planned  | 2025-10-30 | Activated after MVP |
+| ADR-006 | Event-driven architecture: Service Bus + Function + Outbox Pattern | Accepted | 2025-10-30 | Dual-system implementation complete, Service Bus integration in Phase 5 |
 | ADR-007 | SSL Certificate: Manual Let's Encrypt on Free Tier | Accepted | 2025-11-12 | Cost-optimized SSL for custom domain |
 | ADR-008 | Deployment Strategy: Docker Containers via GHCR | Accepted | 2025-11-13 | Resolves Oryx auto-detection issues, reliable container deployment |
 | ADR-009 | Code Organization: Extension Methods Pattern | Accepted | 2025-11-18 | Improved readability and maintainability of startup configuration |
@@ -27,6 +27,7 @@ Last updated: 2025-11-25
 | ADR-011 | Price Calculation System: Age-Based and Student Discounts with Zone Pricing | Accepted | 2025-11-24 | Flexible pricing model with price modifiers for discounts and zone-based pricing |
 | ADR-012 | Azure App Configuration for Feature Flags: Dual-System Coexistence | Accepted | 2025-11-25 | Runtime feature flag management for permanent dual-system architecture |
 | ADR-013 | Outbox Pattern: Securing Data Integrity for Dual Write Operations | Accepted | 2025-11-26 | Transactional consistency for atomic booking creation and event publishing |
+| ADR-014 | Sentinel Key Pattern: Hot-Reload Configuration Without Service Restart | Accepted | 2025-11-27 | Zero-downtime configuration updates for live demonstrations and operational flexibility |
  
 ---
  
