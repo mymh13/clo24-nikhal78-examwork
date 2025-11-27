@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using Microsoft.FeatureManagement;
 
 namespace Ticketing.Web.Controllers;
 
@@ -10,6 +11,7 @@ public class HealthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly CosmosClient? _cosmosClient;
+    private readonly IFeatureManager? _featureManager;
     private readonly ILogger<HealthController> _logger;
 
     public HealthController(
@@ -19,6 +21,7 @@ public class HealthController : ControllerBase
     {
         _configuration = configuration;
         _cosmosClient = serviceProvider.GetService<CosmosClient>();
+        _featureManager = serviceProvider.GetService<IFeatureManager>();
         _logger = logger;
     }
 
@@ -29,6 +32,16 @@ public class HealthController : ControllerBase
         {
             var keyVaultName = _configuration["KeyVault:Name"] ?? _configuration["KeyVault__Name"] ?? "Not configured";
             
+            var appConfigEndpoint = _configuration["AppConfiguration--Endpoint"] 
+                ?? _configuration["AppConfiguration:Endpoint"]
+                ?? "Not configured";
+            
+            var appConfigName = _configuration["AppConfiguration--Name"]
+                ?? _configuration["AppConfiguration:Name"]
+                ?? "Not configured";
+            
+            var sentinelValue = _configuration["Settings:Sentinel"] ?? "Not found";
+            
             var health = new HealthStatus
             {
                 Status = "Healthy",
@@ -38,9 +51,27 @@ public class HealthController : ControllerBase
                     KeyVaultName = keyVaultName,
                     KeyVaultConfigured = !string.IsNullOrEmpty(keyVaultName) && keyVaultName != "Not configured",
                     CosmosDbClientRegistered = _cosmosClient != null,
-                    ApplicationInsightsConfigured = !string.IsNullOrEmpty(_configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"])
+                    ApplicationInsightsConfigured = !string.IsNullOrEmpty(_configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]),
+                    AppConfigurationEndpoint = appConfigEndpoint,
+                    AppConfigurationName = appConfigName,
+                    SentinelValue = sentinelValue,
+                    FeatureManagerAvailable = _featureManager != null
                 }
             };
+            
+            // Test feature flag access if available
+            if (_featureManager != null)
+            {
+                try
+                {
+                    var testFlag = await _featureManager.IsEnabledAsync("BookingEvents:Enabled");
+                    health.Configuration.FeatureFlagTest = $"BookingEvents:Enabled = {testFlag}";
+                }
+                catch (Exception ex)
+                {
+                    health.Configuration.FeatureFlagTest = $"Error: {ex.Message}";
+                }
+            }
 
         if (_cosmosClient != null)
         {
@@ -87,5 +118,10 @@ public class ConfigurationStatus
     public bool CosmosDbClientRegistered { get; set; }
     public string CosmosDbConnectionStatus { get; set; } = "Not tested";
     public bool ApplicationInsightsConfigured { get; set; }
+    public string AppConfigurationEndpoint { get; set; } = string.Empty;
+    public string AppConfigurationName { get; set; } = string.Empty;
+    public string SentinelValue { get; set; } = string.Empty;
+    public bool FeatureManagerAvailable { get; set; }
+    public string FeatureFlagTest { get; set; } = "Not tested";
 }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Ticketing.Web.Authentication;
 using Ticketing.Web.Helpers;
@@ -18,6 +19,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddApplicationInsightsTelemetry();
 
+        services.AddFeatureManagement();
         services.AddDistributedMemoryCache();
         services.AddSession(options =>
         {

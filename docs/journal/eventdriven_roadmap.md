@@ -139,16 +139,20 @@
   - Endpoint stored in Key Vault (`AppConfiguration--Endpoint` and `AppConfiguration--Name` secrets)
   - **Status:** Complete - Resource exists and is ready for feature flag configuration
 
-- [ ] **4.2** Integrate App Configuration into application
-  - Add `Microsoft.Extensions.Configuration.AzureAppConfiguration` NuGet package
-  - Configure App Configuration connection in `Program.cs`
-  - Set up feature flag provider
-  - **Implement sentinel key pattern** for hot-reload (no restart required)
-    - Create sentinel key (e.g., `Settings:Sentinel`) in App Configuration
-    - Configure `Refresh()` with sentinel key watch: `.ConfigureRefresh(refresh => refresh.Register("Settings:Sentinel", refreshAll: true))`
+- [x] **4.2** Integrate App Configuration into application
+  - **Note:** NuGet packages already added in Phase 1.6
+  - Created `AddAppConfiguration()` extension method in `ConfigurationExtensions.cs`
+  - Configured App Configuration connection using managed identity (`DefaultAzureCredential`)
+  - Reads App Configuration endpoint from Key Vault (`AppConfiguration--Endpoint`) or appsettings.json fallback
+  - Set up feature flag provider via `AddFeatureManagement()` in `ServiceCollectionExtensions`
+  - **Implemented sentinel key pattern** for hot-reload (no restart required)
+    - Configured `Refresh()` with sentinel key watch: `refresh.Register("Settings:Sentinel", refreshAll: true)`
     - When sentinel key value changes, all configuration (including feature flags) refreshes automatically
-    - This enables runtime feature flag toggling without service restart
-  - Add fallback to appsettings.json for local development
+    - Added `UseAzureAppConfiguration()` middleware in pipeline for refresh functionality
+    - Cache expiration set to 1 minute for feature flags and refresh
+  - Added fallback to appsettings.json for local development (AppConfiguration section with empty values)
+  - Added `Settings:Sentinel` key to appsettings.json with initial value "1"
+  - **Status:** Complete - App Configuration integrated with hot-reload support via sentinel key pattern
 
 - [ ] **4.3** Create feature flag configuration
   - Add `BookingEvents:Enabled` flag to App Configuration

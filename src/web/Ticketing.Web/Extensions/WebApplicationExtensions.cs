@@ -1,5 +1,6 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 namespace Ticketing.Web.Extensions;
 
@@ -37,6 +38,7 @@ public static class WebApplicationExtensions
 
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();
+        app.UseAzureAppConfiguration();
         app.UseStaticFiles();
         app.UseRouting();
         app.UseSession();
@@ -62,7 +64,6 @@ public static class WebApplicationExtensions
                     await Task.Delay(500);
                     var database = cosmosClient.GetDatabase("ticketing");
                     
-                    // Ensure bookings container exists
                     try
                     {
                         var bookingsContainer = database.GetContainer("bookings");
@@ -70,13 +71,11 @@ public static class WebApplicationExtensions
                     }
                     catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
-                        // Container doesn't exist, create it
                         await database.CreateContainerIfNotExistsAsync(
                             new ContainerProperties("bookings", "/customerId"));
                         Console.WriteLine("Created 'bookings' container in Cosmos DB");
                     }
                     
-                    // Ensure users container exists
                     try
                     {
                         var usersContainer = database.GetContainer("users");
@@ -84,7 +83,6 @@ public static class WebApplicationExtensions
                     }
                     catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
-                        // Container doesn't exist, create it
                         await database.CreateContainerIfNotExistsAsync(
                             new ContainerProperties("users", "/email"));
                         Console.WriteLine("Created 'users' container in Cosmos DB");
