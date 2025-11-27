@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
@@ -18,7 +17,8 @@ public class CosmosJsonSerializer : CosmosSerializer
         };
         
         // Add JsonStringEnumConverter to handle enum serialization as strings
-        _options.Converters.Add(new JsonStringEnumConverter());
+        // This allows reading both string and integer enum values for backward compatibility
+        _options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
     }
 
     public override T FromStream<T>(Stream stream)
@@ -33,19 +33,14 @@ public class CosmosJsonSerializer : CosmosSerializer
             return (T)(object)stream;
         }
 
-        // Ensure stream is at the beginning
-        if (stream.CanSeek && stream.Position != 0)
+        using (stream)
         {
-            stream.Position = 0;
+            using (var reader = new StreamReader(stream))
+            {
+                var json = reader.ReadToEnd();
+                return JsonSerializer.Deserialize<T>(json, _options)!;
+            }
         }
-
-        // Read the JSON from the stream
-        using (var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
-        {
-            var json = reader.ReadToEnd();
-            return JsonSerializer.Deserialize<T>(json, _options)!;
-        }
-        // Note: Cosmos DB SDK will dispose the stream after this method returns
     }
 
     public override Stream ToStream<T>(T input)
