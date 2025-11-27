@@ -114,7 +114,8 @@
 - [x] **3.4** Register `OutboxService` in dependency injection
   - Added `IOutboxService` and `OutboxService` registration to `ServiceCollectionExtensions`
   - Configured as scoped service (matches `IBookingService` and `IUserService` lifecycle)
-  - **Status:** Complete
+  - Created custom `CosmosJsonSerializer` in Helpers directory to handle enum serialization as strings (required for partition key matching)
+  - **Status:** Complete - Events successfully stored in outbox container with "Pending" status, verified in Cosmos DB
 
 ### Phase 4: Feature Flag Integration (Permanent Dual-System Support)
 
@@ -130,11 +131,13 @@
 
 **Note:** Bicep will still be used to CREATE the App Configuration resource (infrastructure), but flag values will be managed in App Configuration (configuration).
 
-- [ ] **4.1** Create Azure App Configuration resource via Bicep
-  - Add App Configuration module to infrastructure
-  - Create App Configuration instance
-  - Configure connection string in Key Vault
-  - Set up managed identity access
+- [x] **4.1** Create Azure App Configuration resource via Bicep
+  - **Note:** Already completed in Phase 1.1 - App Configuration resource created via Bicep
+  - App Configuration module exists in `infra/modules/appconfiguration.bicep`
+  - App Configuration instance created with Free tier
+  - Managed identity access configured (App Service has "App Configuration Data Reader" role)
+  - Endpoint stored in Key Vault (`AppConfiguration--Endpoint` and `AppConfiguration--Name` secrets)
+  - **Status:** Complete - Resource exists and is ready for feature flag configuration
 
 - [ ] **4.2** Integrate App Configuration into application
   - Add `Microsoft.Extensions.Configuration.AzureAppConfiguration` NuGet package

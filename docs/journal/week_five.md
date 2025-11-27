@@ -97,6 +97,7 @@ During week 5, work focused on completing login functionality for regular users,
 - **Razor Syntax Issues:** Encountered compilation errors when trying to use HTML pattern attributes with square brackets in Razor syntax. Resolved by removing pattern attributes and using C# regex validation instead.
 - **Focus Highlight Issue:** Browser was highlighting page titles on load, creating a distracting white box. Resolved with CSS and JavaScript to blur focused elements on page load.
 - **Login Error Message Disappearing:** Error messages from login were disappearing immediately due to traditional form POST causing page redirect. Resolved by converting to Blazor form handling with `@onsubmit` to keep error messages visible.
+- **Cosmos DB Partition Key Mismatch (Outbox Pattern):** When implementing the Outbox Pattern, Cosmos DB threw "PartitionKey extracted from document doesn't match the one specified in the header" errors. Root cause: `OutboxEventStatus` enum was serialized as integer (0, 1, 2) by default, but partition key was passed as string ("Pending", "Processed", "Failed"). Cosmos DB requires exact match between document field and partition key header. Solution: Created custom `CosmosJsonSerializer` with `JsonStringEnumConverter` to serialize all enums as strings globally. Added `allowIntegerValues: true` for backward compatibility. Moved serializer to Helpers directory. This ensures enum partition keys match between document and header, enabling successful outbox event storage.
 
 ### Lessons Learned
 - **Container Management:** Cosmos DB containers should be created either via infrastructure (Bicep) or auto-created on first use. Auto-creation provides better developer experience but should be documented.
@@ -105,6 +106,8 @@ During week 5, work focused on completing login functionality for regular users,
 - **Form Handling:** Traditional HTML form POST causes page redirects which clear error messages. Blazor form handling with `@onsubmit` and `@onsubmit:preventDefault` allows error messages to persist on the page.
 - **User Experience:** Small UI details like focus highlights, error message persistence, and confirmation dialogs significantly impact perceived quality and professionalism of the application.
 - **Security in API Endpoints:** When allowing multiple roles to access an endpoint, add role-specific checks within the endpoint to ensure users can only perform actions on their own data (e.g., users can only create tickets for themselves).
+- **Cosmos DB Enum Serialization:** When using enums as partition keys in Cosmos DB, they must be serialized as strings to match the partition key header. The default `CosmosSerializationOptions` doesn't respect `[JsonConverter]` attributes. A custom `CosmosSerializer` with `JsonStringEnumConverter` is required. Always use `allowIntegerValues: true` for backward compatibility when reading existing data. The serializer must be applied globally to the `CosmosClient`, affecting all containers, so ensure it doesn't break existing data models.
+- **Enum vs String for Simple Status Values:** For simple status values used as partition keys (like `OutboxEventStatus`), consider whether enums are necessary. Enums provide type safety, IntelliSense, and compile-time error checking, but require custom serialization for Cosmos DB. Strings with constants (`public const string Pending = "Pending"`) would be simpler and avoid serialization complexity, but lose compile-time safety. For this use case (simple status partition key), strings might have been the simpler choice. However, enums add value through type safety and prevent typos. The trade-off: simpler code (strings) vs. type safety (enums). Consider the use case complexity and team preferences when choosing. For complex state machines or many valid values, enums are worth the serialization overhead. For simple partition keys with 2-3 values, strings may be sufficient.
 
 ### Key Achievements
 - **Complete User Management:** Full CRUD system for users with proper validation, password hashing, and role-based access control. Edit functionality fully implemented.
@@ -133,6 +136,7 @@ During week 5, work focused on completing login functionality for regular users,
 
 - **Event-Driven Architecture Infrastructure:** Phase 1 complete - App Configuration, Service Bus, Function App infrastructure deployed, and all NuGet packages added.
 - **Event-Driven Architecture Contracts:** Phase 2 complete - Event contracts, Outbox model, and Cosmos DB container configured.
+- **Outbox Pattern Implementation:** Phase 3 complete - Outbox service implemented, integrated into booking creation, custom Cosmos serializer created for enum string serialization. Events successfully stored in outbox container with "Pending" status.
 
 ---
 
@@ -146,11 +150,14 @@ Infrastructure setup for event-driven architecture. Created Azure App Configurat
 ### Phase 2: Event Contracts & Data Models (Complete)
 Created event contracts and data models for the event-driven system. Implemented base `Event` class and `BookingCreated`/`BookingCancelled` event classes in `Ticketing.Contracts.Events`. Created `OutboxEvent` model with `OutboxEventStatus` enum for the Outbox Pattern. Added outbox container to Cosmos DB Bicep template with partition key `/status`. All contracts ready for Outbox Pattern implementation.
 
+### Phase 3: Outbox Pattern Implementation (Complete)
+Implemented the Transactional Outbox Pattern to ensure reliable event publishing. Created `IOutboxService` and `OutboxService` with methods to add events, retrieve pending events, and mark events as processed. Integrated outbox event creation into `BookingsController.CreateBooking` - after successful booking creation, a `BookingCreated` event is automatically added to the outbox. Created custom `CosmosJsonSerializer` in Helpers directory to handle enum serialization as strings (required for partition key matching). Events are successfully stored in the outbox container with `status: "Pending"` and can be queried. Next step: Create Azure Function to process pending events and publish to Service Bus.
+
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 3 (Outbox Pattern Implementation) - one step at a time (3.1, 3.2, 3.3, 3.4).
+1. **Event-Driven Architecture:** Continue with Phase 4 (Event Processing) - Create Azure Function to process pending outbox events and publish to Service Bus.
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
