@@ -1,6 +1,5 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 namespace Ticketing.Web.Extensions;
 
@@ -38,7 +37,6 @@ public static class WebApplicationExtensions
 
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();
-        app.UseAzureAppConfiguration();
         app.UseStaticFiles();
         app.UseRouting();
         app.UseSession();

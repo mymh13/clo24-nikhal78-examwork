@@ -72,15 +72,12 @@ public static class ConfigurationExtensions
                     options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
                         .Select(KeyFilter.Any, LabelFilter.Null)
                         .Select(KeyFilter.Any, environment.EnvironmentName)
-                        .UseFeatureFlags(featureFlagOptions =>
-                        {
-                            featureFlagOptions.CacheExpirationInterval = TimeSpan.FromMinutes(1);
-                        })
+                        .UseFeatureFlags()
                         .ConfigureRefresh(refresh =>
                         {
                             // Sentinel key pattern for hot-reload
                             refresh.Register("Settings:Sentinel", refreshAll: true)
-                                .SetCacheExpiration(TimeSpan.FromMinutes(1));
+                                .SetRefreshInterval(TimeSpan.FromMinutes(1));
                         });
                 });
             }
