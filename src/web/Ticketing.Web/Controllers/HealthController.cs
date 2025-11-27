@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -85,7 +86,7 @@ public class HealthController : ControllerBase
                 try
                 {
                     var pendingEvents = await _outboxService.GetPendingEventsAsync();
-                    health.Configuration.OutboxPendingEventsCount = pendingEvents.Count;
+                    health.Configuration.OutboxPendingEventsCount = pendingEvents.Count();
                     health.Configuration.OutboxServiceStatus = "Operational";
                 }
                 catch (Exception ex)
