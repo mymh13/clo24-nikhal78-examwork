@@ -22,7 +22,7 @@ The ticketing system implements a **permanent dual-system coexistence** architec
 
 **Without Sentinel Key Pattern:**
 ```
-1. Update feature flag in App Configuration (BookingEvents:Enabled = true)
+1. Update feature flag in App Configuration (BookingEvents_Enabled = true)
 2. Application still uses cached value (false)
 3. Must restart service to pick up new value
 4. Service unavailable during restart
@@ -54,7 +54,7 @@ We implement the **Sentinel Key Pattern** for hot-reloading Azure App Configurat
 
 **Flow:**
 ```
-1. Feature flag changed in App Configuration (BookingEvents:Enabled = true)
+1. Feature flag changed in App Configuration (BookingEvents_Enabled = true)
    ↓
 2. Update sentinel key value (Settings:Sentinel = "2" → "3")
    ↓

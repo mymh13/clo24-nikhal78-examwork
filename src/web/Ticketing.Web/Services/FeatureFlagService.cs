@@ -7,7 +7,7 @@ public class FeatureFlagService : IFeatureFlagService
     private readonly IFeatureManager _featureManager;
     private readonly ILogger<FeatureFlagService> _logger;
     
-    private const string BookingEventsFeatureFlag = "BookingEvents:Enabled";
+    private const string BookingEventsFeatureFlag = "BookingEvents_Enabled";
 
     public FeatureFlagService(IFeatureManager featureManager, ILogger<FeatureFlagService> logger)
     {

@@ -40,7 +40,7 @@ We use **Azure App Configuration** for managing feature flag values, with the Ap
   - Endpoint and name stored in Key Vault for application access
 - **Configuration (App Configuration UI):**
   - Feature flag values managed in Azure Portal App Configuration UI
-  - Example: `BookingEvents:Enabled` flag (boolean) to toggle event-driven flow
+  - Example: `BookingEvents_Enabled` flag (boolean) to toggle event-driven flow
   - Environment-specific values via labels (dev, staging, prod)
   - No code changes required to update flag values
 - **Application Integration:**

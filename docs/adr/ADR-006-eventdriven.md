@@ -25,8 +25,8 @@ The system implements **permanent dual-system coexistence** - both synchronous (
 - **Sentinel key pattern** enables hot-reload of feature flags without service restart
 
 **Dual-System Architecture:**
-- **Synchronous Path (default):** When `BookingEvents:Enabled = false`, bookings work exactly as before via chained API calls. No breaking changes.
-- **Event-Driven Path:** When `BookingEvents:Enabled = true`, events are published to Service Bus for asynchronous processing.
+- **Synchronous Path (default):** When `BookingEvents_Enabled = false`, bookings work exactly as before via chained API calls. No breaking changes.
+- **Event-Driven Path:** When `BookingEvents_Enabled = true`, events are published to Service Bus for asynchronous processing.
 - **Both paths coexist permanently** - feature flags remain in the system to allow runtime switching between architectures.
 - **Always write to outbox** - events are stored in outbox regardless of feature flag state (for audit and future activation).
 
@@ -88,21 +88,21 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 ## Implementation Details
 
 ### Feature Flag Configuration
-- **Flag Name:** `BookingEvents:Enabled`
+- **Flag Name:** `BookingEvents_Enabled`
 - **Default Value:** `false` (synchronous mode)
 - **Location:** Azure App Configuration
 - **Hot-Reload:** Enabled via sentinel key pattern (`Settings:Sentinel`)
 
 ### Architecture Flow
 
-**Synchronous Path (BookingEvents:Enabled = false):**
+**Synchronous Path (BookingEvents_Enabled = false):**
 1. Booking created in Cosmos DB
 2. Outbox event created (for audit)
 3. Booking returned to client
 4. No Service Bus publishing
 5. No Function processing
 
-**Event-Driven Path (BookingEvents:Enabled = true):**
+**Event-Driven Path (BookingEvents_Enabled = true):**
 1. Booking created in Cosmos DB
 2. Outbox event created
 3. Event published to Service Bus (Phase 5)
@@ -129,7 +129,7 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 **Via Azure Portal:**
 1. Navigate to Azure Portal → App Configuration → `examwork-appconfig-dev`
 2. Go to **Feature Manager** → **Feature flags**
-3. Find or create feature flag: `BookingEvents:Enabled`
+3. Find or create feature flag: `BookingEvents_Enabled`
 4. Set value:
    - **`false`** = Synchronous mode (chained API calls, no Service Bus publishing)
    - **`true`** = Event-driven mode (events published to Service Bus)
@@ -146,7 +146,7 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 # Set feature flag to enabled (event-driven mode)
 az appconfig feature set \
   --name examwork-appconfig-dev \
-  --feature BookingEvents:Enabled \
+  --feature BookingEvents_Enabled \
   --yes
 
 # Update sentinel key to trigger refresh
@@ -158,7 +158,7 @@ az appconfig kv set \
 
 #### Use Cases for Each Mode
 
-**Synchronous Mode (`BookingEvents:Enabled = false`):**
+**Synchronous Mode (`BookingEvents_Enabled = false`):**
 - **Development:** Default mode during initial development and testing
 - **Cost Optimization:** No Service Bus message costs, Functions not triggered
 - **Simplified Debugging:** All operations synchronous, easier to trace
@@ -166,7 +166,7 @@ az appconfig kv set \
 - **Low Load Scenarios:** Sufficient for small-scale operations
 - **Testing:** Verify core booking functionality without event complexity
 
-**Event-Driven Mode (`BookingEvents:Enabled = true`):**
+**Event-Driven Mode (`BookingEvents_Enabled = true`):**
 - **Demonstrations:** Show event-driven architecture capabilities
 - **Production:** Scalable architecture for high-load scenarios
 - **Integration Testing:** Test Service Bus and Function integration
@@ -185,18 +185,18 @@ az appconfig kv set \
 
 2. **Switch to Event-Driven Mode:**
    - Azure Portal → App Configuration → Feature Manager → Feature flags
-   - Set `BookingEvents:Enabled` to `true` (or create if doesn't exist)
+   - Set `BookingEvents_Enabled` to `true` (or create if doesn't exist)
    - Configuration explorer → Update `Settings:Sentinel` value (increment: "1" → "2")
    - Wait up to 1 minute for automatic refresh
-   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents:Enabled = true`
+   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents_Enabled = true`
    - Create booking - logs should show "Event-Driven" architecture path
 
 3. **Switch Back to Synchronous Mode:**
    - Azure Portal → App Configuration → Feature Manager → Feature flags
-   - Set `BookingEvents:Enabled` to `false`
+   - Set `BookingEvents_Enabled` to `false`
    - Configuration explorer → Update `Settings:Sentinel` value (increment: "2" → "3")
    - Wait up to 1 minute for automatic refresh
-   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents:Enabled = false`
+   - Verify: Check `/api/health` - `FeatureFlagTest` should show `BookingEvents_Enabled = false`
    - Create booking - logs should show "Synchronous" architecture path
 
 4. **Verify Both Modes:**

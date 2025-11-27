@@ -70,9 +70,9 @@ public class HealthController : ControllerBase
             {
                 try
                 {
-                    var testFlag = await _featureManager.IsEnabledAsync("BookingEvents:Enabled");
+                    var testFlag = await _featureManager.IsEnabledAsync("BookingEvents_Enabled");
                     health.Configuration.FeatureFlagValue = testFlag;
-                    health.Configuration.FeatureFlagTest = $"BookingEvents:Enabled = {testFlag}";
+                    health.Configuration.FeatureFlagTest = $"BookingEvents_Enabled = {testFlag}";
                 }
                 catch (Exception ex)
                 {

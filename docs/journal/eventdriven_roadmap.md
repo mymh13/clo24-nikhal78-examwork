@@ -157,10 +157,10 @@
 - [x] **4.3** Create feature flag configuration
   - Created `IFeatureFlagService` interface with `IsBookingEventsEnabledAsync()` method
   - Implemented `FeatureFlagService` class using `IFeatureManager` from Microsoft.FeatureManagement
-  - Service checks `BookingEvents:Enabled` feature flag from App Configuration
+  - Service checks `BookingEvents_Enabled` feature flag from App Configuration
   - Defaults to `false` (synchronous mode) if flag check fails or flag doesn't exist (ensures system remains functional)
   - Registered as scoped service in dependency injection
-  - **Note:** The actual `BookingEvents:Enabled` flag value will be set in Azure App Configuration UI (not in code)
+  - **Note:** The actual `BookingEvents_Enabled` flag value will be set in Azure App Configuration UI (not in code)
   - **Design for permanence:** Service designed to allow permanent switching between architectures via App Configuration
   - **Status:** Complete - Service ready for integration. Flag value to be set in App Configuration UI (default: false for synchronous mode)
 
