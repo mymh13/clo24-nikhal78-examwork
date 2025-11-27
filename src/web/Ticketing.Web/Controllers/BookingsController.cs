@@ -109,18 +109,21 @@ public class BookingsController : ControllerBase
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             
+            _logger.LogInformation("Attempting to create outbox event for booking {BookingId}", createdBooking.Id);
             try
             {
                 var bookingCreatedEvent = BookingCreated.FromBooking(createdBooking);
+                _logger.LogInformation("BookingCreated event created from booking {BookingId}, calling OutboxService", createdBooking.Id);
                 var outboxEvent = await _outboxService.AddEventAsync(bookingCreatedEvent, cancellationToken);
-                _logger.LogInformation("Outbox event created: {OutboxEventId} for booking {BookingId} (EventType: {EventType})",
+                _logger.LogInformation("Outbox event created successfully: {OutboxEventId} for booking {BookingId} (EventType: {EventType})",
                     outboxEvent.Id, createdBooking.Id, outboxEvent.EventType);
             }
             catch (Exception ex)
             {
                 // Log error but don't fail the booking creation
                 // In production, consider whether to rollback booking or handle outbox failure differently
-                _logger.LogError(ex, "Failed to create outbox event for booking {BookingId}. Booking was created successfully.", createdBooking.Id);
+                _logger.LogError(ex, "Failed to create outbox event for booking {BookingId}. Booking was created successfully. Error: {ErrorMessage}", 
+                    createdBooking.Id, ex.Message);
             }
             
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}", 
