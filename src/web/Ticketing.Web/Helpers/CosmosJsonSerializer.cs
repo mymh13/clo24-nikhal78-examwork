@@ -40,10 +40,7 @@ public class CosmosJsonSerializer : CosmosSerializer
     public override Stream ToStream<T>(T input)
     {
         var stream = new MemoryStream();
-        using (var writer = new StreamWriter(stream, leaveOpen: true))
-        {
-            JsonSerializer.Serialize(writer, input, _options);
-        }
+        JsonSerializer.Serialize(stream, input, _options);
         stream.Position = 0;
         return stream;
     }
