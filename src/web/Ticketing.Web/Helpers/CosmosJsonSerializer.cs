@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Azure.Cosmos;
@@ -22,19 +23,29 @@ public class CosmosJsonSerializer : CosmosSerializer
 
     public override T FromStream<T>(Stream stream)
     {
-        using (stream)
+        if (stream == null)
         {
-            if (typeof(Stream).IsAssignableFrom(typeof(T)))
-            {
-                return (T)(object)stream;
-            }
-
-            using (var reader = new StreamReader(stream))
-            {
-                var json = reader.ReadToEnd();
-                return JsonSerializer.Deserialize<T>(json, _options)!;
-            }
+            return default(T)!;
         }
+
+        if (typeof(Stream).IsAssignableFrom(typeof(T)))
+        {
+            return (T)(object)stream;
+        }
+
+        // Ensure stream is at the beginning
+        if (stream.CanSeek && stream.Position != 0)
+        {
+            stream.Position = 0;
+        }
+
+        // Read the JSON from the stream
+        using (var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true))
+        {
+            var json = reader.ReadToEnd();
+            return JsonSerializer.Deserialize<T>(json, _options)!;
+        }
+        // Note: Cosmos DB SDK will dispose the stream after this method returns
     }
 
     public override Stream ToStream<T>(T input)
