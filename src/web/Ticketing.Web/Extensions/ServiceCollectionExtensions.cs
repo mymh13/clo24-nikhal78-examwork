@@ -7,6 +7,7 @@ using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Ticketing.Web.Authentication;
+using Ticketing.Web.Helpers;
 using Ticketing.Web.Services;
 
 namespace Ticketing.Web.Extensions;
@@ -36,10 +37,7 @@ public static class ServiceCollectionExtensions
         {
             var cosmosClientOptions = new CosmosClientOptions
             {
-                SerializerOptions = new CosmosSerializationOptions
-                {
-                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-                }
+                Serializer = new CosmosJsonSerializer()
             };
             services.AddSingleton<CosmosClient>(sp => new CosmosClient(cosmosConnectionString, cosmosClientOptions));
             services.AddScoped<IBookingService, BookingService>();
