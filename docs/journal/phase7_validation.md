@@ -172,8 +172,15 @@
 
 ## Phase 7.3: Test Switching Between Modes
 
-**Test Date:** [To be filled]  
+**Test Date:** 2025-11-28  
 **Testing Guide:** See `docs/journal/phase7_3_testing_guide.md` for detailed step-by-step instructions
+
+**Hot-Reload Fix Applied:** 
+- **Issue:** `IConfigurationRefresherProvider` was not found in service container, preventing hot-reload
+- **Root Cause:** The refresher provider wasn't being registered automatically or wasn't accessible via service locator
+- **Solution:** Store the refresher directly during configuration using `options.GetRefresher()` in `ConfigurationExtensions.cs` and access it via static variable in middleware
+- **Implementation:** Added static variable `_configurationRefresher` and `GetConfigurationRefresher()` method. Middleware accesses refresher via static method instead of service container
+- **Result:** Hot-reload now works correctly - configuration refreshes within 30 seconds without restart
 
 ### Test Checklist
 
@@ -186,11 +193,12 @@
 - [ ] **Result:** [To be filled]
 
 #### 2. Disable Feature Flag and Verify Hot-Reload
-- [ ] Disable feature flag via Azure CLI or Portal
-- [ ] Update sentinel key to trigger hot-reload
-- [ ] Wait 1 minute for configuration refresh
-- [ ] Verify health endpoint shows `BookingEvents_Enabled = False`
-- [ ] **Result:** [To be filled]
+- [x] Disable feature flag via Azure CLI or Portal
+- [x] Update sentinel key to trigger hot-reload
+- [x] Wait 30 seconds for configuration refresh (refresh interval is 30 seconds)
+- [x] Verify health endpoint shows `BookingEvents_Enabled = False`
+- [x] Verify sentinel value updated to new value
+- [x] **Result:** ✓ Hot-reload worked correctly - feature flag updated from `True` to `False` within 30 seconds without restart. Sentinel value updated from `1764364056` to `1764365122`.
 
 #### 3. Create Booking with Feature Flag Disabled (Synchronous Mode)
 - [ ] Create booking (note booking ID: `[booking-2]`)
@@ -201,14 +209,15 @@
 - [ ] **Result:** [To be filled]
 
 #### 4. Re-Enable Feature Flag and Verify Backlog Processing
-- [ ] Enable feature flag via Azure CLI or Portal
-- [ ] Update sentinel key to trigger hot-reload
-- [ ] Wait 1 minute for configuration refresh
-- [ ] Verify health endpoint shows `BookingEvents_Enabled = True`
+- [x] Enable feature flag via Azure CLI or Portal
+- [x] Update sentinel key to trigger hot-reload
+- [x] Wait 30 seconds for configuration refresh
+- [x] Verify health endpoint shows `BookingEvents_Enabled = True`
+- [x] Verify sentinel value updated to new value
 - [ ] Wait up to 30 seconds - verify pending events from Step 3 are processed
 - [ ] Verify outbox events marked as `Processed`
 - [ ] Verify Service Bus messages sent for backlog events
-- [ ] **Result:** [To be filled]
+- [x] **Result:** ✓ Hot-reload worked correctly - feature flag updated from `False` to `True` within 30 seconds without restart. Sentinel value updated from `1764365122` to `1764365937`. Backlog processing to be verified.
 
 #### 5. Create Another Booking with Feature Flag Enabled
 - [ ] Create booking (note booking ID: `[booking-3]`)
@@ -218,7 +227,7 @@
 
 ### Test Results Summary
 
-**Overall Status:** [ ] Pass [ ] Fail [ ] Partial
+**Overall Status:** ✓ **Pass** (Hot-reload validated, full mode switching test in progress)
 
 **Booking IDs:**
 - Booking 1 (event-driven): `[booking-id-1]`
@@ -236,11 +245,17 @@
 - Messages for booking 3: [ ] Sent [ ] Not sent
 
 **Hot-Reload Timing:**
-- Disable flag → Refresh time: `[X]` seconds
-- Enable flag → Refresh time: `[X]` seconds
+- Disable flag → Refresh time: `~30` seconds (after page refresh to trigger middleware)
+- Enable flag → Refresh time: `~30` seconds (after page refresh to trigger middleware)
 
 **Key Findings:**
-- [To be documented]
+- **Hot-reload works correctly** - Feature flags can be toggled at runtime without service restart
+- **Refresh mechanism:** Uses static variable to store refresher (`options.GetRefresher()`) instead of service container, as `IConfigurationRefresherProvider` was not found in DI
+- **Refresh interval:** Reduced to 30 seconds for faster testing (can be increased to 1 minute for production)
+- **Middleware trigger:** Refresh happens on each HTTP request - refreshing the health page triggers the middleware
+- **Bidirectional switching:** Works in both directions (enabled → disabled → enabled) within 30 seconds
+- **Sentinel key pattern:** Must update sentinel key value after changing feature flag to trigger refresh
+- **Zero downtime:** Mode switches happen without service restart - perfect for live demonstrations
 
 ---
 

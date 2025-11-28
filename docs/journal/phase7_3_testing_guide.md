@@ -67,10 +67,11 @@ az appconfig kv set \
 
 ### Step 3: Wait for Hot-Reload
 
-1. **Wait 1 minute** for hot-reload (sentinel key pattern)
+1. **Wait 30 seconds** for hot-reload (sentinel key pattern, refresh interval is 30 seconds)
 2. **Check health endpoint:**
    - Navigate to https://ticket.mymh.dev/health
    - Verify: `Feature Manager: ✓ Available - BookingEvents_Enabled = False`
+   - Verify: Sentinel value updated to the new value
    - Or check `/api/health` endpoint directly
 
 ### Step 4: Create Booking with Feature Flag Disabled (Synchronous Mode)
@@ -122,9 +123,10 @@ az appconfig kv set \
 
 ### Step 6: Wait for Hot-Reload and Verify Processing
 
-1. **Wait 1 minute** for hot-reload
+1. **Wait 30 seconds** for hot-reload (refresh interval is 30 seconds)
 2. **Check health endpoint:**
    - Verify: `Feature Manager: ✓ Available - BookingEvents_Enabled = True`
+   - Verify: Sentinel value updated to the new value
 3. **Wait up to 30 seconds** for OutboxProcessorService to process pending events
 4. **Verify Processing:**
    - Check health endpoint - pending events should decrease (all processed)
@@ -146,7 +148,7 @@ az appconfig kv set \
 ## Validation Checklist
 
 - [ ] Feature flag can be toggled at runtime (enabled → disabled → enabled)
-- [ ] Hot-reload works correctly (flag updates within 1 minute without restart)
+- [ ] Hot-reload works correctly (flag updates within 30 seconds without restart)
 - [ ] Booking created in event-driven mode: outbox event processed, Service Bus message sent
 - [ ] Booking created in synchronous mode: outbox event created but not processed, no Service Bus message
 - [ ] All bookings created successfully regardless of feature flag state
@@ -159,7 +161,7 @@ az appconfig kv set \
 ## Expected Results Summary
 
 ✓ **Runtime switching works** - Feature flag can be toggled without restart  
-✓ **Hot-reload functional** - Configuration updates within 1 minute  
+✓ **Hot-reload functional** - Configuration updates within 30 seconds  
 ✓ **Dual-system coexistence** - Both modes work correctly  
 ✓ **Audit trail maintained** - All bookings create outbox events  
 ✓ **Selective processing** - Only events from enabled periods are published  
@@ -198,10 +200,13 @@ az appconfig kv set \
 ## Troubleshooting
 
 **If hot-reload doesn't work:**
-- Verify sentinel key was updated (check last modified timestamp)
-- Wait up to 1 minute for refresh interval
-- Check health endpoint for current feature flag value
+- Verify sentinel key was updated (check last modified timestamp in Azure Portal)
+- Wait up to 30 seconds for refresh interval (refresh happens on each HTTP request)
+- Refresh the health page to trigger the middleware
+- Check health endpoint for current feature flag value and sentinel value
 - Verify middleware is in place (`WebApplicationExtensions.cs`)
+- Check Application Insights logs for refresh attempts and errors
+- **Note:** If `IConfigurationRefresherProvider` is not found, the refresher is accessed via static variable (`ConfigurationExtensions.GetConfigurationRefresher()`)
 
 **If outbox events aren't processed:**
 - Check feature flag is actually enabled (health endpoint)

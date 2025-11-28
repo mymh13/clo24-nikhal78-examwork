@@ -148,11 +148,14 @@
   - **Implemented sentinel key pattern** for hot-reload (no restart required)
     - Configured `Refresh()` with sentinel key watch: `refresh.Register("Settings:Sentinel", refreshAll: true)`
     - When sentinel key value changes, all configuration (including feature flags) refreshes automatically
-    - **Critical:** Added `app.UseAzureAppConfiguration()` middleware in pipeline for refresh functionality
+    - **Critical:** Custom middleware in `WebApplicationExtensions.cs` calls `TryRefreshAsync()` on each HTTP request
       - Middleware must be placed early in pipeline (after static files, before routing)
+      - **Refresher Access:** Store refresher directly using `options.GetRefresher()` during configuration (static variable)
+      - **Issue Found:** `IConfigurationRefresherProvider` was not found in service container
+      - **Solution:** Access refresher via static variable `ConfigurationExtensions.GetConfigurationRefresher()` instead of service locator
       - Without this middleware, hot-reload does not work - only restart picks up changes
       - Middleware triggers refresh check on each HTTP request
-    - Cache expiration set to 1 minute for feature flags and refresh
+    - Refresh interval set to 30 seconds (reduced from 1 minute for faster testing, can be increased for production)
   - Added fallback to appsettings.json for local development (AppConfiguration section with empty values)
   - Added `Settings:Sentinel` key to appsettings.json with initial value "1"
   - **Status:** Complete - App Configuration integrated with hot-reload support via sentinel key pattern
