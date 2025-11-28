@@ -39,43 +39,47 @@
                             <strong>App Configuration:</strong> 
                             @if (miniHealth.AppConfigurationConfigured)
                             {
-                                <span style="color: #4caf50;">✓ Configured (@miniHealth.AppConfigurationName)</span>
+                                <span style="color: #4caf50;"> ✓ Configured (@miniHealth.AppConfigurationName)</span>
                                 <span style="color: #666; margin-left: 8px;">- Sentinel: @miniHealth.SentinelValue</span>
                             }
                             else
                             {
-                                <span style="color: #f44336;">✗ Not configured</span>
+                                <span style="color: #f44336;"> ✗ Not configured</span>
                             }
                         </div>
                         <div style="margin-bottom: var(--spacing-sm);">
                             <strong>Feature Manager:</strong> 
                             @if (miniHealth.FeatureManagerAvailable)
                             {
-                                <span style="color: #4caf50;">✓ Available</span>
+                                <span style="color: #4caf50;"> ✓ Available</span>
                                 <span style="color: #666; margin-left: 8px;">- @miniHealth.FeatureFlagDisplay</span>
                             }
                             else
                             {
-                                <span style="color: #f44336;">✗ Not available</span>
+                                <span style="color: #f44336;"> ✗ Not available</span>
                             }
                         </div>
                         <div style="margin-bottom: var(--spacing-sm);">
                             <strong>Outbox Service:</strong> 
                             @if (miniHealth.OutboxServiceStatus == "Operational")
                             {
-                                <span style="color: #4caf50;">✓ Registered - Operational</span>
+                                <span style="color: #4caf50;"> ✓ Registered - Operational</span>
                                 <span style="color: #666; margin-left: 8px;">(@miniHealth.OutboxPendingEventsCount pending events)</span>
                             }
                             else
                             {
-                                <span style="color: #f44336;">✗ @miniHealth.OutboxServiceStatus</span>
+                                <span style="color: #f44336;"> ✗ @miniHealth.OutboxServiceStatus</span>
                             }
                         </div>
                         <div style="margin-top: var(--spacing-md);">
-                            <button class="btn btn-primary" @onclick="ToggleFeatureFlag" disabled="@isToggling">
+                            <button class="btn btn-primary" @onclick="ToggleFeatureFlag" disabled="@(isToggling || isCooldown)">
                                 @if (isToggling)
                                 {
                                     <text>Toggling...</text>
+                                }
+                                else if (isCooldown)
+                                {
+                                    <text>Please wait... (@cooldownRemainingSeconds)s</text>
                                 }
                                 else
                                 {
@@ -131,7 +135,12 @@
 @code {
     private MiniHealthStatus? miniHealth;
     private bool isToggling = false;
+    private bool isCooldown = false;
+    private int cooldownRemainingSeconds = 0;
     private string toggleMessage = string.Empty;
+    private DateTime lastToggleTime = DateTime.MinValue;
+    private const int MinToggleIntervalSeconds = 2;
+    private const int CooldownSeconds = 5;
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,8 +162,21 @@
 
     private async Task ToggleFeatureFlag()
     {
+        // Debounce: Prevent rapid successive clicks
+        var timeSinceLastToggle = (DateTime.UtcNow - lastToggleTime).TotalSeconds;
+        if (timeSinceLastToggle < MinToggleIntervalSeconds)
+        {
+            toggleMessage = $"Please wait {MinToggleIntervalSeconds - (int)timeSinceLastToggle} more second(s) before toggling again.";
+            StateHasChanged();
+            await Task.Delay(1000);
+            toggleMessage = string.Empty;
+            StateHasChanged();
+            return;
+        }
+
         isToggling = true;
         toggleMessage = string.Empty;
+        lastToggleTime = DateTime.UtcNow;
         StateHasChanged();
 
         try
@@ -168,8 +190,26 @@
                 if (result?.Success == true)
                 {
                     toggleMessage = result.Message;
+                    
+                    // Start cooldown period
+                    isCooldown = true;
+                    cooldownRemainingSeconds = CooldownSeconds;
+                    StateHasChanged();
+                    
+                    // Countdown timer
+                    for (int i = CooldownSeconds; i > 0; i--)
+                    {
+                        await Task.Delay(1000);
+                        cooldownRemainingSeconds = i - 1;
+                        StateHasChanged();
+                    }
+                    
+                    // Wait a bit more for hot-reload to propagate (30 seconds refresh interval)
                     await Task.Delay(2000);
                     await LoadMiniHealth();
+                    
+                    isCooldown = false;
+                    cooldownRemainingSeconds = 0;
                     toggleMessage = string.Empty;
                 }
                 else

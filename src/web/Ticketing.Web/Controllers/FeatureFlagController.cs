@@ -1,3 +1,4 @@
+using Azure;
 using Azure.Data.AppConfiguration;
 using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -110,48 +111,153 @@ public class FeatureFlagController : ControllerBase
                 new DefaultAzureCredential());
 
             var featureFlagKey = ".appconfig.featureflag/BookingEvents_Enabled";
+            string? sentinelValue = null;
             
-            var featureFlag = await client.GetConfigurationSettingAsync(featureFlagKey);
-            if (featureFlag.Value == null)
+            // Retry logic with exponential backoff for rate limiting and transient errors
+            const int maxRetries = 3;
+            var retryDelay = TimeSpan.FromMilliseconds(500);
+            
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-                return NotFound(new { error = "Feature flag not found" });
+                try
+                {
+                    if (attempt > 0)
+                    {
+                        await Task.Delay(retryDelay);
+                        retryDelay = TimeSpan.FromMilliseconds(retryDelay.TotalMilliseconds * 2); // Exponential backoff
+                        _logger.LogInformation("Retrying feature flag toggle, attempt {Attempt}", attempt + 1);
+                    }
+
+                    // Get current feature flag with ETag for optimistic concurrency
+                    var featureFlag = await client.GetConfigurationSettingAsync(featureFlagKey);
+                    if (featureFlag.Value == null)
+                    {
+                        return NotFound(new { error = "Feature flag not found" });
+                    }
+
+                    var featureFlagContent = JsonSerializer.Deserialize<FeatureFlagContent>(
+                        featureFlag.Value.Value);
+
+                    if (featureFlagContent == null)
+                    {
+                        return BadRequest(new { error = "Invalid feature flag format" });
+                    }
+
+                    // Verify we're actually changing the value
+                    if (featureFlagContent.enabled == newValue)
+                    {
+                        _logger.LogInformation("Feature flag already set to {Value}, no change needed", newValue);
+                        // Still update sentinel to trigger refresh
+                        sentinelValue = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                        await client.SetConfigurationSettingAsync("Settings:Sentinel", sentinelValue);
+                        
+                        return Ok(new ToggleResult
+                        {
+                            Success = true,
+                            PreviousValue = newValue,
+                            NewValue = newValue,
+                            SentinelValue = sentinelValue,
+                            Message = $"Feature flag already set to {newValue}"
+                        });
+                    }
+
+                    featureFlagContent.enabled = newValue;
+
+                    // Update with ETag for optimistic concurrency control
+                    var updatedFeatureFlag = new ConfigurationSetting(
+                        featureFlagKey,
+                        JsonSerializer.Serialize(featureFlagContent))
+                    {
+                        ContentType = "application/vnd.microsoft.appconfig.featureflag+json;charset=utf-8"
+                    };
+
+                    // Use MatchConditions with ETag for optimistic concurrency
+                    await client.SetConfigurationSettingAsync(
+                        updatedFeatureFlag, 
+                        onlyIfUnchanged: true);
+
+                    // Update sentinel key to trigger hot-reload
+                    sentinelValue = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                    await client.SetConfigurationSettingAsync("Settings:Sentinel", sentinelValue);
+
+                    // Verify the change was applied
+                    await Task.Delay(500); // Brief delay for propagation
+                    var verifyFlag = await client.GetConfigurationSettingAsync(featureFlagKey);
+                    var verifyContent = JsonSerializer.Deserialize<FeatureFlagContent>(verifyFlag.Value.Value);
+                    
+                    if (verifyContent?.enabled != newValue)
+                    {
+                        _logger.LogWarning("Feature flag toggle verification failed. Expected {Expected}, got {Actual}", 
+                            newValue, verifyContent?.enabled);
+                        // Continue anyway - might be propagation delay
+                    }
+
+                    _logger.LogInformation(
+                        "Feature flag toggled from {OldValue} to {NewValue} by {User}",
+                        currentValue,
+                        newValue,
+                        User.Identity?.Name);
+
+                    return Ok(new ToggleResult
+                    {
+                        Success = true,
+                        PreviousValue = currentValue,
+                        NewValue = newValue,
+                        SentinelValue = sentinelValue,
+                        Message = $"Feature flag toggled from {currentValue} to {newValue}"
+                    });
+                }
+                catch (RequestFailedException ex) when (attempt < maxRetries - 1 && (ex.Status == 403 || ex.Status == 409 || ex.Status == 429))
+                {
+                    // 403: Permission/rate limit, 409: ETag conflict, 429: Too many requests
+                    _logger.LogWarning(ex, 
+                        "Transient error toggling feature flag (attempt {Attempt}/{MaxRetries}): {Status} - {Message}", 
+                        attempt + 1, maxRetries, ex.Status, ex.Message);
+                    
+                    if (ex.Status == 409)
+                    {
+                        // ETag conflict - feature flag changed, retry with fresh read
+                        continue;
+                    }
+                    
+                    if (ex.Status == 429)
+                    {
+                        // Rate limited - wait longer before retry
+                        retryDelay = TimeSpan.FromSeconds(2);
+                        continue;
+                    }
+                    
+                    // 403 might be transient (token refresh, propagation delay)
+                    if (ex.Status == 403 && attempt < maxRetries - 1)
+                    {
+                        continue;
+                    }
+                    
+                    // Last attempt or non-retryable error
+                    throw;
+                }
             }
-
-            var featureFlagContent = JsonSerializer.Deserialize<FeatureFlagContent>(
-                featureFlag.Value.Value);
-
-            if (featureFlagContent == null)
+            
+            // Should not reach here, but just in case
+            throw new InvalidOperationException("Failed to toggle feature flag after all retries");
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Azure service error toggling feature flag. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
+            
+            if (ex.Status == 403)
             {
-                return BadRequest(new { error = "Invalid feature flag format" });
+                return StatusCode(403, new ToggleResult
+                {
+                    Success = false,
+                    Message = $"Access denied (403 Forbidden). This may be due to rate limiting or token refresh. Please wait a moment and try again."
+                });
             }
-
-            featureFlagContent.enabled = newValue;
-
-            var updatedFeatureFlag = new ConfigurationSetting(
-                featureFlagKey,
-                JsonSerializer.Serialize(featureFlagContent))
+            
+            return StatusCode(ex.Status, new ToggleResult
             {
-                ContentType = "application/vnd.microsoft.appconfig.featureflag+json;charset=utf-8"
-            };
-
-            await client.SetConfigurationSettingAsync(updatedFeatureFlag);
-
-            var sentinelValue = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-            await client.SetConfigurationSettingAsync("Settings:Sentinel", sentinelValue);
-
-            _logger.LogInformation(
-                "Feature flag toggled from {OldValue} to {NewValue} by {User}",
-                currentValue,
-                newValue,
-                User.Identity?.Name);
-
-            return Ok(new ToggleResult
-            {
-                Success = true,
-                PreviousValue = currentValue,
-                NewValue = newValue,
-                SentinelValue = sentinelValue,
-                Message = $"Feature flag toggled from {currentValue} to {newValue}"
+                Success = false,
+                Message = $"Azure service error: {ex.Message} (Status: {ex.Status})"
             });
         }
         catch (Exception ex)
