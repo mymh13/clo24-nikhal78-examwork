@@ -203,11 +203,18 @@
   - Interface designed for error handling and retry logic in implementation (Phase 5.2)
   - **Status:** Complete - Interface ready for Service Bus implementation
 
-- [ ] **5.2** Implement `ServiceBusEventPublisher` class
-  - Service Bus client initialization
-  - Message serialization (JSON)
-  - Connection string from Key Vault
-  - Error handling and logging
+- [x] **5.2** Implement `ServiceBusEventPublisher` class
+  - Created `ServiceBusEventPublisher` class implementing `IEventPublisher`
+  - Service Bus client initialization using managed identity (`DefaultAzureCredential`) with fully qualified namespace
+  - Message serialization to JSON using `System.Text.Json` with camelCase naming policy
+  - Service Bus namespace name retrieved from configuration (`ServiceBus--NamespaceName` from Key Vault or `ServiceBus:NamespaceName` from appsettings.json)
+  - Queue name configurable via `ServiceBus:QueueName` (defaults to "booking-events")
+  - Error handling with specific `ServiceBusException` handling and general exception logging
+  - Comprehensive logging for successful publishes and errors
+  - Message properties set: `ContentType`, `Subject`, `MessageId`, `CorrelationId`
+  - Registered `ServiceBusClient` as singleton and `IEventPublisher` as scoped in dependency injection
+  - Added `Azure.Messaging.ServiceBus` NuGet package (version 7.20.1) to `Ticketing.Web` project
+  - **Status:** Complete - Service Bus publisher ready for integration with outbox processor
 
 - [ ] **5.3** Create background service for processing outbox
   - `OutboxProcessorService` (IHostedService)

@@ -111,6 +111,44 @@
                         <span style="color: #ff6b6b;">✗ Not registered</span>
                     }
                 </p>
+                <p><strong>Service Bus Client: </strong> 
+                    @if (healthStatus.Configuration.ServiceBusClientRegistered)
+                    {
+                        <span style="color: #4ec9b0;">✓ Registered</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not registered</span>
+                    }
+                </p>
+                <p><strong>Event Publisher: </strong> 
+                    @if (healthStatus.Configuration.EventPublisherRegistered)
+                    {
+                        <span style="color: #4ec9b0;">✓ Registered</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not registered</span>
+                    }
+                </p>
+                <p><strong>Service Bus Status: </strong> 
+                    @if (healthStatus.Configuration.ServiceBusStatus == "Operational")
+                    {
+                        <span style="color: #4ec9b0;">✓ @healthStatus.Configuration.ServiceBusStatus</span>
+                        @if (!string.IsNullOrEmpty(healthStatus.Configuration.ServiceBusQueueName))
+                        {
+                            <text> (Queue: @healthStatus.Configuration.ServiceBusQueueName)</text>
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(healthStatus.Configuration.ServiceBusStatus) && healthStatus.Configuration.ServiceBusStatus != "Not tested")
+                    {
+                        <span style="color: #ff6b6b;">✗ @healthStatus.Configuration.ServiceBusStatus</span>
+                    }
+                    else
+                    {
+                        <span style="color: #ff6b6b;">✗ Not tested</span>
+                    }
+                </p>
             </div>
         </div>
 
@@ -168,6 +206,10 @@
         public bool OutboxServiceRegistered { get; set; }
         public string OutboxServiceStatus { get; set; } = string.Empty;
         public int OutboxPendingEventsCount { get; set; }
+        public bool ServiceBusClientRegistered { get; set; }
+        public bool EventPublisherRegistered { get; set; }
+        public string ServiceBusStatus { get; set; } = string.Empty;
+        public string ServiceBusQueueName { get; set; } = string.Empty;
     }
 }
 

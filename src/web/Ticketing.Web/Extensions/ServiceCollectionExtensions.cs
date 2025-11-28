@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -47,6 +49,20 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IOutboxService, OutboxService>();
+        }
+
+        var serviceBusNamespaceName = configuration["ServiceBus--NamespaceName"] 
+            ?? configuration["ServiceBus:NamespaceName"];
+        
+        if (!string.IsNullOrEmpty(serviceBusNamespaceName))
+        {
+            var fullyQualifiedNamespace = $"{serviceBusNamespaceName}.servicebus.windows.net";
+            
+            services.AddSingleton<ServiceBusClient>(sp => new ServiceBusClient(
+                fullyQualifiedNamespace,
+                new DefaultAzureCredential()));
+            
+            services.AddScoped<IEventPublisher, ServiceBusEventPublisher>();
         }
 
         var azureAdClientId = configuration["AzureAd:ClientId"];

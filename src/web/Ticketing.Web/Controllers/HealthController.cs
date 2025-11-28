@@ -1,4 +1,5 @@
 using System.Linq;
+using Azure.Messaging.ServiceBus;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +16,8 @@ public class HealthController : ControllerBase
     private readonly CosmosClient? _cosmosClient;
     private readonly IFeatureManager? _featureManager;
     private readonly IOutboxService? _outboxService;
+    private readonly ServiceBusClient? _serviceBusClient;
+    private readonly IEventPublisher? _eventPublisher;
     private readonly ILogger<HealthController> _logger;
 
     public HealthController(
@@ -26,6 +29,8 @@ public class HealthController : ControllerBase
         _cosmosClient = serviceProvider.GetService<CosmosClient>();
         _featureManager = serviceProvider.GetService<IFeatureManager>();
         _outboxService = serviceProvider.GetService<IOutboxService>();
+        _serviceBusClient = serviceProvider.GetService<ServiceBusClient>();
+        _eventPublisher = serviceProvider.GetService<IEventPublisher>();
         _logger = logger;
     }
 
@@ -61,7 +66,9 @@ public class HealthController : ControllerBase
                     AppConfigurationConfigured = !string.IsNullOrEmpty(appConfigEndpoint) && appConfigEndpoint != "Not configured",
                     SentinelValue = sentinelValue,
                     FeatureManagerAvailable = _featureManager != null,
-                    OutboxServiceRegistered = _outboxService != null
+                    OutboxServiceRegistered = _outboxService != null,
+                    ServiceBusClientRegistered = _serviceBusClient != null,
+                    EventPublisherRegistered = _eventPublisher != null
                 }
             };
             
@@ -94,6 +101,30 @@ public class HealthController : ControllerBase
                     health.Configuration.OutboxServiceStatus = $"Error: {ex.Message}";
                     health.Status = "Degraded";
                 }
+            }
+
+            // Test Service Bus client if available
+            if (_serviceBusClient != null)
+            {
+                try
+                {
+                    var queueName = _configuration["ServiceBus:QueueName"] 
+                        ?? _configuration["ServiceBus--QueueName"] 
+                        ?? "booking-events";
+                    
+                    await using var sender = _serviceBusClient.CreateSender(queueName);
+                    health.Configuration.ServiceBusStatus = "Operational";
+                    health.Configuration.ServiceBusQueueName = queueName;
+                }
+                catch (Exception ex)
+                {
+                    health.Configuration.ServiceBusStatus = $"Error: {ex.Message}";
+                    health.Status = "Degraded";
+                }
+            }
+            else
+            {
+                health.Configuration.ServiceBusStatus = "Client not registered";
             }
 
         if (_cosmosClient != null)
@@ -151,5 +182,9 @@ public class ConfigurationStatus
     public bool OutboxServiceRegistered { get; set; }
     public string OutboxServiceStatus { get; set; } = "Not tested";
     public int OutboxPendingEventsCount { get; set; }
+    public bool ServiceBusClientRegistered { get; set; }
+    public bool EventPublisherRegistered { get; set; }
+    public string ServiceBusStatus { get; set; } = "Not tested";
+    public string ServiceBusQueueName { get; set; } = string.Empty;
 }
 
