@@ -61,6 +61,20 @@ We implement the **Sentinel Key Pattern** for hot-reloading Azure App Configurat
 - **Cache Expiration:** 30 seconds for feature flags and configuration refresh (can be increased to 1 minute for production)
 - **Fallback:** Sentinel key also exists in `appsettings.json` with initial value "1" for local development
 
+**Updating Sentinel Key:**
+
+**PowerShell:**
+```powershell
+az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --value "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" --yes
+```
+
+**Bash/Git Bash (Windows):**
+```bash
+# Note: Git Bash on Windows may interpret 'date' as PowerShell Get-Date
+# Use Python instead for reliable Unix timestamp:
+az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --value $(python -c "import time; print(int(time.time()))") --yes
+```
+
 **Flow:**
 ```
 1. Feature flag changed in App Configuration (BookingEvents_Enabled = true)

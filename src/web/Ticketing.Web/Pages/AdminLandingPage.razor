@@ -1,8 +1,10 @@
 @page "/admin"
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Json
 @attribute [Authorize(Roles = "Admin")]
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
 
 <PageTitle>Admin Dashboard</PageTitle>
 
@@ -23,6 +25,77 @@
             <form method="post" action="/api/auth/logout" class="user-info-logout">
                 <button type="submit" class="btn btn-secondary">Logout</button>
             </form>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="dashboard-section">
+            <div class="dashboard-expandable-section">
+                <p><strong>Event-Driven Architecture Status:</strong></p>
+                <div class="mini-health-check" style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-secondary); border-radius: 4px;">
+                    @if (miniHealth != null)
+                    {
+                        <div style="margin-bottom: var(--spacing-sm);">
+                            <strong>App Configuration:</strong> 
+                            @if (miniHealth.AppConfigurationConfigured)
+                            {
+                                <span style="color: #4caf50;">✓ Configured (@miniHealth.AppConfigurationName)</span>
+                                <span style="color: #666; margin-left: 8px;">- Sentinel: @miniHealth.SentinelValue</span>
+                            }
+                            else
+                            {
+                                <span style="color: #f44336;">✗ Not configured</span>
+                            }
+                        </div>
+                        <div style="margin-bottom: var(--spacing-sm);">
+                            <strong>Feature Manager:</strong> 
+                            @if (miniHealth.FeatureManagerAvailable)
+                            {
+                                <span style="color: #4caf50;">✓ Available</span>
+                                <span style="color: #666; margin-left: 8px;">- @miniHealth.FeatureFlagDisplay</span>
+                            }
+                            else
+                            {
+                                <span style="color: #f44336;">✗ Not available</span>
+                            }
+                        </div>
+                        <div style="margin-bottom: var(--spacing-sm);">
+                            <strong>Outbox Service:</strong> 
+                            @if (miniHealth.OutboxServiceStatus == "Operational")
+                            {
+                                <span style="color: #4caf50;">✓ Registered - Operational</span>
+                                <span style="color: #666; margin-left: 8px;">(@miniHealth.OutboxPendingEventsCount pending events)</span>
+                            }
+                            else
+                            {
+                                <span style="color: #f44336;">✗ @miniHealth.OutboxServiceStatus</span>
+                            }
+                        </div>
+                        <div style="margin-top: var(--spacing-md);">
+                            <button class="btn btn-primary" @onclick="ToggleFeatureFlag" disabled="@isToggling">
+                                @if (isToggling)
+                                {
+                                    <text>Toggling...</text>
+                                }
+                                else
+                                {
+                                    <text>Toggle Feature Flag (@(miniHealth.FeatureFlagValue == true ? "Disable" : "Enable") Event-Driven Mode)</text>
+                                }
+                            </button>
+                            @if (!string.IsNullOrEmpty(toggleMessage))
+                            {
+                                <div style="margin-top: var(--spacing-sm); color: @(toggleMessage.Contains("Error") ? "#f44336" : "#4caf50");">
+                                    @toggleMessage
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>Loading health status...</p>
+                    }
+                </div>
+            </div>
         </div>
 
         <hr class="section-divider" />
@@ -54,5 +127,93 @@
         <p>Not authenticated. <a href="/login">Go to login page</a> to authenticate.</p>
     }
 </div>
+
+@code {
+    private MiniHealthStatus? miniHealth;
+    private bool isToggling = false;
+    private string toggleMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMiniHealth();
+    }
+
+    private async Task LoadMiniHealth()
+    {
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
+            miniHealth = await httpClient.GetFromJsonAsync<MiniHealthStatus>("/api/featureflag/mini-health");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading mini health: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleFeatureFlag()
+    {
+        isToggling = true;
+        toggleMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
+            var response = await httpClient.PostAsync("/api/featureflag/toggle", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ToggleResult>();
+                if (result?.Success == true)
+                {
+                    toggleMessage = result.Message;
+                    await Task.Delay(2000);
+                    await LoadMiniHealth();
+                    toggleMessage = string.Empty;
+                }
+                else
+                {
+                    toggleMessage = result?.Message ?? "Toggle failed";
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                toggleMessage = $"Error: {error}";
+            }
+        }
+        catch (Exception ex)
+        {
+            toggleMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isToggling = false;
+            StateHasChanged();
+        }
+    }
+
+    private class MiniHealthStatus
+    {
+        public string AppConfigurationName { get; set; } = string.Empty;
+        public bool AppConfigurationConfigured { get; set; }
+        public string SentinelValue { get; set; } = string.Empty;
+        public bool FeatureManagerAvailable { get; set; }
+        public bool? FeatureFlagValue { get; set; }
+        public string FeatureFlagDisplay { get; set; } = "Not tested";
+        public string OutboxServiceStatus { get; set; } = "Not tested";
+        public int OutboxPendingEventsCount { get; set; }
+    }
+
+    private class ToggleResult
+    {
+        public bool Success { get; set; }
+        public bool? PreviousValue { get; set; }
+        public bool? NewValue { get; set; }
+        public string? SentinelValue { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+}
 
 

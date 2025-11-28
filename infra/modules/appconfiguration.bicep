@@ -53,13 +53,26 @@ resource appConfigNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
 }
 
 // Grant App Service managed identity access to App Configuration (if principal ID provided)
-// Using subscriptionResourceId for built-in role: App Configuration Data Reader
+// Using subscriptionResourceId for built-in role: App Configuration Data Reader (for reading)
 // Note: Role definition ID verified: 516239f1-63e1-4d78-a4de-a74fb236a071
 resource appConfigDataReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(appServicePrincipalId)) {
   name: guid(appConfiguration.id, appServicePrincipalId, 'App Configuration Data Reader')
   scope: appConfiguration
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '516239f1-63e1-4d78-a4de-a74fb236a071') // App Configuration Data Reader
+    principalId: appServicePrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Grant App Service managed identity write access to App Configuration (for feature flag toggling)
+// Using subscriptionResourceId for built-in role: App Configuration Data Owner
+// Note: Role definition ID: 5ae67dd6-50cb-40e7-96ac-d0fae5166711
+resource appConfigDataOwnerRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(appServicePrincipalId)) {
+  name: guid(appConfiguration.id, appServicePrincipalId, 'App Configuration Data Owner')
+  scope: appConfiguration
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5ae67dd6-50cb-40e7-96ac-d0fae5166711') // App Configuration Data Owner
     principalId: appServicePrincipalId
     principalType: 'ServicePrincipal'
   }

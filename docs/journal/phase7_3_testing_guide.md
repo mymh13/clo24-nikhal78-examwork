@@ -47,12 +47,14 @@ az appconfig kv set \
   --value "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" \
   --yes
 
-# Alternative for bash/Git Bash:
-# az appconfig kv set \
-#   --name examwork-appconfig-dev \
-#   --key Settings:Sentinel \
-#   --value "$(date +%s)" \
-#   --yes
+# Alternative for bash/Git Bash (Windows):
+# Note: Git Bash on Windows may interpret 'date' as PowerShell Get-Date
+# Use Python instead for reliable Unix timestamp:
+az appconfig kv set \
+  --name examwork-appconfig-dev \
+  --key Settings:Sentinel \
+  --value $(python -c "import time; print(int(time.time()))") \
+  --yes
 ```
 
 **Via Azure Portal:**
@@ -106,12 +108,14 @@ az appconfig kv set \
   --value "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" \
   --yes
 
-# Alternative for bash/Git Bash:
-# az appconfig kv set \
-#   --name examwork-appconfig-dev \
-#   --key Settings:Sentinel \
-#   --value "$(date +%s)" \
-#   --yes
+# Alternative for bash/Git Bash (Windows):
+# Note: Git Bash on Windows may interpret 'date' as PowerShell Get-Date
+# Use Python instead for reliable Unix timestamp:
+az appconfig kv set \
+  --name examwork-appconfig-dev \
+  --key Settings:Sentinel \
+  --value $(python -c "import time; print(int(time.time()))") \
+  --yes
 ```
 
 **Via Azure Portal:**
