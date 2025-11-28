@@ -39,7 +39,24 @@ public static class WebApplicationExtensions
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
-        app.UseAzureAppConfiguration();
+        
+        // Trigger Azure App Configuration refresh on each request
+        // This middleware checks the sentinel key and refreshes configuration if changed
+        app.Use(async (context, next) =>
+        {
+            var refresherProvider = app.Services.GetService<IConfigurationRefresherProvider>();
+            if (refresherProvider != null)
+            {
+                foreach (var configurationRefresher in refresherProvider.Refreshers)
+                {
+                    // Fire-and-forget: TryRefreshAsync respects the refresh interval
+                    // It will only actually refresh if the sentinel key changed and interval elapsed
+                    _ = configurationRefresher.TryRefreshAsync();
+                }
+            }
+            await next();
+        });
+        
         app.UseRouting();
         app.UseSession();
         app.UseAuthentication();

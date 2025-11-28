@@ -79,7 +79,7 @@ public static class ConfigurationExtensions
                             refresh.Register("Settings:Sentinel", refreshAll: true)
                                 .SetRefreshInterval(TimeSpan.FromMinutes(1));
                         });
-                });
+                }, optional: false);
             }
             catch (Exception ex)
             {
