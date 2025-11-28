@@ -65,6 +65,8 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IEventPublisher, ServiceBusEventPublisher>();
         }
 
+        services.AddHostedService<OutboxProcessorService>();
+
         var azureAdClientId = configuration["AzureAd:ClientId"];
         var azureAdTenantId = configuration["AzureAd:TenantId"];
         var azureAdClientSecret = configuration["AzureAd:ClientSecret"];

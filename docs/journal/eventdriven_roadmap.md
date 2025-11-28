@@ -216,17 +216,23 @@
   - Added `Azure.Messaging.ServiceBus` NuGet package (version 7.20.1) to `Ticketing.Web` project
   - **Status:** Complete - Service Bus publisher ready for integration with outbox processor
 
-- [ ] **5.3** Create background service for processing outbox
-  - `OutboxProcessorService` (IHostedService)
-  - Poll outbox for pending events
-  - Publish to Service Bus when feature flag enabled
-  - Mark events as processed after successful publish
-  - Handle failures and retries
+- [x] **5.3** Create background service for processing outbox
+  - Created `OutboxProcessorService` class extending `BackgroundService` (implements `IHostedService`)
+  - Polls outbox for pending events every 30 seconds
+  - Checks feature flag (`IsBookingEventsEnabledAsync`) before processing - only publishes when event-driven mode is enabled
+  - Deserializes event data from JSON based on event type (supports `BookingCreated`, extensible for other event types)
+  - Publishes events to Service Bus using `IEventPublisher`
+  - Marks events as processed after successful publish
+  - Error handling: logs errors, respects max retry count (3 retries), continues processing other events on failure
+  - Uses scoped services via `IServiceProvider` for proper dependency injection lifecycle
+  - Comprehensive logging for all operations (startup, polling, processing, errors)
+  - **Status:** Complete - Outbox processor ready to publish events when feature flag is enabled
 
-- [ ] **5.4** Register Service Bus services in DI
-  - Register `ServiceBusClient`
-  - Register `IEventPublisher`
-  - Register `OutboxProcessorService` as hosted service
+- [x] **5.4** Register Service Bus services in DI
+  - **Note:** `ServiceBusClient` and `IEventPublisher` already registered in Phase 5.2
+  - Registered `OutboxProcessorService` as hosted service via `AddHostedService<OutboxProcessorService>()`
+  - Service starts automatically on application startup and runs in background
+  - **Status:** Complete - All Service Bus services registered and operational
 
 ### Phase 6: Azure Function Implementation
 - [ ] **6.1** Create Azure Functions project structure
