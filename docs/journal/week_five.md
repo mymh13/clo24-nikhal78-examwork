@@ -169,11 +169,16 @@ Completed full Service Bus integration for event publishing. Created `IEventPubl
 ### Phase 6: Azure Function Implementation (Complete)
 Completed Azure Functions implementation for event consumption. Created Functions project structure with all required NuGet packages (Service Bus extensions, Application Insights). Implemented `OnBookingCreatedFunction` with Service Bus trigger binding to `booking-events` queue using managed identity authentication. Function deserializes `BookingCreated` events from JSON with camelCase naming policy (matches publisher). Comprehensive error handling with specific exception types (`ArgumentException`, `InvalidOperationException`, `JsonException`) and message metadata tracking (deliveryCount, enqueuedTimeUtc, messageId). Configured retry policy in `host.json` with exponential backoff (3 retries, 5 seconds to 5 minutes). Dead letter queue support via Service Bus queue configuration (maxDeliveryCount: 10). Application Insights integration configured for automatic telemetry. Created GitHub Actions deployment pipeline (`.github/workflows/cd-functions-dev.yaml`) using zip deploy via Azure CLI. Function App deploys automatically after successful CI builds. Event-driven architecture fully operational end-to-end: bookings → outbox → Service Bus → Azure Functions → Application Insights.
 
+### Phase 7: Testing & Validation (In Progress)
+**Phase 7.1 (Complete):** Tested synchronous flow with feature flag disabled. Verified bookings work exactly as before, outbox events created but not published to Service Bus, no performance impact, and system operates as "before refactoring" state. All tests passed.
+
+**Phase 7.2 (Complete):** Tested event-driven flow with feature flag enabled. Verified hot-reload works correctly (feature flag updates without restart), outbox events are processed by `OutboxProcessorService` and published to Service Bus, Function App receives and processes events, and complete end-to-end event flow operational. Hot-reload fix: Added custom middleware in `WebApplicationExtensions.cs` that triggers `IConfigurationRefresher.TryRefreshAsync()` on each HTTP request, enabling configuration refresh within 1 minute without service restart. Event-driven architecture fully validated and operational.
+
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 7 (Testing & Validation) - Test synchronous flow (feature flag disabled), test event-driven flow (feature flag enabled), test switching between modes, test error scenarios, and performance testing.
+1. **Event-Driven Architecture:** Continue with Phase 7 (Testing & Validation) - Phase 7.1 and 7.2 complete. Remaining: Test switching between modes (7.3), test error scenarios (7.4), and performance testing (7.5). Then proceed to Phase 8 (Monitoring & Observability) for Application Insights dashboards and alerts.
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.

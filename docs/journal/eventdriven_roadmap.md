@@ -316,13 +316,16 @@
   - **Overall Status:** **PASS** - Synchronous flow works correctly, no breaking changes, system operates as "before refactoring" state
   - **Status:** Complete - Test results documented, synchronous mode validated
 
-- [ ] **7.2** Test event-driven flow (feature flag enabled)
-  - Create booking
-  - Verify outbox event created
-  - Verify Service Bus message sent
-  - Verify Function receives and processes event
-  - Verify Application Insights logs
-  - **This is the "after refactoring" state**
+- [x] **7.2** Test event-driven flow (feature flag enabled)
+  - Created booking with feature flag enabled
+  - Verified outbox event created with `status: "Pending"`
+  - Verified OutboxProcessorService processed events and published to Service Bus
+  - Verified outbox events marked as `Processed` (pending count decreased from 2 to 0)
+  - Verified Function App received and processed events (checked in Azure Portal)
+  - Verified complete event flow: Web App → Outbox → Service Bus → Function App → Application Insights
+  - **Hot-reload validated:** Feature flag updates without restart after adding refresh middleware
+  - **Test results documented:** See `docs/journal/phase7_validation.md` Phase 7.2 section
+  - **Status:** Complete - Event-driven flow fully validated and operational
 
 - [ ] **7.3** Test switching between modes
   - Toggle feature flag at runtime (if supported)
