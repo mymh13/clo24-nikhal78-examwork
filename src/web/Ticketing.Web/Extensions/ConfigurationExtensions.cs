@@ -77,7 +77,7 @@ public static class ConfigurationExtensions
                         {
                             // Sentinel key pattern for hot-reload
                             refresh.Register("Settings:Sentinel", refreshAll: true)
-                                .SetRefreshInterval(TimeSpan.FromMinutes(1));
+                                .SetRefreshInterval(TimeSpan.FromSeconds(30)); // Reduced to 30 seconds for faster testing
                         });
                 }, optional: false);
             }

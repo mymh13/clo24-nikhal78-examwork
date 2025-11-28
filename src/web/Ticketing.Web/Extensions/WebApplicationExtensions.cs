@@ -1,6 +1,7 @@
 using Microsoft.Azure.Cosmos;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+using Microsoft.Extensions.Logging;
 
 namespace Ticketing.Web.Extensions;
 
@@ -49,9 +50,24 @@ public static class WebApplicationExtensions
             {
                 foreach (var configurationRefresher in refresherProvider.Refreshers)
                 {
-                    // Fire-and-forget: TryRefreshAsync respects the refresh interval
+                    // TryRefreshAsync respects the refresh interval (30 seconds)
                     // It will only actually refresh if the sentinel key changed and interval elapsed
-                    _ = configurationRefresher.TryRefreshAsync();
+                    // We await it to ensure it completes, but it returns quickly if interval hasn't elapsed
+                    try
+                    {
+                        var refreshed = await configurationRefresher.TryRefreshAsync();
+                        var logger = context.RequestServices.GetService<ILogger<Program>>();
+                        if (refreshed)
+                        {
+                            logger?.LogInformation("App Configuration refreshed successfully");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail the request if refresh fails
+                        var logger = context.RequestServices.GetService<ILogger<Program>>();
+                        logger?.LogWarning(ex, "Failed to refresh App Configuration");
+                    }
                 }
             }
             await next();

@@ -30,12 +30,19 @@ az appconfig feature enable \
   --feature BookingEvents_Enabled \
   --yes
 
-# Update sentinel key to trigger refresh
+# Update sentinel key to trigger refresh (PowerShell)
 az appconfig kv set \
   --name examwork-appconfig-dev \
   --key Settings:Sentinel \
-  --value "$(date +%s)" \
+  --value "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" \
   --yes
+
+# Alternative for bash/Git Bash:
+# az appconfig kv set \
+#   --name examwork-appconfig-dev \
+#   --key Settings:Sentinel \
+#   --value "$(date +%s)" \
+#   --yes
 ```
 
 ### Step 2: Verify Feature Flag Enabled

@@ -12,12 +12,19 @@
        --feature BookingEvents_Enabled \
        --yes
      
-     # Update sentinel to trigger refresh
+     # Update sentinel to trigger refresh (PowerShell)
      az appconfig kv set \
        --name examwork-appconfig-dev \
        --key Settings:Sentinel \
-       --value "$(date +%s)" \
+       --value "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" \
        --yes
+     
+     # Alternative for bash/Git Bash:
+     # az appconfig kv set \
+     #   --name examwork-appconfig-dev \
+     #   --key Settings:Sentinel \
+     #   --value "$(date +%s)" \
+     #   --yes
      ```
    - Wait 1 minute for hot-reload
 

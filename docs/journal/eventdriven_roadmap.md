@@ -328,10 +328,17 @@
   - **Status:** Complete - Event-driven flow fully validated and operational
 
 - [ ] **7.3** Test switching between modes
-  - Toggle feature flag at runtime (if supported)
-  - Verify system handles mode switch gracefully
-  - Test bookings created in both modes
-  - Verify no data loss or corruption
+  - **Testing guide created:** `docs/journal/phase7_3_testing_guide.md` with step-by-step instructions
+  - Toggle feature flag at runtime (enabled → disabled → enabled)
+  - Verify hot-reload works for each toggle (within 1 minute)
+  - Create booking in event-driven mode (flag enabled) - verify processing
+  - Create booking in synchronous mode (flag disabled) - verify no processing
+  - Re-enable flag - verify pending events from synchronous mode are processed
+  - Verify all bookings created successfully regardless of mode
+  - Verify outbox events exist for all bookings (audit trail)
+  - Verify Service Bus messages only for bookings created when flag was enabled
+  - Verify no data loss or corruption during mode switches
+  - **Status:** Testing guide ready - Ready for validation
 
 - [ ] **7.4** Test error scenarios
   - Service Bus connection failure (event-driven mode)

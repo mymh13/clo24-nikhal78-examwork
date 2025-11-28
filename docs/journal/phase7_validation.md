@@ -172,19 +172,75 @@
 
 ## Phase 7.3: Test Switching Between Modes
 
-**Test Date:** [To be filled]
+**Test Date:** [To be filled]  
+**Testing Guide:** See `docs/journal/phase7_3_testing_guide.md` for detailed step-by-step instructions
 
 ### Test Checklist
 
-- [ ] Start with feature flag disabled, create booking
-- [ ] Enable feature flag, wait for hot-reload
-- [ ] Create another booking
-- [ ] Disable feature flag, wait for hot-reload
-- [ ] Create another booking
-- [ ] Verify all bookings created successfully
-- [ ] Verify outbox events exist for all bookings
-- [ ] Verify Service Bus messages only for bookings created when flag was enabled
+#### 1. Create Booking with Feature Flag Enabled (Event-Driven Mode)
+- [ ] Verify feature flag is enabled (`BookingEvents_Enabled = True`)
+- [ ] Create booking (note booking ID: `[booking-1]`)
+- [ ] Verify outbox event created with `status: "Pending"`
+- [ ] Wait up to 30 seconds - verify event processed and published to Service Bus
+- [ ] Verify outbox event status changed to `Processed`
 - [ ] **Result:** [To be filled]
+
+#### 2. Disable Feature Flag and Verify Hot-Reload
+- [ ] Disable feature flag via Azure CLI or Portal
+- [ ] Update sentinel key to trigger hot-reload
+- [ ] Wait 1 minute for configuration refresh
+- [ ] Verify health endpoint shows `BookingEvents_Enabled = False`
+- [ ] **Result:** [To be filled]
+
+#### 3. Create Booking with Feature Flag Disabled (Synchronous Mode)
+- [ ] Create booking (note booking ID: `[booking-2]`)
+- [ ] Verify outbox event created with `status: "Pending"`
+- [ ] Wait 1-2 minutes - verify event remains `Pending` (not processed)
+- [ ] Verify Service Bus queue remains empty (no new messages)
+- [ ] Verify health endpoint shows increased pending events count
+- [ ] **Result:** [To be filled]
+
+#### 4. Re-Enable Feature Flag and Verify Backlog Processing
+- [ ] Enable feature flag via Azure CLI or Portal
+- [ ] Update sentinel key to trigger hot-reload
+- [ ] Wait 1 minute for configuration refresh
+- [ ] Verify health endpoint shows `BookingEvents_Enabled = True`
+- [ ] Wait up to 30 seconds - verify pending events from Step 3 are processed
+- [ ] Verify outbox events marked as `Processed`
+- [ ] Verify Service Bus messages sent for backlog events
+- [ ] **Result:** [To be filled]
+
+#### 5. Create Another Booking with Feature Flag Enabled
+- [ ] Create booking (note booking ID: `[booking-3]`)
+- [ ] Verify event-driven behavior works again
+- [ ] Verify complete event flow: outbox → Service Bus → Function
+- [ ] **Result:** [To be filled]
+
+### Test Results Summary
+
+**Overall Status:** [ ] Pass [ ] Fail [ ] Partial
+
+**Booking IDs:**
+- Booking 1 (event-driven): `[booking-id-1]`
+- Booking 2 (synchronous): `[booking-id-2]`
+- Booking 3 (event-driven): `[booking-id-3]`
+
+**Outbox Events:**
+- Event 1 (from booking 1): `[event-id-1]` - Status: `Processed`
+- Event 2 (from booking 2): `[event-id-2]` - Status: `Processed` (after re-enable)
+- Event 3 (from booking 3): `[event-id-3]` - Status: `Processed`
+
+**Service Bus Messages:**
+- Messages for booking 1: [ ] Sent [ ] Not sent
+- Messages for booking 2: [ ] Sent [ ] Not sent (should not be sent)
+- Messages for booking 3: [ ] Sent [ ] Not sent
+
+**Hot-Reload Timing:**
+- Disable flag → Refresh time: `[X]` seconds
+- Enable flag → Refresh time: `[X]` seconds
+
+**Key Findings:**
+- [To be documented]
 
 ---
 
