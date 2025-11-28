@@ -25,7 +25,7 @@ clo24-nikhal78-examwork/
 ├─ src/                             # Production code
 │  ├─ web/                          # Blazor Server (UI)
 │  │  └─ Ticketing.Web/            # .NET 8 Blazor Server project
-│  │     ├─ Controllers/           # API Controllers (Auth, Bookings, Users, Health)
+│  │     ├─ Controllers/           # API Controllers (Auth, Bookings, Users, Health, FeatureFlag)
 │  │     ├─ Pages/                # Razor pages (Login, Admin, User, Inspector, etc.)
 │  │     ├─ Services/              # Business logic services
 │  │     ├─ Helpers/               # Utility helpers

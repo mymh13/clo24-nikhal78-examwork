@@ -199,11 +199,29 @@ Completed Azure Functions implementation for event consumption. Created Function
 - All bookings created successfully regardless of mode
 - Zero-downtime switching confirmed - perfect for live demonstrations
 
+**Admin Dashboard Feature Flag Toggle (Side Mission):**
+- Added mini health check section to Admin Dashboard displaying:
+  - App Configuration status (configured, sentinel value)
+  - Feature Manager status (available, `BookingEvents_Enabled` value)
+  - Outbox Service status (operational, pending events count)
+- Implemented toggle button to enable/disable event-driven mode directly from Admin Dashboard
+- Created `FeatureFlagController` with:
+  - `GET /api/featureflag/mini-health` - returns simplified health status
+  - `POST /api/featureflag/toggle` - toggles feature flag and updates sentinel key (Admin only)
+- Added debouncing (2-second minimum between clicks) and 5-second cooldown after successful toggle
+- Button shows countdown during cooldown period
+- Automatic health status refresh after toggle
+- Uses Azure App Configuration SDK (`Azure.Data.AppConfiguration`) with managed identity authentication
+- Requires "App Configuration Data Owner" role for App Service managed identity (added to Bicep template)
+- Retry logic with exponential backoff for transient 403 errors (rate limiting, token refresh)
+- ETag-based optimistic concurrency control to prevent conflicts
+- Significantly speeds up testing and perfect for live demonstrations
+
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 7 (Testing & Validation) - Phase 7.1, 7.2, and 7.3 (in progress) complete. Remaining: Complete Step 4 and 5 of Phase 7.3 (backlog processing validation), test error scenarios (7.4), and performance testing (7.5). Then proceed to Phase 8 (Monitoring & Observability) for Application Insights dashboards and alerts.
+1. **Event-Driven Architecture:** Continue with Phase 7 (Testing & Validation) - Phase 7.1, 7.2, and 7.3 (in progress) complete. Admin Dashboard now includes feature flag toggle for faster testing. Remaining: Complete Step 4 and 5 of Phase 7.3 (backlog processing validation), test error scenarios (7.4), and performance testing (7.5). Then proceed to Phase 8 (Monitoring & Observability) for Application Insights dashboards and alerts.
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.

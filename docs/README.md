@@ -115,6 +115,16 @@ Weekly logs for project progress and timeline tracking.
 | **week_four.md**         | Week 4 – infrastructure expansion and application integration |
 | **week_five.md**         | Week 5 – feature development and ticket management |
 | **eventdriven_roadmap.md** | Detailed roadmap for event-driven architecture refactoring (phases 1-10) |
+| **phase7_testing_guide.md** | Testing guide for Phase 7.1 (synchronous flow validation) |
+| **phase7_2_testing_guide.md** | Testing guide for Phase 7.2 (event-driven flow validation) |
+| **phase7_3_testing_guide.md** | Testing guide for Phase 7.3 (switching between modes) |
+| **phase7_validation.md** | Test results and validation documentation for Phase 7 |
+| **app_insights_refresh_query.kql** | KQL query for Application Insights to check App Configuration refresh activity |
+| **phase7_testing_guide.md** | Testing guide for Phase 7.1 (synchronous flow validation) |
+| **phase7_2_testing_guide.md** | Testing guide for Phase 7.2 (event-driven flow validation) |
+| **phase7_3_testing_guide.md** | Testing guide for Phase 7.3 (switching between modes) |
+| **phase7_validation.md** | Test results and validation documentation for Phase 7 |
+| **app_insights_refresh_query.kql** | KQL query for Application Insights to check App Configuration refresh activity |
 
 ---
 

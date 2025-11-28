@@ -100,12 +100,6 @@ public class FeatureFlagController : ControllerBase
                 return BadRequest(new { error = "App Configuration endpoint not configured" });
             }
 
-            var currentValue = _featureManager != null 
-                ? await _featureManager.IsEnabledAsync("BookingEvents_Enabled")
-                : false;
-
-            var newValue = !currentValue;
-
             var client = new ConfigurationClient(
                 new Uri(appConfigEndpoint),
                 new DefaultAzureCredential());
@@ -129,6 +123,7 @@ public class FeatureFlagController : ControllerBase
                     }
 
                     // Get current feature flag with ETag for optimistic concurrency
+                    // Read directly from App Configuration (not cached) to get the actual current value
                     var featureFlag = await client.GetConfigurationSettingAsync(featureFlagKey);
                     if (featureFlag.Value == null)
                     {
@@ -142,6 +137,10 @@ public class FeatureFlagController : ControllerBase
                     {
                         return BadRequest(new { error = "Invalid feature flag format" });
                     }
+
+                    // Get current value from App Configuration (source of truth, not cached)
+                    var currentValue = featureFlagContent.enabled;
+                    var newValue = !currentValue;
 
                     // Verify we're actually changing the value
                     if (featureFlagContent.enabled == newValue)
