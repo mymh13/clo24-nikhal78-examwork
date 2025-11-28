@@ -45,42 +45,57 @@ public static class WebApplicationExtensions
         // This middleware checks the sentinel key and refreshes configuration if changed
         app.Use(async (context, next) =>
         {
-            var refresherProvider = app.Services.GetService<IConfigurationRefresherProvider>();
             var logger = context.RequestServices.GetService<ILogger<Program>>();
             
-            if (refresherProvider == null)
+            // Get the refresher from the static variable (set during configuration)
+            var configurationRefresher = ConfigurationExtensions.GetConfigurationRefresher();
+            
+            if (configurationRefresher == null)
             {
-                logger?.LogWarning("IConfigurationRefresherProvider not found in service container");
-            }
-            else
-            {
-                var refreshers = refresherProvider.Refreshers.ToList();
-                logger?.LogDebug("Found {Count} configuration refresher(s)", refreshers.Count);
+                // Fallback: Try to get from service container
+                var refresherProvider = app.Services.GetService<IConfigurationRefresherProvider>()
+                    ?? context.RequestServices.GetService<IConfigurationRefresherProvider>();
                 
-                foreach (var configurationRefresher in refreshers)
+                if (refresherProvider != null)
                 {
-                    // TryRefreshAsync respects the refresh interval (30 seconds)
-                    // It will only actually refresh if the sentinel key changed and interval elapsed
-                    // We await it to ensure it completes, but it returns quickly if interval hasn't elapsed
-                    try
+                    var refreshers = refresherProvider.Refreshers.ToList();
+                    if (refreshers.Any())
                     {
-                        var refreshed = await configurationRefresher.TryRefreshAsync();
-                        if (refreshed)
-                        {
-                            logger?.LogInformation("App Configuration refreshed successfully - sentinel key change detected");
-                        }
-                        else
-                        {
-                            logger?.LogDebug("App Configuration refresh attempted but no refresh needed (interval not elapsed or no change detected)");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log but don't fail the request if refresh fails
-                        logger?.LogWarning(ex, "Failed to refresh App Configuration: {ErrorMessage}", ex.Message);
+                        configurationRefresher = refreshers.First();
+                        logger?.LogInformation("App Configuration refresh middleware: Found refresher via IConfigurationRefresherProvider ({Count} total)", refreshers.Count);
                     }
                 }
+                
+                if (configurationRefresher == null)
+                {
+                    logger?.LogWarning("Configuration refresher not found - hot-reload will not work. Check if AddAzureAppConfiguration was called.");
+                }
             }
+            
+            if (configurationRefresher != null)
+            {
+                // TryRefreshAsync respects the refresh interval (30 seconds)
+                // It will only actually refresh if the sentinel key changed and interval elapsed
+                // We await it to ensure it completes, but it returns quickly if interval hasn't elapsed
+                try
+                {
+                    var refreshed = await configurationRefresher.TryRefreshAsync();
+                    if (refreshed)
+                    {
+                        logger?.LogInformation("App Configuration refreshed successfully - sentinel key change detected");
+                    }
+                    else
+                    {
+                        logger?.LogInformation("App Configuration refresh attempted but returned false (interval not elapsed or no change detected)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail the request if refresh fails
+                    logger?.LogWarning(ex, "Failed to refresh App Configuration: {ErrorMessage}", ex.Message);
+                }
+            }
+            
             await next();
         });
         

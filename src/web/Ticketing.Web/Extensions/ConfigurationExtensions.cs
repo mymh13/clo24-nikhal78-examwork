@@ -40,6 +40,11 @@ public static class ConfigurationExtensions
         return builder;
     }
 
+    // Static variable to store the refresher for middleware access
+    private static IConfigurationRefresher? _configurationRefresher;
+    
+    public static IConfigurationRefresher? GetConfigurationRefresher() => _configurationRefresher;
+
     public static IConfigurationBuilder AddAppConfiguration(this IConfigurationBuilder builder, IWebHostEnvironment environment)
     {
         // Build temporary config to get App Configuration endpoint
@@ -79,6 +84,9 @@ public static class ConfigurationExtensions
                             refresh.Register("Settings:Sentinel", refreshAll: true)
                                 .SetRefreshInterval(TimeSpan.FromSeconds(30)); // Reduced to 30 seconds for faster testing
                         });
+                    
+                    // Get the refresher from the options and store it
+                    _configurationRefresher = options.GetRefresher();
                 }, optional: false);
             }
             catch (Exception ex)
