@@ -1,0 +1,14 @@
+// Query to check App Configuration refresh activity
+traces
+| where timestamp > ago(10m)
+| where message contains "App Configuration" or message contains "refresh" or message contains "sentinel"
+| project timestamp, message, severityLevel
+| order by timestamp desc
+
+// Alternative: Check for any errors related to configuration
+exceptions
+| where timestamp > ago(10m)
+| where outerMessage contains "Configuration" or outerMessage contains "App Configuration" or outerMessage contains "refresh"
+| project timestamp, outerMessage, type
+| order by timestamp desc
+

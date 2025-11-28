@@ -46,9 +46,18 @@ public static class WebApplicationExtensions
         app.Use(async (context, next) =>
         {
             var refresherProvider = app.Services.GetService<IConfigurationRefresherProvider>();
-            if (refresherProvider != null)
+            var logger = context.RequestServices.GetService<ILogger<Program>>();
+            
+            if (refresherProvider == null)
             {
-                foreach (var configurationRefresher in refresherProvider.Refreshers)
+                logger?.LogWarning("IConfigurationRefresherProvider not found in service container");
+            }
+            else
+            {
+                var refreshers = refresherProvider.Refreshers.ToList();
+                logger?.LogDebug("Found {Count} configuration refresher(s)", refreshers.Count);
+                
+                foreach (var configurationRefresher in refreshers)
                 {
                     // TryRefreshAsync respects the refresh interval (30 seconds)
                     // It will only actually refresh if the sentinel key changed and interval elapsed
@@ -56,17 +65,19 @@ public static class WebApplicationExtensions
                     try
                     {
                         var refreshed = await configurationRefresher.TryRefreshAsync();
-                        var logger = context.RequestServices.GetService<ILogger<Program>>();
                         if (refreshed)
                         {
-                            logger?.LogInformation("App Configuration refreshed successfully");
+                            logger?.LogInformation("App Configuration refreshed successfully - sentinel key change detected");
+                        }
+                        else
+                        {
+                            logger?.LogDebug("App Configuration refresh attempted but no refresh needed (interval not elapsed or no change detected)");
                         }
                     }
                     catch (Exception ex)
                     {
                         // Log but don't fail the request if refresh fails
-                        var logger = context.RequestServices.GetService<ILogger<Program>>();
-                        logger?.LogWarning(ex, "Failed to refresh App Configuration");
+                        logger?.LogWarning(ex, "Failed to refresh App Configuration: {ErrorMessage}", ex.Message);
                     }
                 }
             }
