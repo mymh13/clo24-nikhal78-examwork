@@ -17,6 +17,9 @@ clo24-nikhal78-examwork/
 │  │  ├─ cosmos-ticketing-considerations.md
 │  │  ├─ system_overview.md
 │  │  └─ Examensarbete-utkast.pdf
+│  ├─ school_related/              # Education-specific documentation
+│  │  ├─ teknisk_dokumentation_clo24nikhal.docx
+│  │  ├─ verktygspresentation_clo24nikhal.docx
 │  └─ journal/                      # Timeline/log per week
 │
 ├─ src/                             # Production code
@@ -33,13 +36,17 @@ clo24-nikhal78-examwork/
 │  │  └─ Ticketing.Api/            # .NET 8 Web API project
 │  ├─ functions/                   # Azure Functions (event-driven)
 │  │  └─ Ticketing.Functions/      # .NET 8 isolated worker Functions
-│  │     ├─ Program.cs
-│  │     ├─ host.json
-│  │     └─ local.settings.json
+│  │     ├─ Functions/            # Function implementations
+│  │     │  └─ OnBookingCreatedFunction.cs
+│  │     ├─ Program.cs            # Function app startup
+│  │     ├─ host.json             # Function app configuration (retry, logging)
+│  │     └─ local.settings.json  # Local development settings
 │  └─ shared/                      # Shared libraries
 │     ├─ Ticketing.Contracts/      # DTOs, Events, Contracts
 │     │  ├─ Bookings/              # Booking, BookingDto
-│     │  └─ Users/                  # User
+│     │  ├─ Users/                 # User
+│     │  ├─ Events/                # Event base class, BookingCreated, BookingCancelled
+│     │  └─ Outbox/                # OutboxEvent, OutboxEventStatus
 │     └─ Ticketing.Domain/         # Domain entities (future)
 │
 ├─ infra/                          # Infrastructure as Code (Bicep)
@@ -56,6 +63,12 @@ clo24-nikhal78-examwork/
 │  │     ├─ main.bicep
 │  │     └─ main.parameters.json
 │  └─ README.md
+│
+├─ .github/                        # GitHub Actions workflows
+│  └─ workflows/
+│     ├─ ci-build.yaml            # CI: Build and push Docker images
+│     ├─ cd-web-dev.yaml          # CD: Deploy Web app to dev
+│     └─ cd-functions-dev.yaml    # CD: Deploy Functions to dev
 │
 ├─ letsencrypt/                    # Let's Encrypt SSL certificate management
 │  ├─ accounts/                    # ACME account data
