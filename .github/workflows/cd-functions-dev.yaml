@@ -1,0 +1,97 @@
+name: CD - Deploy Functions (dev)
+
+on:
+  workflow_run:
+    workflows: [ "CI - Build solution" ]
+    types: [ "completed" ]
+
+permissions:
+  contents: read
+  id-token: write    # required for OIDC login to Azure
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Set up Azure CLI
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify target Function App exists
+        id: probe
+        shell: bash
+        run: |
+          if ! az functionapp show -n "${{ vars.FUNCTIONAPP_NAME }}" -g "${{ vars.FUNCTIONAPP_RG }}" >/dev/null 2>&1; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip (no Function App yet)
+        if: steps.probe.outputs.exists == 'false'
+        run: |
+          echo "Function App '${{ vars.FUNCTIONAPP_NAME }}' not found. Skipping deployment."
+          exit 0
+
+      - name: Build Functions project
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          dotnet publish src/functions/Ticketing.Functions/Ticketing.Functions.csproj \
+            -c Release \
+            -o ./publish/functions \
+            --no-self-contained
+
+      - name: Create deployment package
+        if: steps.probe.outputs.exists == 'true'
+        run: |
+          cd ./publish/functions
+          zip -r ../functions-deploy.zip . -q
+          cd ../..
+
+      - name: Deploy to Function App
+        if: steps.probe.outputs.exists == 'true'
+        shell: bash
+        run: |
+          echo "Deploying Function App package..."
+          az functionapp deployment source config-zip \
+            --resource-group "${{ vars.FUNCTIONAPP_RG }}" \
+            --name "${{ vars.FUNCTIONAPP_NAME }}" \
+            --src ./publish/functions-deploy.zip
+          
+          echo "Deployment completed successfully"
+
+      - name: Verify deployment
+        if: steps.probe.outputs.exists == 'true'
+        shell: bash
+        run: |
+          echo "Waiting for Function App to be ready..."
+          sleep 10
+          
+          FUNCTIONS=$(az functionapp function list \
+            --name "${{ vars.FUNCTIONAPP_NAME }}" \
+            --resource-group "${{ vars.FUNCTIONAPP_RG }}" \
+            --query "[].name" -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$FUNCTIONS" ]; then
+            echo "Warning: Could not retrieve function list. Deployment may still be in progress."
+          else
+            echo "Deployed functions:"
+            echo "$FUNCTIONS"
+          fi
+

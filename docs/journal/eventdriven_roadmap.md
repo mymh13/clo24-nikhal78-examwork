@@ -286,9 +286,17 @@
   - Processing time tracking for performance monitoring
   - **Status:** Complete - Comprehensive error handling, retry policies, and dead letter queue support configured
 
-- [ ] **6.4** Deploy Function App
-  - Configure deployment pipeline
-  - Test deployment to dev environment
+- [x] **6.4** Deploy Function App
+  - Created GitHub Actions workflow `.github/workflows/cd-functions-dev.yaml` for Function App deployment
+  - Deployment uses zip deploy via Azure CLI (`az functionapp deployment source config-zip`)
+  - Workflow triggered after successful CI build (same pattern as Web app deployment)
+  - Builds Functions project with `dotnet publish` in Release configuration
+  - Creates zip package and deploys to Function App
+  - Includes verification step to check deployed functions
+  - **Staging slots decision:** Skipped for dev environment - direct deployment is sufficient. Staging slots for Functions have limitations (some bindings don't work in slots) and add complexity. Can be reconsidered for production if needed.
+  - Updated CI workflow to trigger on Functions project changes
+  - **Required GitHub variables:** `FUNCTIONAPP_NAME` and `FUNCTIONAPP_RG` must be configured in repository settings
+  - **Status:** Complete - Deployment pipeline ready. Function App will deploy automatically after successful CI build.
 
 ### Phase 7: Testing & Validation (Dual-System Testing)
 - [ ] **7.1** Test synchronous flow (feature flag disabled)

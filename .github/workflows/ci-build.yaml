@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'src/**'
-      - '.github/workflows/ci-build.yaml'
+      - '.github/workflows/**'
       - '*.sln'
       - '*.csproj'
       - '**/Dockerfile'
@@ -13,7 +13,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'src/**'
-      - '.github/workflows/ci-build.yaml'
+      - '.github/workflows/**'
       - '*.sln'
       - '*.csproj'
       - '**/Dockerfile'
