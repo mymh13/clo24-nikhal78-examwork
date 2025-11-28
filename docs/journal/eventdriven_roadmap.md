@@ -196,9 +196,12 @@
   - **Status:** Complete - Feature flag usage fully documented with operational instructions
 
 ### Phase 5: Service Bus Integration
-- [ ] **5.1** Create `IEventPublisher` interface
-  - `PublishEventAsync<T>(T eventData)` method
-  - Error handling and retry logic
+- [x] **5.1** Create `IEventPublisher` interface
+  - Created `IEventPublisher` interface in `src/web/Ticketing.Web/Services/IEventPublisher.cs`
+  - `PublishEventAsync<T>(T eventData)` method with generic constraint `where T : Event`
+  - Optional `CancellationToken` parameter for async cancellation support
+  - Interface designed for error handling and retry logic in implementation (Phase 5.2)
+  - **Status:** Complete - Interface ready for Service Bus implementation
 
 - [ ] **5.2** Implement `ServiceBusEventPublisher` class
   - Service Bus client initialization
