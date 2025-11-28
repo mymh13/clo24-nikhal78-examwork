@@ -73,6 +73,10 @@
                     @if (healthStatus.Configuration.AppConfigurationConfigured)
                     {
                         <span style="color: #4ec9b0;">✓ Configured</span> <text>(@healthStatus.Configuration.AppConfigurationName)</text>
+                        @if (!string.IsNullOrEmpty(healthStatus.Configuration.SentinelValue) && healthStatus.Configuration.SentinelValue != "Not found")
+                        {
+                            <text> - Sentinel: @healthStatus.Configuration.SentinelValue</text>
+                        }
                     }
                     else
                     {

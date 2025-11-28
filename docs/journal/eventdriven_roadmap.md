@@ -299,12 +299,19 @@
   - **Status:** Complete - Deployment pipeline ready. Function App will deploy automatically after successful CI build.
 
 ### Phase 7: Testing & Validation (Dual-System Testing)
-- [ ] **7.1** Test synchronous flow (feature flag disabled)
-  - Verify bookings work exactly as before (chained API mode)
-  - Verify outbox events are created (for audit)
-  - Verify no Service Bus messages sent
-  - Verify no performance impact from event infrastructure
-  - **This is the "before refactoring" state**
+- [x] **7.1** Test synchronous flow (feature flag disabled)
+  - **Testing guide created:** `docs/journal/phase7_testing_guide.md` with step-by-step instructions
+  - **Validation results documented:** `docs/journal/phase7_validation.md` with test results
+  - **Test Date:** 2025-11-28
+  - **Test Booking ID:** `e40c3e9d-fcca-4fca-b944-d88db4dc9982`
+  - **Bookings work exactly as before:** Booking created successfully, retrievable via API/UI, all data correct (customer info, zones, pricing)
+  - **Outbox events created:** 2 pending events confirmed in outbox container, correct structure (`eventType: "BookingCreated"`, `status: "Pending"`)
+  - **No Service Bus messages sent:** Service Bus queue `booking-events` confirmed empty (0 active, 0 dead-letter, 0 scheduled messages)
+  - **No performance impact:** Response time acceptable, no noticeable delay from event infrastructure
+  - **Feature flag confirmed disabled:** Health endpoint shows `BookingEvents_Enabled = False`
+  - ⚠️ **Application Insights note:** Query editor is hidden behind dropdown (top right) - must switch from "Simple" to "KQL" mode. Log queries for "Synchronous" messages didn't return results (may need different query terms).
+  - **Overall Status:** **PASS** - Synchronous flow works correctly, no breaking changes, system operates as "before refactoring" state
+  - **Status:** Complete - Test results documented, synchronous mode validated
 
 - [ ] **7.2** Test event-driven flow (feature flag enabled)
   - Create booking

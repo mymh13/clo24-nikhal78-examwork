@@ -143,8 +143,8 @@ Note: each additional messaging service (Service Bus, Event Grid, Event Hubs) en
 
 **Via Azure CLI:**
 ```bash
-# Set feature flag to enabled (event-driven mode)
-az appconfig feature set \
+# Enable feature flag (event-driven mode)
+az appconfig feature enable \
   --name examwork-appconfig-dev \
   --feature BookingEvents_Enabled \
   --yes
@@ -153,7 +153,8 @@ az appconfig feature set \
 az appconfig kv set \
   --name examwork-appconfig-dev \
   --key Settings:Sentinel \
-  --value "2"
+  --value "2" \
+  --yes
 ```
 
 #### Use Cases for Each Mode

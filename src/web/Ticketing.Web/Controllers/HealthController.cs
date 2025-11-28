@@ -80,10 +80,18 @@ public class HealthController : ControllerBase
                     var testFlag = await _featureManager.IsEnabledAsync("BookingEvents_Enabled");
                     health.Configuration.FeatureFlagValue = testFlag;
                     health.Configuration.FeatureFlagTest = $"BookingEvents_Enabled = {testFlag}";
+                    
+                    // Also check raw configuration value for debugging
+                    var rawConfigValue = _configuration[".appconfig.featureflag~BookingEvents_Enabled"];
+                    if (!string.IsNullOrEmpty(rawConfigValue))
+                    {
+                        health.Configuration.FeatureFlagTest += $" (Raw: {rawConfigValue})";
+                    }
                 }
                 catch (Exception ex)
                 {
                     health.Configuration.FeatureFlagTest = $"Error: {ex.Message}";
+                    _logger.LogError(ex, "Error checking feature flag");
                 }
             }
             
