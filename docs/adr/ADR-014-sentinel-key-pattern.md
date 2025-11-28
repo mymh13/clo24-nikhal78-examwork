@@ -49,6 +49,10 @@ We implement the **Sentinel Key Pattern** for hot-reloading Azure App Configurat
   - When sentinel key value changes, all configuration refreshes automatically
   - `refreshAll: true` ensures all keys (not just watched keys) are refreshed
 - **Refresh Interval:** `SetRefreshInterval(TimeSpan.FromMinutes(1))` - checks for changes every minute
+- **Middleware:** `app.UseAzureAppConfiguration()` must be added to the HTTP pipeline
+  - This middleware triggers the refresh check on each HTTP request
+  - Without this middleware, hot-reload will not work (only restart will pick up changes)
+  - Should be placed early in the pipeline, after static files but before routing
 - **Cache Expiration:** 1 minute for feature flags and configuration refresh
 - **Fallback:** Sentinel key also exists in `appsettings.json` with initial value "1" for local development
 
