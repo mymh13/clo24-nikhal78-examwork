@@ -266,10 +266,25 @@
   - **Note:** Booking status update not needed - booking is already created in Cosmos DB before event is published. Function processes event for side effects (logging, future notifications, etc.)
   - **Status:** Complete - Function ready to process BookingCreated events from Service Bus
 
-- [ ] **6.3** Add error handling and dead letter queue
-  - Try-catch blocks
-  - Dead letter queue configuration
-  - Retry policies
+- [x] **6.3** Add error handling and dead letter queue
+  - Enhanced error handling in `OnBookingCreatedFunction` with specific exception types:
+    - `ArgumentException` for invalid message body
+    - `InvalidOperationException` for deserialization failures
+    - General `Exception` catch-all with comprehensive logging
+  - Added message metadata parameters to function signature: `deliveryCount`, `enqueuedTimeUtc`, `messageId` for tracking and logging
+  - Comprehensive logging includes message metadata, processing time, and delivery count
+  - Dead letter queue warning logged when approaching max delivery count (10 attempts)
+  - **Dead letter queue configuration:** Already configured in Service Bus queue (Phase 1.2):
+    - `maxDeliveryCount: 10` - messages moved to dead letter queue after 10 failed attempts
+    - `deadLetteringOnMessageExpiration: true` - expired messages moved to dead letter queue
+    - `defaultMessageTimeToLive: P14D` - 14-day message TTL
+  - **Retry policy configured in `host.json`:**
+    - Exponential backoff strategy with 3 retries
+    - Minimum interval: 5 seconds, Maximum interval: 5 minutes
+    - Service Bus extension settings: `maxConcurrentCalls: 1`, `maxAutoRenewDuration: 5 minutes`
+  - Function throws exceptions to trigger Service Bus retry mechanism and eventual dead lettering
+  - Processing time tracking for performance monitoring
+  - **Status:** Complete - Comprehensive error handling, retry policies, and dead letter queue support configured
 
 - [ ] **6.4** Deploy Function App
   - Configure deployment pipeline

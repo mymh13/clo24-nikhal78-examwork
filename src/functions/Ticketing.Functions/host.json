@@ -8,5 +8,21 @@
             },
             "enableLiveMetricsFilters": true
         }
+    },
+    "retry": {
+        "strategy": "exponentialBackoff",
+        "maxRetryCount": 3,
+        "minimumInterval": "00:00:05",
+        "maximumInterval": "00:05:00"
+    },
+    "extensions": {
+        "serviceBus": {
+            "prefetchCount": 0,
+            "messageHandlerOptions": {
+                "autoComplete": true,
+                "maxConcurrentCalls": 1,
+                "maxAutoRenewDuration": "00:05:00"
+            }
+        }
     }
 }
