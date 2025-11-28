@@ -235,17 +235,36 @@
   - **Status:** Complete - All Service Bus services registered and operational
 
 ### Phase 6: Azure Function Implementation
-- [ ] **6.1** Create Azure Functions project structure
-  - `src/functions/Ticketing.Functions` project
-  - Configure function app settings
-  - Set up local development (local.settings.json)
+- [x] **6.1** Create Azure Functions project structure
+  - **Note:** Functions project already created in Phase 1.5
+  - Verified `src/functions/Ticketing.Functions` project structure with all required packages:
+    - `Microsoft.Azure.Functions.Worker` (2.51.0)
+    - `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` (5.24.0)
+    - `Microsoft.Azure.Functions.Worker.ApplicationInsights` (2.50.0)
+    - `Microsoft.ApplicationInsights.WorkerService` (2.23.0)
+    - Project reference to `Ticketing.Contracts` for event contracts
+  - Configured `local.settings.json` for local development:
+    - `AzureWebJobsStorage` for local storage emulator
+    - `FUNCTIONS_WORKER_RUNTIME` set to `dotnet-isolated`
+    - `APPLICATIONINSIGHTS_CONNECTION_STRING` (empty for local, populated in Azure)
+    - `KeyVault__Name`, `ServiceBus__NamespaceName`, `CosmosDb__AccountName` for configuration
+    - `AzureWebJobsServiceBus` with managed identity endpoint for Service Bus connection
+  - Verified `host.json` configured with Application Insights logging and sampling
+  - Verified `Program.cs` configured with Application Insights telemetry
+  - Project builds successfully with all dependencies
+  - **Status:** Complete - Functions project structure ready for function implementation
 
-- [ ] **6.2** Implement `OnBookingCreated` function
-  - Service Bus trigger binding
-  - Deserialize `BookingCreated` event
-  - Log event processing
-  - Update booking status (if needed)
-  - Send to Application Insights
+- [x] **6.2** Implement `OnBookingCreated` function
+  - Created `OnBookingCreatedFunction` class in `Functions/OnBookingCreatedFunction.cs`
+  - Service Bus trigger binding configured with `[ServiceBusTrigger("booking-events", Connection = "AzureWebJobsServiceBus")]`
+  - Function listens to `booking-events` queue using managed identity authentication
+  - Deserializes `BookingCreated` event from message body using `System.Text.Json` with camelCase naming policy (matches publisher serialization)
+  - Comprehensive logging for event receipt, processing, and completion
+  - Error handling with specific `JsonException` handling and general exception logging
+  - Application Insights integration already configured in `Program.cs` - all logs automatically sent to Application Insights
+  - Function processes events asynchronously and logs key event properties (BookingId, CustomerId, CustomerEmail, TotalPrice)
+  - **Note:** Booking status update not needed - booking is already created in Cosmos DB before event is published. Function processes event for side effects (logging, future notifications, etc.)
+  - **Status:** Complete - Function ready to process BookingCreated events from Service Bus
 
 - [ ] **6.3** Add error handling and dead letter queue
   - Try-catch blocks
