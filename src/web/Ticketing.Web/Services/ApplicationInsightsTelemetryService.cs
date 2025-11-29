@@ -28,6 +28,9 @@ public class ApplicationInsightsTelemetryService : ITelemetryService
                 { "SystemType", eventDrivenEnabled ? "Event-Driven" : "Synchronous" }
             });
 
+            // Flush to ensure event is sent immediately (especially important for demos)
+            _telemetryClient.Flush();
+
             _logger.LogInformation("Tracked BookingCreated event: {BookingId}, Mode: {ArchitectureMode}", bookingId, architectureMode);
         }
         catch (Exception ex)
@@ -48,6 +51,8 @@ public class ApplicationInsightsTelemetryService : ITelemetryService
                 { "ArchitectureMode", architectureMode },
                 { "Status", "Pending" }
             });
+
+            _telemetryClient.Flush();
 
             _logger.LogInformation("Tracked OutboxEventCreated: {OutboxEventId}, Booking: {BookingId}", outboxEventId, bookingId);
         }

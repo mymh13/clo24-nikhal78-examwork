@@ -39,7 +39,7 @@ jobs:
           echo "App Service '${{ vars.WEBAPP_NAME }}' not found. Skipping deployment."
           exit 0
 
-      - name: Update App Service container image
+      - name: Update App Service container image and settings
         if: steps.probe.outputs.exists == 'true'
         run: |
           COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
@@ -51,6 +51,17 @@ jobs:
             --name "${{ vars.WEBAPP_NAME }}" \
             --resource-group "${{ vars.WEBAPP_RG }}" \
             --linux-fx-version "DOCKER|$CONTAINER_IMAGE"
+          
+          # Update Application Insights connection string if secret is available
+          if [ -n "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}" ]; then
+            echo "Setting Application Insights connection string..."
+            az webapp config appsettings set \
+              --name "${{ vars.WEBAPP_NAME }}" \
+              --resource-group "${{ vars.WEBAPP_RG }}" \
+              --settings APPLICATIONINSIGHTS_CONNECTION_STRING="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
+          else
+            echo "Warning: APPLICATIONINSIGHTS_CONNECTION_STRING secret not found. Skipping App Insights configuration."
+          fi
           
           echo "Restarting App Service..."
           az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"
