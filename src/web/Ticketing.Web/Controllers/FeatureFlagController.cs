@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.FeatureManagement;
 using System.Text.Json;
+using Ticketing.Web.Services;
 
 namespace Ticketing.Web.Controllers;
 
@@ -16,6 +17,7 @@ public class FeatureFlagController : ControllerBase
 {
     private readonly IConfiguration _configuration;
     private readonly IFeatureManager? _featureManager;
+    private readonly ITelemetryService? _telemetryService;
     private readonly ILogger<FeatureFlagController> _logger;
 
     public FeatureFlagController(
@@ -25,6 +27,7 @@ public class FeatureFlagController : ControllerBase
     {
         _configuration = configuration;
         _featureManager = serviceProvider.GetService<IFeatureManager>();
+        _telemetryService = serviceProvider.GetService<ITelemetryService>();
         _logger = logger;
     }
 
@@ -179,6 +182,12 @@ public class FeatureFlagController : ControllerBase
                             newValue, verifyContent?.enabled);
                         // Continue anyway - might be propagation delay
                     }
+
+                    // Track feature flag toggle and mode switch
+                    var fromMode = currentValue ? "Event-Driven" : "Synchronous";
+                    var toMode = newValue ? "Event-Driven" : "Synchronous";
+                    _telemetryService?.TrackFeatureFlagToggled(currentValue, newValue, User.Identity?.Name ?? "Unknown");
+                    _telemetryService?.TrackModeSwitch(fromMode, toMode, User.Identity?.Name ?? "Unknown");
 
                     _logger.LogInformation(
                         "Feature flag successfully toggled from {OldValue} to {NewValue} by {User}. Sentinel updated to {SentinelValue}",

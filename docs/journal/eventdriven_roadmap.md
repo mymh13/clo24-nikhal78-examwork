@@ -414,16 +414,40 @@
   - **Status:** ✓ **Deferred** - Performance testing deferred due to time constraints and MVP focus. Minimal performance impact already validated. Application Insights provides ongoing performance monitoring. Detailed testing can be conducted post-MVP if needed.
 
 ### Phase 8: Monitoring & Observability
-- [ ] **8.1** Add Application Insights custom events
-  - Track event publishing
-  - Track function execution
-  - Track outbox processing
+- [x] **8.1** Add Application Insights custom events
+  - Created `ITelemetryService` interface and `ApplicationInsightsTelemetryService` implementation
+  - **Custom Events Tracked:**
+    - `BookingCreated` - Tracks booking creation with `SystemType` ("Synchronous" or "Event-Driven") and `ArchitectureMode`
+    - `OutboxEventCreated` - Tracks outbox event creation (always created for audit)
+    - `OutboxEventProcessed` - Tracks outbox event processing with `ProcessingTimeMs` metric (Event-Driven only)
+    - `ServiceBusEventPublished` - Tracks Service Bus publishing (Event-Driven only)
+    - `FeatureFlagToggled` - Tracks feature flag toggles with `FromMode` and `ToMode`
+    - `ModeSwitch` - Tracks architecture mode switches
+  - **Function App Events:**
+    - `FunctionBookingCreatedProcessed` - Tracks Function App processing with `ProcessingTimeMs` metric
+  - Integrated telemetry tracking into:
+    - `BookingsController` - Tracks booking creation and outbox events
+    - `OutboxProcessorService` - Tracks event processing with timing
+    - `ServiceBusEventPublisher` - Tracks Service Bus publishing
+    - `FeatureFlagController` - Tracks mode switches
+    - `OnBookingCreatedFunction` - Tracks Function App processing
+  - All events include `SystemType` property to clearly distinguish Synchronous vs Event-Driven
+  - **Status:** Complete - Custom events implemented and integrated throughout event flow
 
 - [ ] **8.2** Create Application Insights dashboard
-  - Event publishing metrics
-  - Function execution metrics
-  - Error rates
-  - Processing latency
+  - **Dashboard guide created:** `docs/journal/phase8_dashboard_guide.md` with step-by-step instructions
+  - **Dashboard Components:**
+    - Bookings by Architecture Mode (pie chart)
+    - Bookings Over Time - Synchronous vs Event-Driven (time chart)
+    - Event-Driven Flow: Outbox → Service Bus → Function (time chart)
+    - Event Processing Time (time chart with metrics)
+    - Mode Switches (table)
+    - Synchronous Mode Bookings (time chart)
+    - Event-Driven Mode: Complete Flow (time chart)
+    - Recent Activity Comparison (table)
+  - **KQL Queries:** All queries provided in dashboard guide
+  - **Demonstration Workflow:** Step-by-step guide for live demos
+  - **Status:** Dashboard guide ready - awaiting dashboard creation in Azure Portal
 
 - [ ] **8.3** Set up alerts
   - Dead letter queue messages

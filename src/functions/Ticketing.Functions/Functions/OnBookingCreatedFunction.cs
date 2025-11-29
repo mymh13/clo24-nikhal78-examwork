@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Ticketing.Contracts.Events;
 
 namespace Ticketing.Functions.Functions;
@@ -8,10 +10,14 @@ namespace Ticketing.Functions.Functions;
 public class OnBookingCreatedFunction
 {
     private readonly ILogger<OnBookingCreatedFunction> _logger;
+    private readonly TelemetryClient _telemetryClient;
 
-    public OnBookingCreatedFunction(ILogger<OnBookingCreatedFunction> logger)
+    public OnBookingCreatedFunction(
+        ILogger<OnBookingCreatedFunction> logger,
+        TelemetryClient telemetryClient)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryClient = telemetryClient ?? throw new ArgumentNullException(nameof(telemetryClient));
     }
 
     [Function("OnBookingCreated")]
@@ -77,6 +83,22 @@ public class OnBookingCreatedFunction
             await ProcessBookingCreatedEventAsync(bookingCreated);
 
             var processingTime = DateTime.UtcNow - startTime;
+            
+            // Track custom event for Application Insights dashboard
+            _telemetryClient.TrackEvent("FunctionBookingCreatedProcessed", new Dictionary<string, string>
+            {
+                { "BookingId", bookingCreated.BookingId },
+                { "EventId", bookingCreated.Id },
+                { "CustomerEmail", bookingCreated.CustomerEmail },
+                { "EventType", "BookingCreated" },
+                { "SystemType", "Event-Driven" },
+                { "FunctionName", "OnBookingCreated" },
+                { "DeliveryCount", deliveryCount.ToString() }
+            }, new Dictionary<string, double>
+            {
+                { "ProcessingTimeMs", processingTime.TotalMilliseconds }
+            });
+            
             _logger.LogInformation(
                 "BookingCreated event processed successfully: BookingId={BookingId}, EventId={EventId}, ProcessingTime={ProcessingTime}ms, DeliveryCount={DeliveryCount}",
                 bookingCreated.BookingId,

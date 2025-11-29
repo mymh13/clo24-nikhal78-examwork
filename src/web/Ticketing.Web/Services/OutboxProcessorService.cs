@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Ticketing.Contracts.Events;
 using Ticketing.Contracts.Outbox;
 
@@ -85,6 +86,7 @@ public class OutboxProcessorService : BackgroundService
         IOutboxService outboxService,
         CancellationToken cancellationToken)
     {
+        var startTime = DateTime.UtcNow;
         try
         {
             var eventData = DeserializeEvent(outboxEvent.EventType, outboxEvent.EventData);
@@ -99,9 +101,15 @@ public class OutboxProcessorService : BackgroundService
             await eventPublisher.PublishEventAsync(eventData, cancellationToken);
             await outboxService.MarkAsProcessedAsync(outboxEvent.Id, cancellationToken);
 
+            var processingTime = DateTime.UtcNow - startTime;
+            
+            // Track outbox event processed with processing time
+            var telemetryService = _serviceProvider.CreateScope().ServiceProvider.GetService<ITelemetryService>();
+            telemetryService?.TrackOutboxEventProcessed(outboxEvent.Id, outboxEvent.EventType, processingTime);
+
             _logger.LogInformation(
-                "Successfully published and processed outbox event {EventId} of type {EventType}",
-                outboxEvent.Id, outboxEvent.EventType);
+                "Successfully published and processed outbox event {EventId} of type {EventType} in {ProcessingTime}ms",
+                outboxEvent.Id, outboxEvent.EventType, processingTime.TotalMilliseconds);
         }
         catch (Exception ex)
         {

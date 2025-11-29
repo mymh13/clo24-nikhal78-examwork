@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddApplicationInsightsTelemetry();
+        services.AddSingleton<ITelemetryService, ApplicationInsightsTelemetryService>();
 
         services.AddFeatureManagement();
         services.AddScoped<IFeatureFlagService, FeatureFlagService>();

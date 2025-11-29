@@ -8,15 +8,18 @@ public class ServiceBusEventPublisher : IEventPublisher
 {
     private readonly ServiceBusClient _serviceBusClient;
     private readonly string _queueName;
+    private readonly ITelemetryService? _telemetryService;
     private readonly ILogger<ServiceBusEventPublisher> _logger;
 
     public ServiceBusEventPublisher(
         ServiceBusClient serviceBusClient,
         IConfiguration configuration,
+        ITelemetryService? telemetryService,
         ILogger<ServiceBusEventPublisher> logger)
     {
         _serviceBusClient = serviceBusClient ?? throw new ArgumentNullException(nameof(serviceBusClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryService = telemetryService;
         
         _queueName = configuration["ServiceBus:QueueName"] 
             ?? configuration["ServiceBus--QueueName"] 
@@ -46,6 +49,9 @@ public class ServiceBusEventPublisher : IEventPublisher
             };
 
             await sender.SendMessageAsync(message, cancellationToken);
+
+            // Track Service Bus event published
+            _telemetryService?.TrackServiceBusEventPublished(eventData.Id, eventData.EventType, _queueName);
 
             _logger.LogInformation(
                 "Event published to Service Bus: {EventType} with ID {EventId} to queue {QueueName}",

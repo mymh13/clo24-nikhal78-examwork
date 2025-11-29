@@ -19,6 +19,7 @@ public class BookingsController : ControllerBase
     private readonly IUserService _userService;
     private readonly IOutboxService _outboxService;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly ITelemetryService _telemetryService;
     private readonly ILogger<BookingsController> _logger;
 
     public BookingsController(
@@ -26,12 +27,14 @@ public class BookingsController : ControllerBase
         IUserService userService, 
         IOutboxService outboxService,
         IFeatureFlagService featureFlagService,
+        ITelemetryService telemetryService,
         ILogger<BookingsController> logger)
     {
         _bookingService = bookingService ?? throw new ArgumentNullException(nameof(bookingService));
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
         _featureFlagService = featureFlagService ?? throw new ArgumentNullException(nameof(featureFlagService));
+        _telemetryService = telemetryService ?? throw new ArgumentNullException(nameof(telemetryService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -110,6 +113,13 @@ public class BookingsController : ControllerBase
             var isEventDrivenEnabled = await _featureFlagService.IsBookingEventsEnabledAsync(cancellationToken);
             var architecturePath = isEventDrivenEnabled ? "Event-Driven" : "Synchronous";
             
+            // Track booking creation with architecture mode
+            _telemetryService.TrackBookingCreated(
+                createdBooking.Id, 
+                createdBooking.CustomerEmail, 
+                architecturePath, 
+                isEventDrivenEnabled);
+            
             _logger.LogInformation("Booking created: {BookingId} for customer {CustomerEmail} (ID: {CustomerId}) by user {UserId} with role {Role}. Architecture: {ArchitecturePath}",
                 createdBooking.Id, createdBooking.CustomerEmail, createdBooking.CustomerId, userId, userRole, architecturePath);
             
@@ -119,6 +129,14 @@ public class BookingsController : ControllerBase
             {
                 var bookingCreatedEvent = BookingCreated.FromBooking(createdBooking);
                 var outboxEvent = await _outboxService.AddEventAsync(bookingCreatedEvent, cancellationToken);
+                
+                // Track outbox event creation
+                _telemetryService.TrackOutboxEventCreated(
+                    outboxEvent.Id, 
+                    createdBooking.Id, 
+                    outboxEvent.EventType, 
+                    architecturePath);
+                
                 _logger.LogInformation("Outbox event created: {OutboxEventId} for booking {BookingId} (EventType: {EventType}, Architecture: {ArchitecturePath})",
                     outboxEvent.Id, createdBooking.Id, outboxEvent.EventType, architecturePath);
                 
