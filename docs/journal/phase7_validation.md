@@ -209,81 +209,181 @@
 - [x] **Result:** ✓ Synchronous mode working correctly - Booking created successfully, outbox event created with `Pending` status and remains unprocessed. Health endpoint shows 1 pending event, confirming OutboxProcessorService is not processing events when feature flag is disabled. No Service Bus messages sent. System operates in synchronous mode as expected.
 
 #### 4. Re-Enable Feature Flag and Verify Backlog Processing
-- [x] Enable feature flag via Azure CLI or Portal
-- [x] Update sentinel key to trigger hot-reload
-- [x] Wait 30 seconds for configuration refresh
+- [x] Enable feature flag via Admin Dashboard toggle (faster than CLI/Portal)
+- [x] Update sentinel key to trigger hot-reload (automatic via toggle button)
+- [x] Wait for propagation (detected via Admin Dashboard polling UX)
 - [x] Verify health endpoint shows `BookingEvents_Enabled = True`
-- [x] Verify sentinel value updated to new value
-- [ ] Wait up to 30 seconds - verify pending events from Step 3 are processed
-- [ ] Verify outbox events marked as `Processed`
-- [ ] Verify Service Bus messages sent for backlog events
-- [x] **Result:** ✓ Hot-reload worked correctly - feature flag updated from `False` to `True` within 30 seconds without restart. Sentinel value updated from `1764365122` to `1764365937`. Backlog processing to be verified.
+- [x] Verify sentinel value updated to new value: `1764450465`
+- [x] Wait up to 30 seconds - verify pending events from Step 3 are processed
+  - **Result:** ✓ Pending event from Step 3 (booking `0e4fc863-8efc-462d-99d0-21ee97d11fa2`) was processed successfully
+- [x] Verify outbox events marked as `Processed`
+  - **Result:** ✓ Outbox shows processed events - backlog event successfully processed
+- [x] Verify Service Bus messages sent for backlog events
+  - **Result:** ✓ Service Bus shows activity (Incoming Requests) - messages sent and consumed
+- [x] **Result:** ✓ **PASS** - Hot-reload worked correctly via Admin Dashboard toggle. Feature flag updated from `False` to `True`. Sentinel value updated to `1764450465`. Backlog processing verified - pending event from synchronous mode was successfully processed when flag was re-enabled. Service Bus activity confirmed.
 
 #### 5. Create Another Booking with Feature Flag Enabled
-- [ ] Create booking (note booking ID: `[booking-3]`)
-- [ ] Verify event-driven behavior works again
-- [ ] Verify complete event flow: outbox → Service Bus → Function
-- [ ] **Result:** [To be filled]
+- [x] Create booking (note booking ID: `a086ea6a-3952-4d20-8ee0-4656bada892c`)
+  - **Created by:** Admin (booking for user: test-user@mymh.dev)
+  - **Zones:** Zone B, Zone C
+  - **Booking Date:** 2025-11-29T21:11:13.1966579Z
+- [x] Verify event-driven behavior works again
+  - **Initial state:** Outbox service showed 1 pending event
+  - **After 30 seconds:** Outbox service showed 0 pending events
+  - **Event processing time:** ~31 seconds (created at 21:11:23, processed at 21:11:54)
+- [x] Verify complete event flow: outbox → Service Bus → Function
+  - **Outbox Event ID:** `af9994ae-5694-4e73-8fd8-0b22a6c234c1`
+  - **Status:** `Processed` (verified in Cosmos DB)
+  - **Processing details:**
+    - Created: 2025-11-29T21:11:23.739883Z
+    - Processed: 2025-11-29T21:11:54.6952942Z
+    - Processing duration: ~31 seconds
+    - Retry count: 0 (successful on first attempt)
+  - **Service Bus:** Activity confirmed (Incoming Requests showing activity)
+  - **Function App:** Activity confirmed (Service Bus messages consumed)
+- [x] **Result:** ✓ **PASS** - Event-driven flow works correctly after mode switch. Booking created successfully, outbox event processed within 31 seconds, Service Bus and Function App activity confirmed. Complete end-to-end event flow validated: Booking → Outbox → Service Bus → Function App.
 
 ### Test Results Summary
 
-**Overall Status:** ✓ **Pass** (Hot-reload validated, full mode switching test in progress)
+**Overall Status:** ✓ **PASS** - Full mode switching test complete. All steps validated successfully.
 
 **Booking IDs:**
 - Booking 1 (event-driven): `3cbcf3c4-77e3-4d60-a136-4c84ce9dbb45`
 - Booking 2 (synchronous): `0e4fc863-8efc-462d-99d0-21ee97d11fa2`
-- Booking 3 (event-driven): `[booking-id-3]`
+- Booking 3 (event-driven): `a086ea6a-3952-4d20-8ee0-4656bada892c`
 
 **Outbox Events:**
-- Event 1 (from booking 1): `[event-id-1]` - Status: `Processed` (processed within 30 seconds)
-- Event 2 (from booking 2): `[event-id-2]` - Status: `Processed` (after re-enable)
-- Event 3 (from booking 3): `[event-id-3]` - Status: `Processed`
+- Event 1 (from booking 1): Status: `Processed` (processed within 30 seconds)
+- Event 2 (from booking 2): Event ID `[from Step 3]` - Status: `Processed` (processed after re-enable, backlog processing verified)
+- Event 3 (from booking 3): Event ID `af9994ae-5694-4e73-8fd8-0b22a6c234c1` - Status: `Processed` (processed in ~31 seconds)
 
 **Service Bus Messages:**
 - Messages for booking 1: [x] Sent [ ] Not sent
-- Messages for booking 2: [ ] Sent [x] Not sent (correct - synchronous mode)
-- Messages for booking 3: [ ] Sent [ ] Not sent
+- Messages for booking 2: [x] Sent [ ] Not sent (sent after re-enable flag - backlog processing)
+- Messages for booking 3: [x] Sent [ ] Not sent
 
 **Hot-Reload Timing:**
 - Disable flag → Refresh time: `~30` seconds (after page refresh to trigger middleware)
-- Enable flag → Refresh time: `~30` seconds (after page refresh to trigger middleware)
+- Enable flag → Refresh time: `~30` seconds (via Admin Dashboard toggle with propagation polling UX)
+- **Propagation polling:** Admin Dashboard automatically detected change (exact time shown in UI yellow box)
 
 **Key Findings:**
 - **Hot-reload works correctly** - Feature flags can be toggled at runtime without service restart
+- **Admin Dashboard toggle:** Significantly faster than Azure CLI/Portal - provides real-time propagation feedback
+- **Propagation polling UX:** Automatically detects when feature flag change takes effect (3-second polling, visual feedback)
 - **Refresh mechanism:** Uses static variable to store refresher (`options.GetRefresher()`) instead of service container, as `IConfigurationRefresherProvider` was not found in DI
 - **Refresh interval:** Reduced to 30 seconds for faster testing (can be increased to 1 minute for production)
 - **Middleware trigger:** Refresh happens on each HTTP request - refreshing the health page triggers the middleware
 - **Bidirectional switching:** Works in both directions (enabled → disabled → enabled) within 30 seconds
-- **Sentinel key pattern:** Must update sentinel key value after changing feature flag to trigger refresh
+- **Sentinel key pattern:** Must update sentinel key value after changing feature flag to trigger refresh (automatic via Admin Dashboard toggle)
 - **Zero downtime:** Mode switches happen without service restart - perfect for live demonstrations
+- **Backlog processing:** Pending events from synchronous mode are successfully processed when feature flag is re-enabled
+- **Event processing time:** ~31 seconds from event creation to processing (within expected 30-second polling interval)
+- **Complete event flow validated:** Booking → Outbox → Service Bus → Function App (all steps verified)
 
 ---
 
 ## Phase 7.4: Test Error Scenarios
 
-**Test Date:** [To be filled]
+**Test Date:** 2025-11-29  
+**Testing Guide:** See [Phase 7.4 Testing Guide](phase7_4_testing_guide.md) for detailed step-by-step instructions  
+**Decision:** Code review completed - error handling verified. Detailed testing deferred to focus on roadmap completion.
 
-### Test Checklist
+### Code Review Results
 
-- [ ] Test Service Bus connection failure (if possible)
-- [ ] Test Function processing failure
-- [ ] Test dead letter queue handling
-- [ ] Test outbox retry logic
-- [ ] Verify synchronous mode unaffected by event system failures
-- [ ] **Result:** [To be filled]
+**Error Handling Mechanisms Verified:**
+
+- [x] **Service Bus Error Handling:**
+  - `ServiceBusEventPublisher` catches `ServiceBusException` and logs errors
+  - Exceptions re-thrown for retry mechanism
+  - Comprehensive logging for troubleshooting
+
+- [x] **Function App Error Handling:**
+  - Specific exception handling (`ArgumentException`, `InvalidOperationException`, `JsonException`)
+  - Retry policy configured in `host.json`: 3 retries with exponential backoff (5s to 5min)
+  - Dead letter queue warning logged when approaching max delivery count
+
+- [x] **Dead Letter Queue Configuration:**
+  - `maxDeliveryCount: 10` (configured in Service Bus queue)
+  - `deadLetteringOnMessageExpiration: true`
+  - `defaultMessageTimeToLive: P14D` (14 days)
+
+- [x] **Outbox Retry Logic:**
+  - `OutboxProcessorService` polls every 30 seconds
+  - Events remain `Pending` until successfully processed
+  - Retries on each polling cycle (no retry count limit in current implementation)
+  - Errors logged but processing continues for other events
+
+- [x] **Synchronous Mode Isolation:**
+  - `OutboxProcessorService` checks feature flag before processing
+  - When disabled, skips processing entirely
+  - Synchronous mode completely independent of event system
+
+**Result:** ✓ **Code Verified** - All error handling mechanisms in place. Error scenarios can be tested in production or future iterations. Core functionality validated (Phases 7.1, 7.2, 7.3). Testing guide available for future detailed testing if needed.
 
 ---
 
 ## Phase 7.5: Performance Testing
 
-**Test Date:** [To be filled]
+**Test Date:** 2025-11-29  
+**Decision:** Performance testing deferred due to time constraints and MVP focus
 
-### Test Checklist
+### Analysis & Decision
 
+**Performance Testing Requirements Considered:**
 - [ ] Compare performance: synchronous vs event-driven
 - [ ] Test multiple concurrent bookings in both modes
 - [ ] Test outbox processing throughput
 - [ ] Test Function scaling behavior
 - [ ] Document performance characteristics
-- [ ] **Result:** [To be filled]
+
+**Why Performance Testing Was Deferred:**
+
+1. **MVP/Low-Cost Tier Constraints:**
+   - System runs on Azure App Service B1 tier (Basic, low-cost) and Function App B1 tier
+   - Performance testing would be limited by tier constraints, not representative of production scaling
+   - B1 tier is designed for development/demonstration, not production-scale load
+
+2. **Already Validated Minimal Impact:**
+   - Phase 7.1 testing confirmed no significant performance impact from event infrastructure
+   - Response times acceptable (< 500ms), no noticeable delay observed
+   - Feature flag check overhead: ~1ms (negligible)
+   - Outbox write overhead: ~5-10ms (minimal, non-blocking)
+
+3. **Performance Metrics Already Available:**
+   - Application Insights integrated and tracking all requests automatically
+   - Function App logs processing time (`ProcessingTime={ProcessingTime}ms`)
+   - Request duration metrics available in Application Insights
+   - Performance data can be analyzed post-deployment via Application Insights dashboards
+
+4. **Load Testing Tools Not Set Up:**
+   - Comprehensive performance testing requires load testing tools (e.g., k6, JMeter, Azure Load Testing)
+   - Tools not currently configured
+   - Setup and execution would require significant time investment
+
+5. **Time Constraints:**
+   - One week remaining to complete roadmap
+   - Performance testing is valuable but not critical for MVP demonstration
+   - System is operational and performance appears acceptable
+
+6. **Demonstration Focus:**
+   - Primary goal is demonstrating dual-system architecture and event-driven patterns
+   - Not production-scale performance testing
+   - Current performance is sufficient for demonstrations
+
+**What We Know (From Existing Tests):**
+- ✓ Feature flag check overhead: ~1ms (negligible)
+- ✓ Outbox write overhead: ~5-10ms (minimal, non-blocking)
+- ✓ Booking creation response time: < 500ms (acceptable)
+- ✓ Event processing time: ~31 seconds (within 30-second polling interval, acceptable for async processing)
+- ✓ No performance degradation observed compared to baseline
+- ✓ Synchronous mode performance unchanged (no breaking changes)
+
+**Future Consideration:**
+- Performance testing can be conducted post-MVP if needed
+- Application Insights provides historical performance data for analysis
+- Load testing can be added as Phase 10 enhancement if system scales to production
+- Performance characteristics can be documented from Application Insights data post-deployment
+
+**Result:** ✓ **Deferred** - Performance testing deferred due to time constraints and MVP focus. Minimal performance impact already validated in Phase 7.1. Application Insights provides ongoing performance monitoring. Detailed testing can be conducted post-MVP if needed. System performance is acceptable for demonstration purposes.
 

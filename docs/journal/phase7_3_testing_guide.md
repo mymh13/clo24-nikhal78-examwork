@@ -93,11 +93,27 @@ az appconfig kv set \
 
 ### Step 5: Re-Enable Feature Flag (Switch Back to Event-Driven Mode)
 
-**Via Azure CLI:**
+**Via Admin Dashboard (Recommended - Fastest Method):**
+1. Navigate to https://ticket.mymh.dev/admin (must be logged in as Admin)
+2. Scroll to **"Event-Driven Architecture Status"** section
+3. Verify current state:
+   - Feature flag shows: `BookingEvents_Enabled = False`
+   - Outbox shows: `X pending events` (should be 1 from Step 4)
+4. Click **"Toggle Feature Flag"** button
+5. Wait for 5-second cooldown (button shows countdown)
+6. Watch for **"Waiting for change..."** status (yellow box)
+   - Shows elapsed time and check count
+   - Polls every 3 seconds to detect when change takes effect
+7. When you see **"Change applied!"** (green box), the flag is enabled
+8. Verify in mini health check:
+   - Feature flag now shows: `BookingEvents_Enabled = True`
+   - Sentinel value has updated
+
+**Via Azure CLI (Alternative):**
 ```bash
 # Enable feature flag
 az appconfig feature enable \
-  --name examwork-dev \
+  --name examwork-appconfig-dev \
   --feature BookingEvents_Enabled \
   --yes
 
@@ -118,7 +134,7 @@ az appconfig kv set \
   --yes
 ```
 
-**Via Azure Portal:**
+**Via Azure Portal (Alternative):**
 1. Navigate to Azure Portal → App Configuration → `examwork-appconfig-dev`
 2. Go to **Feature Manager** → **Feature flags**
 3. Find feature flag: `BookingEvents_Enabled`
@@ -127,16 +143,27 @@ az appconfig kv set \
 
 ### Step 6: Wait for Hot-Reload and Verify Processing
 
+**If using Admin Dashboard toggle:**
+- The propagation polling UX automatically detects when the change takes effect
+- You'll see "Change applied!" message when ready
+- No manual waiting needed - the UI handles it
+
+**If using Azure CLI/Portal:**
 1. **Wait 30 seconds** for hot-reload (refresh interval is 30 seconds)
 2. **Check health endpoint:**
    - Verify: `Feature Manager: ✓ Available - BookingEvents_Enabled = True`
    - Verify: Sentinel value updated to the new value
+
+**Verify Backlog Processing (All Methods):**
 3. **Wait up to 30 seconds** for OutboxProcessorService to process pending events
-4. **Verify Processing:**
+4. **Check Admin Dashboard or Health Endpoint:**
+   - Pending events count should decrease from 1 to 0 (or decrease by number of pending events)
+   - Refresh the mini health check section to see updated count
+5. **Verify Processing:**
    - Check health endpoint - pending events should decrease (all processed)
-   - Verify outbox events from Step 4 are now marked as `Processed`
+   - Verify outbox events from Step 4 are now marked as `Processed` (check Cosmos DB)
    - Verify Service Bus queue received messages (or were consumed by Function)
-   - Verify Function App processed the events
+   - Verify Function App processed the events (check Application Insights or Azure Portal)
 
 ### Step 7: Create Another Booking with Feature Flag Enabled
 
