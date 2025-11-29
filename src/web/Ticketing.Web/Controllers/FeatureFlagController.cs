@@ -142,24 +142,13 @@ public class FeatureFlagController : ControllerBase
                     var currentValue = featureFlagContent.enabled;
                     var newValue = !currentValue;
 
-                    // Verify we're actually changing the value
-                    if (featureFlagContent.enabled == newValue)
-                    {
-                        _logger.LogInformation("Feature flag already set to {Value}, no change needed", newValue);
-                        // Still update sentinel to trigger refresh
-                        sentinelValue = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-                        await client.SetConfigurationSettingAsync("Settings:Sentinel", sentinelValue);
-                        
-                        return Ok(new ToggleResult
-                        {
-                            Success = true,
-                            PreviousValue = newValue,
-                            NewValue = newValue,
-                            SentinelValue = sentinelValue,
-                            Message = $"Feature flag already set to {newValue}"
-                        });
-                    }
+                    _logger.LogInformation(
+                        "Toggle request: Current value from App Config = {CurrentValue}, Target value = {NewValue}",
+                        currentValue,
+                        newValue);
 
+                    // Always attempt the toggle - don't check if already at target due to propagation delays
+                    // The ETag will handle any conflicts if the value changed between read and write
                     featureFlagContent.enabled = newValue;
 
                     // Update with ETag for optimistic concurrency control
@@ -192,10 +181,11 @@ public class FeatureFlagController : ControllerBase
                     }
 
                     _logger.LogInformation(
-                        "Feature flag toggled from {OldValue} to {NewValue} by {User}",
+                        "Feature flag successfully toggled from {OldValue} to {NewValue} by {User}. Sentinel updated to {SentinelValue}",
                         currentValue,
                         newValue,
-                        User.Identity?.Name);
+                        User.Identity?.Name,
+                        sentinelValue);
 
                     return Ok(new ToggleResult
                     {
@@ -215,8 +205,12 @@ public class FeatureFlagController : ControllerBase
                     
                     if (ex.Status == 409)
                     {
-                        // ETag conflict - feature flag changed, retry with fresh read
-                        continue;
+                        // ETag conflict - feature flag changed between read and write
+                        // This is expected if user clicked multiple times quickly
+                        // Re-read the current value and toggle from there
+                        _logger.LogInformation("ETag conflict detected - feature flag was modified. Re-reading current value and retrying toggle.");
+                        await Task.Delay(500); // Brief delay before retry to allow propagation
+                        continue; // Will re-read in next iteration
                     }
                     
                     if (ex.Status == 429)
@@ -229,6 +223,7 @@ public class FeatureFlagController : ControllerBase
                     // 403 might be transient (token refresh, propagation delay)
                     if (ex.Status == 403 && attempt < maxRetries - 1)
                     {
+                        await Task.Delay(1000); // Wait a bit for token refresh/propagation
                         continue;
                     }
                     
