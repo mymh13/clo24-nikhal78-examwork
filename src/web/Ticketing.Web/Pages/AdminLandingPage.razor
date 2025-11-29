@@ -5,6 +5,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IHttpClientFactory HttpClientFactory
+@implements IAsyncDisposable
 
 <PageTitle>Admin Dashboard</PageTitle>
 
@@ -92,6 +93,30 @@
                                     @toggleMessage
                                 </div>
                             }
+                            @if (isWaitingForPropagation)
+                            {
+                                <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="animation: spin 1s linear infinite;">⏳</span>
+                                        <span><strong>Waiting for change to take effect...</strong></span>
+                                    </div>
+                                    <div style="margin-top: 4px; font-size: 0.9em; color: #666;">
+                                        @propagationStatus
+                                    </div>
+                                </div>
+                            }
+                            @if (propagationComplete)
+                            {
+                                <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="color: #28a745; font-size: 1.2em;">✓</span>
+                                        <span><strong>Change applied successfully!</strong></span>
+                                    </div>
+                                    <div style="margin-top: 4px; font-size: 0.9em; color: #666;">
+                                        Feature flag is now @(miniHealth?.FeatureFlagValue == true ? "enabled" : "disabled")
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                     else
@@ -141,6 +166,15 @@
     private DateTime lastToggleTime = DateTime.MinValue;
     private const int MinToggleIntervalSeconds = 2;
     private const int CooldownSeconds = 5;
+    
+    // Propagation tracking
+    private bool isWaitingForPropagation = false;
+    private bool propagationComplete = false;
+    private string propagationStatus = string.Empty;
+    private bool? expectedFeatureFlagValue = null;
+    private CancellationTokenSource? propagationCancellationTokenSource = null;
+    private const int PollingIntervalSeconds = 3;
+    private const int MaxPropagationWaitSeconds = 60;
 
     protected override async Task OnInitializedAsync()
     {
@@ -189,7 +223,9 @@
                 var result = await response.Content.ReadFromJsonAsync<ToggleResult>();
                 if (result?.Success == true)
                 {
-                    toggleMessage = result.Message;
+                    toggleMessage = $"Toggle request successful: {result.Message}";
+                    expectedFeatureFlagValue = result.NewValue;
+                    propagationComplete = false;
                     
                     // Start cooldown period
                     isCooldown = true;
@@ -204,13 +240,12 @@
                         StateHasChanged();
                     }
                     
-                    // Wait a bit more for hot-reload to propagate (30 seconds refresh interval)
-                    await Task.Delay(2000);
-                    await LoadMiniHealth();
-                    
                     isCooldown = false;
                     cooldownRemainingSeconds = 0;
                     toggleMessage = string.Empty;
+                    
+                    // Start polling for propagation
+                    await StartPropagationPolling();
                 }
                 else
                 {
@@ -246,6 +281,83 @@
         public int OutboxPendingEventsCount { get; set; }
     }
 
+    private async Task StartPropagationPolling()
+    {
+        if (expectedFeatureFlagValue == null)
+        {
+            return;
+        }
+
+        // Cancel any existing polling
+        propagationCancellationTokenSource?.Cancel();
+        propagationCancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = propagationCancellationTokenSource.Token;
+
+        isWaitingForPropagation = true;
+        propagationComplete = false;
+        propagationStatus = "Checking for change...";
+        StateHasChanged();
+
+        var startTime = DateTime.UtcNow;
+        var pollCount = 0;
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(PollingIntervalSeconds), cancellationToken);
+                pollCount++;
+
+                var elapsed = (DateTime.UtcNow - startTime).TotalSeconds;
+                if (elapsed > MaxPropagationWaitSeconds)
+                {
+                    propagationStatus = $"Timeout after {MaxPropagationWaitSeconds} seconds. The change may still be propagating.";
+                    isWaitingForPropagation = false;
+                    StateHasChanged();
+                    return;
+                }
+
+                // Reload health status
+                await LoadMiniHealth();
+                StateHasChanged();
+
+                // Check if the feature flag value matches the expected value
+                if (miniHealth?.FeatureFlagValue == expectedFeatureFlagValue)
+                {
+                    propagationComplete = true;
+                    isWaitingForPropagation = false;
+                    propagationStatus = $"Change detected after {elapsed:F1} seconds ({pollCount} checks)";
+                    StateHasChanged();
+
+                    // Auto-hide success message after 5 seconds
+                    await Task.Delay(5000, cancellationToken);
+                    propagationComplete = false;
+                    expectedFeatureFlagValue = null;
+                    StateHasChanged();
+                    return;
+                }
+                else
+                {
+                    propagationStatus = $"Waiting... ({elapsed:F0}s elapsed, {pollCount} checks) - Current: {miniHealth?.FeatureFlagValue}, Expected: {expectedFeatureFlagValue}";
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Polling was cancelled, which is fine
+            isWaitingForPropagation = false;
+            propagationComplete = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            propagationStatus = $"Error during polling: {ex.Message}";
+            isWaitingForPropagation = false;
+            StateHasChanged();
+        }
+    }
+
     private class ToggleResult
     {
         public bool Success { get; set; }
@@ -253,6 +365,17 @@
         public bool? NewValue { get; set; }
         public string? SentinelValue { get; set; }
         public string Message { get; set; } = string.Empty;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Cancel any ongoing polling when component is disposed
+        propagationCancellationTokenSource?.Cancel();
+        if (propagationCancellationTokenSource != null)
+        {
+            await Task.Delay(100); // Give cancellation time to process
+            propagationCancellationTokenSource.Dispose();
+        }
     }
 }
 
