@@ -17,30 +17,44 @@ public class ApplicationInsightsTelemetryService : ITelemetryService
 
     public void TrackBookingCreated(string bookingId, string customerEmail, string architectureMode, bool eventDrivenEnabled)
     {
-        _telemetryClient.TrackEvent("BookingCreated", new Dictionary<string, string>
+        try
         {
-            { "BookingId", bookingId },
-            { "CustomerEmail", customerEmail },
-            { "ArchitectureMode", architectureMode },
-            { "EventDrivenEnabled", eventDrivenEnabled.ToString() },
-            { "SystemType", eventDrivenEnabled ? "Event-Driven" : "Synchronous" }
-        });
+            _telemetryClient.TrackEvent("BookingCreated", new Dictionary<string, string>
+            {
+                { "BookingId", bookingId },
+                { "CustomerEmail", customerEmail },
+                { "ArchitectureMode", architectureMode },
+                { "EventDrivenEnabled", eventDrivenEnabled.ToString() },
+                { "SystemType", eventDrivenEnabled ? "Event-Driven" : "Synchronous" }
+            });
 
-        _logger.LogDebug("Tracked BookingCreated event: {BookingId}, Mode: {ArchitectureMode}", bookingId, architectureMode);
+            _logger.LogInformation("Tracked BookingCreated event: {BookingId}, Mode: {ArchitectureMode}", bookingId, architectureMode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to track BookingCreated event: {BookingId}", bookingId);
+        }
     }
 
     public void TrackOutboxEventCreated(string outboxEventId, string bookingId, string eventType, string architectureMode)
     {
-        _telemetryClient.TrackEvent("OutboxEventCreated", new Dictionary<string, string>
+        try
         {
-            { "OutboxEventId", outboxEventId },
-            { "BookingId", bookingId },
-            { "EventType", eventType },
-            { "ArchitectureMode", architectureMode },
-            { "Status", "Pending" }
-        });
+            _telemetryClient.TrackEvent("OutboxEventCreated", new Dictionary<string, string>
+            {
+                { "OutboxEventId", outboxEventId },
+                { "BookingId", bookingId },
+                { "EventType", eventType },
+                { "ArchitectureMode", architectureMode },
+                { "Status", "Pending" }
+            });
 
-        _logger.LogDebug("Tracked OutboxEventCreated: {OutboxEventId}, Booking: {BookingId}", outboxEventId, bookingId);
+            _logger.LogInformation("Tracked OutboxEventCreated: {OutboxEventId}, Booking: {BookingId}", outboxEventId, bookingId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to track OutboxEventCreated: {OutboxEventId}", outboxEventId);
+        }
     }
 
     public void TrackOutboxEventProcessed(string outboxEventId, string eventType, TimeSpan processingTime)

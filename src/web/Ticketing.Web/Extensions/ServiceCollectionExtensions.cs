@@ -19,7 +19,22 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddApplicationInsightsTelemetry();
+        // Configure Application Insights
+        var appInsightsConnectionString = configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+        if (!string.IsNullOrEmpty(appInsightsConnectionString))
+        {
+            services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.ConnectionString = appInsightsConnectionString;
+            });
+        }
+        else
+        {
+            // Still add telemetry even without connection string (for local dev)
+            // Events won't be sent, but code won't crash
+            services.AddApplicationInsightsTelemetry();
+        }
+        
         services.AddSingleton<ITelemetryService, ApplicationInsightsTelemetryService>();
 
         services.AddFeatureManagement();

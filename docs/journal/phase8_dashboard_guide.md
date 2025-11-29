@@ -42,31 +42,73 @@ The application now tracks the following custom events with clear `SystemType` a
 
 ### Step 1: Create New Dashboard
 
-1. Navigate to Azure Portal → Application Insights → `examwork-appinsights-dev`
-2. Click **"Dashboards"** in the left menu
-3. Click **"+ New dashboard"**
-4. Name it: **"Event-Driven Architecture Demo"**
+1. Navigate to Azure Portal → Application Insights → `examwork-insights-dev`
+2. Click the **"Dashboards"** tab at the top (in the navigation tabs, next to "Application Dashboard", "Getting started", "Search", "Logs", etc.)
+3. Click the **"Create"** button (top right of the dashboard view, next to "Upload", "Refresh", etc.)
+4. You'll see a grid of dashboard templates. Select **"Custom"** template:
+   - **Location:** First tile in the top-left (shows a grid with a blue plus sign)
+   - **Description:** "Create a custom dashboard"
+   - **Why Custom:** Gives you a blank canvas to add only the charts you need for the demo
+   - **Alternative:** You can use "Application Insights" template if you want a pre-configured dashboard, but you'll need to remove/modify existing charts
+5. The dashboard editor will open with an empty grid
+6. **Name the dashboard:** Click on "Untitled dashboard" at the top and rename it to **"Event-Driven Architecture Demo"**
 
-### Step 2: Add Architecture Mode Comparison Chart
+### Step 2: Verify Events Are Being Tracked (Diagnostic Query)
 
-**Chart 1: Bookings by Architecture Mode (Last 1 Hour)**
+**First, let's verify that custom events are being tracked:**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Bookings by Architecture Mode"
-3. **Query:**
+1. **Navigate to Logs:** In Application Insights (`examwork-insights-dev`), click the **"Logs"** tab at the top
+2. **Switch to KQL mode:** In the query editor, look for a dropdown in the top-right corner that says "Simple" - change it to **"KQL"** mode
+3. **Run this diagnostic query to see all custom events:**
+```kusto
+customEvents
+| where timestamp > ago(24h)
+| summarize Count = count() by name
+| order by Count desc
+```
+4. **Expected results:** You should see events like:
+   - `BookingCreated`
+   - `OutboxEventCreated`
+   - `OutboxEventProcessed` (if event-driven mode was used)
+   - `ServiceBusEventPublished` (if event-driven mode was used)
+   - `FeatureFlagToggled`
+   - `ModeSwitch`
+
+**If you see no results:**
+- Events might not have been tracked yet - create a test booking first
+- Check if Application Insights connection string is configured correctly
+- Verify `ITelemetryService` is being called in `BookingsController`
+
+**If you see events but queries below fail:**
+- Try increasing the time range from `ago(1h)` to `ago(24h)` or `ago(7d)`
+- Check the exact property names in `customDimensions` by running: `customEvents | where name == "BookingCreated" | take 1 | project customDimensions`
+
+### Step 3: Add Architecture Mode Comparison Chart
+
+**Chart 1: Bookings by Architecture Mode**
+
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name == "BookingCreated"
-| where timestamp > ago(1h)
-| summarize Count = count() by SystemType = tostring(customDimensions.SystemType)
+| where timestamp > ago(24h)
+| summarize Count = count() by SystemType = tostring(customDimensions["SystemType"])
 | render piechart
 ```
-4. **Visualization:** Pie chart
-5. **Time range:** Last 1 hour
+2. **Run the query:** Click **"Run"** button
+3. **If you get results, pin to dashboard:**
+   - Click the **"Pin"** icon at the top of the query results
+   - Select your dashboard: **"Event-Driven Architecture Demo"**
+   - **Title:** "Bookings by Architecture Mode"
+   - **Visualization:** Select "Pie chart" from the pin dialog
+   - Click **"Pin"** to confirm
+4. The chart will appear on your dashboard - you can resize and reposition it by dragging
+
+**Note:** If no results, try `ago(7d)` instead of `ago(24h)` to see older events
 
 **Chart 2: Bookings Over Time (Last 1 Hour)**
 
-1. Click **"+ Add"** → **"Query"**
+1. Click **"+ Add"** → **"Query"** (or **"Logs query"**)
 2. **Title:** "Bookings Over Time - Synchronous vs Event-Driven"
 3. **Query:**
 ```kusto
@@ -79,114 +121,165 @@ customEvents
 4. **Visualization:** Time chart
 5. **Time range:** Last 1 hour
 
-### Step 3: Add Event-Driven Flow Visualization
+### Step 4: Add Event-Driven Flow Visualization
 
 **Chart 3: Event-Driven Flow Events**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Event-Driven Flow: Outbox → Service Bus → Function"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name in ("OutboxEventProcessed", "ServiceBusEventPublished", "FunctionBookingCreatedProcessed")
-| where timestamp > ago(1h)
+| where timestamp > ago(24h)
 | summarize Count = count() by EventName = name, bin(timestamp, 1m)
 | render timechart
 ```
-4. **Visualization:** Time chart
-5. **Time range:** Last 1 hour
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Event-Driven Flow: Outbox → Service Bus → Function"
+   - **Visualization:** "Time chart"
+   - Click **"Pin"**
+
+**Note:** This will only show data if event-driven mode was used. If no results, ensure feature flag was enabled and bookings were created in event-driven mode.
 
 **Chart 4: Event Processing Time**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Event Processing Time (Event-Driven Mode)"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name == "OutboxEventProcessed"
-| where timestamp > ago(1h)
-| extend ProcessingTime = todouble(customMetrics.ProcessingTimeMs)
+| where timestamp > ago(24h)
+| extend ProcessingTime = todouble(customMetrics["ProcessingTimeMs"])
+| where isnotnull(ProcessingTime)
 | summarize AvgProcessingTime = avg(ProcessingTime), MaxProcessingTime = max(ProcessingTime), MinProcessingTime = min(ProcessingTime) by bin(timestamp, 5m)
 | render timechart
 ```
-4. **Visualization:** Time chart
-5. **Time range:** Last 1 hour
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Event Processing Time (Event-Driven Mode)"
+   - **Visualization:** "Time chart"
+   - Click **"Pin"**
 
-### Step 4: Add Mode Switch Tracking
+**Note:** If you get an error about `customMetrics`, try this alternative query that uses the property from customDimensions:
+```kusto
+customEvents
+| where name == "OutboxEventProcessed"
+| where timestamp > ago(24h)
+| summarize Count = count() by bin(timestamp, 5m)
+| render timechart
+```
+
+### Step 5: Add Mode Switch Tracking
 
 **Chart 5: Mode Switches**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Architecture Mode Switches"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name == "ModeSwitch"
-| where timestamp > ago(24h)
-| project timestamp, FromMode = tostring(customDimensions.FromMode), ToMode = tostring(customDimensions.ToMode), UserId = tostring(customDimensions.UserId)
+| where timestamp > ago(7d)
+| project timestamp, FromMode = tostring(customDimensions["FromMode"]), ToMode = tostring(customDimensions["ToMode"]), UserId = tostring(customDimensions["UserId"])
 | order by timestamp desc
 ```
-4. **Visualization:** Table
-5. **Time range:** Last 24 hours
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Architecture Mode Switches"
+   - **Visualization:** "Table"
+   - Click **"Pin"**
 
-### Step 5: Add Synchronous Mode Indicator
+**Note:** Mode switches only occur when the feature flag is toggled. If no results, try `ago(30d)` or toggle the feature flag to generate a test event.
+
+### Step 6: Add Synchronous Mode Indicator
 
 **Chart 6: Synchronous Mode Bookings (No Event Processing)**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Synchronous Mode: Bookings (No Event Processing)"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name == "BookingCreated"
-| where timestamp > ago(1h)
-| where tostring(customDimensions.SystemType) == "Synchronous"
+| where timestamp > ago(24h)
+| where tostring(customDimensions["SystemType"]) == "Synchronous"
 | summarize Count = count() by bin(timestamp, 1m)
 | render timechart
 ```
-4. **Visualization:** Time chart
-5. **Time range:** Last 1 hour
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Synchronous Mode: Bookings (No Event Processing)"
+   - **Visualization:** "Time chart"
+   - Click **"Pin"**
 
 **Chart 7: Event-Driven Mode: Complete Flow**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Event-Driven Mode: Complete Flow"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name in ("BookingCreated", "OutboxEventCreated", "OutboxEventProcessed", "ServiceBusEventPublished", "FunctionBookingCreatedProcessed")
-| where timestamp > ago(1h)
-| where tostring(customDimensions.SystemType) == "Event-Driven" or name == "OutboxEventCreated"
+| where timestamp > ago(24h)
+| where tostring(customDimensions["SystemType"]) == "Event-Driven" or name == "OutboxEventCreated"
 | summarize Count = count() by EventName = name, bin(timestamp, 1m)
 | render timechart
 ```
-4. **Visualization:** Time chart
-5. **Time range:** Last 1 hour
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Event-Driven Mode: Complete Flow"
+   - **Visualization:** "Time chart"
+   - Click **"Pin"**
 
-### Step 6: Add Real-Time Comparison Table
+### Step 7: Add Real-Time Comparison Table
 
 **Chart 8: Recent Activity Comparison**
 
-1. Click **"+ Add"** → **"Query"**
-2. **Title:** "Recent Activity: Synchronous vs Event-Driven"
-3. **Query:**
+1. **In the Logs tab**, write the query:
 ```kusto
 customEvents
 | where name == "BookingCreated"
-| where timestamp > ago(30m)
-| project timestamp, BookingId = tostring(customDimensions.BookingId), CustomerEmail = tostring(customDimensions.CustomerEmail), SystemType = tostring(customDimensions.SystemType), ArchitectureMode = tostring(customDimensions.ArchitectureMode)
+| where timestamp > ago(24h)
+| project timestamp, BookingId = tostring(customDimensions["BookingId"]), CustomerEmail = tostring(customDimensions["CustomerEmail"]), SystemType = tostring(customDimensions["SystemType"]), ArchitectureMode = tostring(customDimensions["ArchitectureMode"])
 | order by timestamp desc
 | take 20
 ```
-4. **Visualization:** Table
-5. **Time range:** Last 30 minutes
+2. **Run the query** and click **"Pin"** icon
+3. **Pin settings:**
+   - Dashboard: "Event-Driven Architecture Demo"
+   - **Title:** "Recent Activity: Synchronous vs Event-Driven"
+   - **Visualization:** "Table"
+   - Click **"Pin"**
+
+### Step 8: (Optional) Add Application Map
+
+**Note:** The user mentioned seeing "Application map" in the tile options - this is a great visual for showing the architecture flow!
+
+1. **In the dashboard editor**, click **"+ Add"** button
+2. Select **"Application map"** from the tile options
+3. **Configure:**
+   - Select Application Insights resource: `examwork-insights-dev`
+   - This will show a visual map of your application components and their dependencies
+   - Great for demonstrating the event-driven flow visually!
+4. Click **"Done"** to add it to the dashboard
+
+### Step 9: Save and View Dashboard
+
+1. **Navigate to your dashboard:** Click the **"Dashboards"** tab → Open **"Event-Driven Architecture Demo"**
+2. **Arrange charts:** Drag and resize charts to organize them as needed
+3. **Save:** Changes are saved automatically
+4. **Optional:** Click **"Share"** or **"Manage sharing"** to share the dashboard with others
 
 ## Demonstration Workflow
 
 ### Before Demo:
-1. Open Application Insights dashboard in one browser tab
-2. Open Admin Dashboard (`/admin`) in another tab
-3. Position windows side-by-side
+1. Navigate to Azure Portal → Application Insights → `examwork-insights-dev`
+2. Click the **"Dashboards"** tab
+3. Open your **"Event-Driven Architecture Demo"** dashboard
+4. Open Admin Dashboard (`https://ticket.mymh.dev/admin`) in another browser tab
+5. Position windows side-by-side for live comparison
+6. **Note:** Pinned queries from Logs will use the time range set when you pinned them. To update:
+   - Click on a chart tile
+   - It will open the query in Logs
+   - Adjust time range and re-pin if needed
 
 ### During Demo:
 
@@ -226,10 +319,10 @@ customEvents
 ```kusto
 customEvents
 | where name in ("BookingCreated", "OutboxEventProcessed", "ServiceBusEventPublished", "FunctionBookingCreatedProcessed")
-| where timestamp > ago(10m)
+| where timestamp > ago(24h)
 | summarize 
-    SynchronousBookings = countif(tostring(customDimensions.SystemType) == "Synchronous"),
-    EventDrivenBookings = countif(tostring(customDimensions.SystemType) == "Event-Driven"),
+    SynchronousBookings = countif(tostring(customDimensions["SystemType"]) == "Synchronous"),
+    EventDrivenBookings = countif(tostring(customDimensions["SystemType"]) == "Event-Driven"),
     EventsProcessed = countif(name == "OutboxEventProcessed"),
     ServiceBusPublished = countif(name == "ServiceBusEventPublished"),
     FunctionsProcessed = countif(name == "FunctionBookingCreatedProcessed")
@@ -239,9 +332,9 @@ customEvents
 ### Real-Time Event Flow:
 ```kusto
 customEvents
-| where timestamp > ago(5m)
+| where timestamp > ago(24h)
 | where name in ("BookingCreated", "OutboxEventCreated", "OutboxEventProcessed", "ServiceBusEventPublished", "FunctionBookingCreatedProcessed", "ModeSwitch")
-| project timestamp, EventName = name, SystemType = tostring(customDimensions.SystemType), Details = strcat(tostring(customDimensions))
+| project timestamp, EventName = name, SystemType = tostring(customDimensions["SystemType"]), Details = strcat(tostring(customDimensions))
 | order by timestamp desc
 ```
 
@@ -273,13 +366,74 @@ customEvents
 
 ## Troubleshooting
 
-**If events don't appear:**
-- Check Application Insights connection string is configured
-- Verify `ITelemetryService` is registered in DI
-- Check time range in queries (may need to adjust)
-- Verify events are being tracked (check Application Insights → Logs → customEvents)
+### No Results Found
 
-**If SystemType is missing:**
-- Verify custom events include `SystemType` property
-- Check event properties in Application Insights → Logs
+**If queries return "No results found":**
+
+1. **First, verify events exist:**
+   ```kusto
+   customEvents
+   | where timestamp > ago(7d)
+   | summarize Count = count() by name
+   | order by Count desc
+   ```
+   - If this returns no results, events are not being tracked
+   - Check Application Insights connection string is configured in `appsettings.json` or App Configuration
+   - Verify `ITelemetryService` is registered in `ServiceCollectionExtensions.cs`
+   - Create a test booking to generate events
+
+2. **If events exist but queries fail:**
+   - **Increase time range:** Change `ago(1h)` to `ago(24h)` or `ago(7d)`
+   - **Check property names:** Run this to see actual property names:
+     ```kusto
+     customEvents
+     | where name == "BookingCreated"
+     | take 1
+     | project customDimensions
+     ```
+   - **Use bracket notation:** Use `customDimensions["SystemType"]` instead of `customDimensions.SystemType`
+
+3. **If `customMetrics` fails:**
+   - Metrics might not be stored as expected
+   - Use the alternative query provided in Chart 4 that counts events instead
+   - Or check if metrics are stored differently:
+     ```kusto
+     customEvents
+     | where name == "OutboxEventProcessed"
+     | take 1
+     | project customMetrics
+     ```
+
+### Property Access Issues
+
+**If you get errors accessing properties:**
+- Use bracket notation: `customDimensions["PropertyName"]` instead of `customDimensions.PropertyName`
+- Check if property exists first: `where isnotnull(customDimensions["SystemType"])`
+- Use `tostring()` to convert values: `tostring(customDimensions["SystemType"])`
+
+### Time Range Issues
+
+**If events are old:**
+- Increase time range: `ago(7d)` or `ago(30d)`
+- Check when last booking was created
+- Create a new test booking to generate fresh events
+
+### Verification Steps
+
+1. **Check if telemetry is configured:**
+   - Verify `ApplicationInsights:ConnectionString` in configuration
+   - Check `AddApplicationInsightsTelemetry()` is called in `Program.cs` or `ServiceCollectionExtensions.cs`
+
+2. **Verify events are being tracked:**
+   - Check `BookingsController.cs` - ensure `_telemetryService.TrackBookingCreated()` is called
+   - Check logs for telemetry errors
+   - Create a test booking and immediately check Application Insights
+
+3. **Test with a simple query:**
+   ```kusto
+   customEvents
+   | where timestamp > ago(1h)
+   | take 10
+   ```
+   If this returns results, events are being tracked - the issue is with specific queries.
 
