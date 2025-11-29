@@ -111,6 +111,7 @@ During week 5, work focused on completing login functionality for regular users,
 - **Enum vs String for Simple Status Values:** For simple status values used as partition keys (like `OutboxEventStatus`), consider whether enums are necessary. Enums provide type safety, IntelliSense, and compile-time error checking, but require custom serialization for Cosmos DB. Strings with constants (`public const string Pending = "Pending"`) would be simpler and avoid serialization complexity, but lose compile-time safety. For this use case (simple status partition key), strings might have been the simpler choice. However, enums add value through type safety and prevent typos. The trade-off: simpler code (strings) vs. type safety (enums). Consider the use case complexity and team preferences when choosing. For complex state machines or many valid values, enums are worth the serialization overhead. For simple partition keys with 2-3 values, strings may be sufficient.
 - **Azure App Configuration Feature Flag Naming Restrictions:** Azure App Configuration feature flags have strict naming rules - colons (`:`) are not allowed in feature flag names. Use underscores (`_`) or hyphens (`-`) instead. When designing feature flag names, check Azure documentation for allowed characters. Common patterns: `FeatureName_Enabled`, `Feature-Name-Enabled`, or `FeatureNameEnabled`. The error message "The value ':' is not allowed in the feature name" is clear, but it's better to follow naming conventions from the start to avoid runtime errors.
 - **Azure App Configuration Hot-Reload Implementation:** The `IConfigurationRefresherProvider` may not be automatically registered in the service container when using `AddAzureAppConfiguration`. Instead of relying on service locator, store the refresher directly during configuration using `options.GetRefresher()` and access it via a static variable. This ensures the refresher is available to middleware for hot-reload functionality. The refresh interval can be reduced to 30 seconds for faster testing, but 1 minute is recommended for production to reduce API calls. Always update the sentinel key after changing feature flags to trigger the refresh mechanism. **Note:** In Git Bash on Windows, use Python for Unix timestamp: `$(python -c "import time; print(int(time.time()))")` instead of `$(date +%s)` which may be interpreted as PowerShell Get-Date.
+- **Azure App Service B1 Tier Cold Start Behavior:** On Azure App Service B1 tier, the first request after idle period experiences cold start delays. This affects feature flag toggle propagation - first toggle can take 9-21 seconds (3-7 polling checks), while subsequent toggles are faster (3-9 seconds, 1-3 checks) once the application is warmed up. This is normal behavior for B1 tier. Mitigation: Implemented polling UX in Admin Dashboard that provides real-time feedback showing propagation status, so users understand the system is working even during cold starts. For production, consider enabling "Always On" (reduces cold starts, additional cost) or using a higher tier. Documented in ADR-014 v1.1.
 
 ### Key Achievements
 - **Complete User Management:** Full CRUD system for users with proper validation, password hashing, and role-based access control. Edit functionality fully implemented.
@@ -210,12 +211,19 @@ Completed Azure Functions implementation for event consumption. Created Function
   - `POST /api/featureflag/toggle` - toggles feature flag and updates sentinel key (Admin only)
 - Added debouncing (2-second minimum between clicks) and 5-second cooldown after successful toggle
 - Button shows countdown during cooldown period
+- **Real-time propagation polling (v1.1):** Polls health endpoint every 3 seconds to detect when feature flag change takes effect
+  - Shows "Waiting for change..." status with elapsed time and check count
+  - Displays "Change applied!" success message when propagation detected
+  - Auto-hides success message after 5 seconds
+  - Handles timeout (60 seconds max wait)
+  - Provides clear visual feedback during cold start delays
 - Automatic health status refresh after toggle
 - Uses Azure App Configuration SDK (`Azure.Data.AppConfiguration`) with managed identity authentication
 - Requires "App Configuration Data Owner" role for App Service managed identity (added to Bicep template)
 - Retry logic with exponential backoff for transient 403 errors (rate limiting, token refresh)
 - ETag-based optimistic concurrency control to prevent conflicts
 - Significantly speeds up testing and perfect for live demonstrations
+- **Cold Start Behavior Observed:** First toggle after idle period takes 3-7 checks (9-21 seconds) due to Azure App Service B1 tier cold start. Subsequent toggles are faster (1-3 checks, 3-9 seconds) once application is warmed up. Polling UX provides real-time feedback regardless of timing. Documented in ADR-014 v1.1.
 
 ---
 

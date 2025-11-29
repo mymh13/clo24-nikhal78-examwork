@@ -2,7 +2,17 @@
 
 **Status:** Accepted  
 **Date:** 2025-11-27  
+**Last Updated:** 2025-11-28  
 **Author:** Niklas Häll
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2025-11-27 | Initial ADR - Sentinel key pattern implementation for hot-reload |
+| 1.1 | 2025-11-28 | Added Admin Dashboard feature flag toggle UI, documented cold start behavior, added propagation polling UX |
 
 ---
 
@@ -108,6 +118,50 @@ az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --valu
 4. Configuration and feature flags are updated
 5. Application uses new values immediately
 
+**Admin Dashboard Toggle UI (v1.1 Addition):**
+After implementing the sentinel key pattern, we recognized an opportunity to add a **feature flag toggle UI directly in the Admin Dashboard**. This was not originally planned but became feasible once hot-reload was working.
+
+**Implementation:**
+- **Location:** `/admin` page (Admin Dashboard)
+- **Components:**
+  - Mini health check section displaying App Configuration status, feature flag value, and outbox pending events
+  - Toggle button to enable/disable event-driven mode
+  - Real-time propagation status with polling to detect when changes take effect
+- **API Endpoints:**
+  - `GET /api/featureflag/mini-health` - Returns simplified health status
+  - `POST /api/featureflag/toggle` - Toggles feature flag and updates sentinel key (Admin role only)
+- **Features:**
+  - Debouncing (2-second minimum between clicks)
+  - 5-second cooldown after successful toggle
+  - Automatic polling every 3 seconds to detect when change takes effect
+  - Visual feedback: "Waiting for change..." (yellow) → "Change applied!" (green)
+  - Timeout handling (60 seconds max wait)
+  - ETag-based optimistic concurrency control
+  - Retry logic with exponential backoff for transient errors
+- **Benefits:**
+  - **Faster Testing** - No need to use Azure CLI or Portal to toggle flags
+  - **Live Demonstrations** - Perfect for showing architecture switching in real-time
+  - **Better UX** - Clear visual feedback when changes propagate
+  - **Operational Convenience** - Admins can toggle flags directly from the dashboard
+
+**Propagation Behavior & Cold Start:**
+During testing, we observed that feature flag toggles become faster after the application "warms up":
+- **First toggle:** 3-7 checks (9-21 seconds) - App Service B1 tier cold start
+- **Subsequent toggles:** 1-3 checks (3-9 seconds) - Application warmed up
+
+**Root Causes:**
+1. **Azure App Service B1 Tier Cold Start** - After idle time, the first request can be slower. Once warm, subsequent requests are faster.
+2. **30-Second Refresh Interval** - The sentinel key triggers refresh, but refresh only runs if 30 seconds have elapsed since the last refresh. If toggling within 30 seconds, it may wait for the next refresh window.
+3. **App Configuration Propagation** - Changes can take a few seconds to propagate through Azure's infrastructure. Once the app is active, it may pick up changes faster.
+
+**Mitigation:**
+- **Polling UX** - The Admin Dashboard polls every 3 seconds to detect when changes take effect, providing real-time feedback regardless of propagation timing
+- **Visual Status** - Shows elapsed time and check count, so users understand the system is working even during cold starts
+- **Production Considerations:**
+  - Enable "Always On" for production (reduces cold starts, additional cost)
+  - Consider higher tier for better performance
+  - Or accept cold start delays with the polling UX (current approach)
+
 ---
 
 ## Consequences
@@ -121,13 +175,15 @@ az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --valu
 - **Atomic Updates** – All configuration refreshes together (`refreshAll: true`), preventing partial updates that could cause inconsistent state.
 - **Simple Operation** – Updating sentinel key value is straightforward (just increment a number). No complex procedures required.
 - **Cost Effective** – No additional infrastructure needed. Uses existing App Configuration refresh capabilities.
+- **Admin Dashboard Toggle (v1.1)** – Feature flag can be toggled directly from Admin Dashboard with real-time propagation feedback. Eliminates need for Azure CLI or Portal access during demonstrations.
 
 **Disadvantages:**
 - **Polling Overhead** – Application polls App Configuration every minute, consuming resources even when no changes occur. However, this is minimal (single key check).
 - **Refresh Delay** – Changes take up to 1 minute to propagate (refresh interval). For immediate updates, would need to reduce interval (increases polling overhead).
-- **Sentinel Key Management** – Requires discipline to update sentinel key when changing configuration. If forgotten, changes won't be picked up until next sentinel update.
+- **Sentinel Key Management** – Requires discipline to update sentinel key when changing configuration. If forgotten, changes won't be picked up until next sentinel update. (Mitigated by Admin Dashboard toggle which updates sentinel automatically.)
 - **Cache Complexity** – Configuration is cached, and refresh logic adds complexity to configuration pipeline. Requires understanding of refresh behavior.
 - **Potential Race Conditions** – If multiple configuration values change simultaneously, refresh happens atomically but timing could cause brief inconsistencies (mitigated by `refreshAll: true`).
+- **Cold Start Delays (v1.1)** – On Azure App Service B1 tier, first toggle after idle period can take 9-21 seconds due to cold start. Subsequent toggles are faster (3-9 seconds). Mitigated by polling UX that provides real-time feedback.
 
 ---
 
@@ -151,6 +207,9 @@ az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --valu
 - **Risk:** Configuration refresh fails silently, leaving application with stale values.  
   **Mitigation:** Implement health checks to verify configuration refresh is working. Monitor sentinel key value in health endpoint. Log refresh events for observability.
 
+- **Risk:** Cold start delays on B1 tier cause slow feature flag toggles during demonstrations.  
+  **Mitigation:** Admin Dashboard polling UX provides real-time feedback showing propagation status. Users understand the system is working even during cold starts. For production, consider "Always On" or higher tier to reduce cold starts.
+
 ---
 
 ## Alternatives
@@ -161,7 +220,7 @@ az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --valu
 
 - **Manual Service Restart** – Rejected. Causes downtime, poor user experience, and operational overhead. Not suitable for production or live demonstrations.
 
-- **Configuration Reload Endpoint** – Rejected. Requires exposing administrative endpoint, security concerns, and manual intervention. Sentinel pattern is automatic and doesn't require API changes.
+- **Configuration Reload Endpoint** – Initially rejected. However, after implementing sentinel key pattern, we added Admin Dashboard toggle UI (`POST /api/featureflag/toggle`) which provides convenient UI for toggling flags while maintaining security (Admin role only) and automatic sentinel key updates. This combines the benefits of both approaches.
 
 - **Change Feed (Cosmos DB Style)** – Not applicable. App Configuration doesn't have change feed. Would need to build custom solution, adding complexity.
 
@@ -176,6 +235,7 @@ az appconfig kv set --name examwork-appconfig-dev --key Settings:Sentinel --valu
 - [Event-Driven Architecture Roadmap](../journal/eventdriven_roadmap.md)
 - [ADR-006 - Event-Driven Architecture](./ADR-006-eventdriven.md)
 - [ADR-012 - Azure App Configuration](./ADR-012-azure-app-configuration.md)
+- [Week 5 Journal - Admin Dashboard Feature Flag Toggle](../journal/week_five.md#admin-dashboard-feature-flag-toggle-side-mission)
 - [Azure App Configuration - Refresh Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/enable-dynamic-configuration-dotnet-core)
 - [Sentinel Key Pattern - Microsoft Docs](https://learn.microsoft.com/en-us/azure/azure-app-configuration/enable-dynamic-configuration-dotnet-core#refreshall)
 
