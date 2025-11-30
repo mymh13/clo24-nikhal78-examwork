@@ -112,6 +112,9 @@ During week 5, work focused on completing login functionality for regular users,
 - **Azure App Configuration Feature Flag Naming Restrictions:** Azure App Configuration feature flags have strict naming rules - colons (`:`) are not allowed in feature flag names. Use underscores (`_`) or hyphens (`-`) instead. When designing feature flag names, check Azure documentation for allowed characters. Common patterns: `FeatureName_Enabled`, `Feature-Name-Enabled`, or `FeatureNameEnabled`. The error message "The value ':' is not allowed in the feature name" is clear, but it's better to follow naming conventions from the start to avoid runtime errors.
 - **Azure App Configuration Hot-Reload Implementation:** The `IConfigurationRefresherProvider` may not be automatically registered in the service container when using `AddAzureAppConfiguration`. Instead of relying on service locator, store the refresher directly during configuration using `options.GetRefresher()` and access it via a static variable. This ensures the refresher is available to middleware for hot-reload functionality. The refresh interval can be reduced to 30 seconds for faster testing, but 1 minute is recommended for production to reduce API calls. Always update the sentinel key after changing feature flags to trigger the refresh mechanism. **Note:** In Git Bash on Windows, use Python for Unix timestamp: `$(python -c "import time; print(int(time.time()))")` instead of `$(date +%s)` which may be interpreted as PowerShell Get-Date.
 - **Azure App Service B1 Tier Cold Start Behavior:** On Azure App Service B1 tier, the first request after idle period experiences cold start delays. This affects feature flag toggle propagation - first toggle can take 9-21 seconds (3-7 polling checks), while subsequent toggles are faster (3-9 seconds, 1-3 checks) once the application is warmed up. This is normal behavior for B1 tier. Mitigation: Implemented polling UX in Admin Dashboard that provides real-time feedback showing propagation status, so users understand the system is working even during cold starts. For production, consider enabling "Always On" (reduces cold starts, additional cost) or using a higher tier. Documented in ADR-014 v1.1.
+- **Application Insights REST API Authentication:** When querying Application Insights via REST API, the App Service managed identity requires explicit "Reader" role assignment on the Application Insights resource. The role assignment must be at the resource level (not subscription or resource group). Use Azure CLI: `az role assignment create --assignee <principal-id> --role "Reader" --scope /subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.Insights/components/<name>`. Permissions typically propagate within 1-2 minutes. If errors persist, restart the App Service to refresh the managed identity token.
+- **HTTP Content-Type Header with StringContent:** When using `StringContent` in HttpClient, do not manually set `Content-Type` header on `DefaultRequestHeaders`. `StringContent` automatically sets the `Content-Type` header based on the encoding and media type provided in the constructor. Manually adding it causes "Misused header name" errors. Always let `StringContent` handle content headers automatically.
+- **Azure Metadata Service for Subscription ID:** In Azure App Service, the subscription ID can be automatically retrieved from the Azure Metadata Service (`http://169.254.169.254/metadata/instance/compute/subscriptionId`). This eliminates the need to store subscription ID in configuration for Azure deployments. However, for local development, subscription ID must be provided via environment variables or configuration. The metadata service is only available within Azure infrastructure.
 
 ### Key Achievements
 - **Complete User Management:** Full CRUD system for users with proper validation, password hashing, and role-based access control. Edit functionality fully implemented.
@@ -179,26 +182,28 @@ Completed full Service Bus integration for event publishing. Created `IEventPubl
 ### Phase 6: Azure Function Implementation (Complete)
 Completed Azure Functions implementation for event consumption. Created Functions project structure with all required NuGet packages (Service Bus extensions, Application Insights). Implemented `OnBookingCreatedFunction` with Service Bus trigger binding to `booking-events` queue using managed identity authentication. Function deserializes `BookingCreated` events from JSON with camelCase naming policy (matches publisher). Comprehensive error handling with specific exception types (`ArgumentException`, `InvalidOperationException`, `JsonException`) and message metadata tracking (deliveryCount, enqueuedTimeUtc, messageId). Configured retry policy in `host.json` with exponential backoff (3 retries, 5 seconds to 5 minutes). Dead letter queue support via Service Bus queue configuration (maxDeliveryCount: 10). Application Insights integration configured for automatic telemetry. Created GitHub Actions deployment pipeline (`.github/workflows/cd-functions-dev.yaml`) using zip deploy via Azure CLI. Function App deploys automatically after successful CI builds. Event-driven architecture fully operational end-to-end: bookings → outbox → Service Bus → Azure Functions → Application Insights.
 
-### Phase 7: Testing & Validation (In Progress)
+### Phase 7: Testing & Validation (Complete)
 **Phase 7.1 (Complete):** Tested synchronous flow with feature flag disabled. Verified bookings work exactly as before, outbox events created but not published to Service Bus, no performance impact, and system operates as "before refactoring" state. All tests passed.
 
 **Phase 7.2 (Complete):** Tested event-driven flow with feature flag enabled. Verified hot-reload works correctly (feature flag updates without restart), outbox events are processed by `OutboxProcessorService` and published to Service Bus, Function App receives and processes events, and complete end-to-end event flow operational. Event-driven architecture fully validated and operational.
 
-**Phase 7.3 (In Progress):** Testing switching between modes at runtime. Verified hot-reload works in both directions (enabled → disabled → enabled) within 30 seconds without service restart. 
+**Phase 7.3 (Complete):** Testing switching between modes at runtime. Verified hot-reload works in both directions (enabled → disabled → enabled) within 30 seconds without service restart. 
 
 **Test Results (2025-11-28):**
 - ✓ **Step 1:** Created booking in event-driven mode (`3cbcf3c4-77e3-4d60-a136-4c84ce9dbb45`) - event processed within 30 seconds, health endpoint shows 0 pending events
 - ✓ **Step 2:** Hot-reload validated - feature flag disabled successfully, sentinel value updated to `1764368122`
 - ✓ **Step 3:** Created booking in synchronous mode (`0e4fc863-8efc-462d-99d0-21ee97d11fa2`) - outbox event created with `Pending` status, remains unprocessed (1 pending event visible), no Service Bus messages sent
-- ⏳ **Step 4:** Re-enable feature flag and verify backlog processing (pending event from Step 3 should be processed)
-- ⏳ **Step 5:** Create another booking with feature flag enabled to verify event-driven flow works again
+- ✓ **Step 4:** Re-enabled feature flag and verified backlog processing - pending event from Step 3 processed successfully within 30 seconds, outbox shows 0 pending events, event marked as `Processed` in Cosmos DB
+- ✓ **Step 5:** Created another booking with feature flag enabled (`a086ea6a-3952-4d20-8ee0-4656bada892c`) - event processed immediately, Service Bus activity confirmed, complete event-driven flow operational
 
 **Key Findings:**
 - Hot-reload works correctly in both directions within 30 seconds
 - Event-driven mode: events processed and published to Service Bus
 - Synchronous mode: events created but remain `Pending`, no Service Bus messages
+- Backlog processing: pending events from synchronous mode are automatically processed when feature flag is re-enabled
 - All bookings created successfully regardless of mode
 - Zero-downtime switching confirmed - perfect for live demonstrations
+- Mode switching fully validated and operational
 
 **Admin Dashboard Feature Flag Toggle (Side Mission):**
 - Added mini health check section to Admin Dashboard displaying:
@@ -225,11 +230,43 @@ Completed Azure Functions implementation for event consumption. Created Function
 - Significantly speeds up testing and perfect for live demonstrations
 - **Cold Start Behavior Observed:** First toggle after idle period takes 3-7 checks (9-21 seconds) due to Azure App Service B1 tier cold start. Subsequent toggles are faster (1-3 checks, 3-9 seconds) once application is warmed up. Polling UX provides real-time feedback regardless of timing. Documented in ADR-014 v1.1.
 
+### Phase 8: Monitoring & Observability (In Progress)
+**Phase 8.1 (Complete):** Application Insights custom events integration. Created `ITelemetryService` interface and `ApplicationInsightsTelemetryService` implementation with comprehensive event tracking. Custom events tracked: `BookingCreated`, `OutboxEventCreated`, `OutboxEventProcessed`, `ServiceBusEventPublished`, `FeatureFlagToggled`, `ModeSwitch`. All events include `SystemType` property to distinguish Synchronous vs Event-Driven modes. Integrated telemetry throughout event flow: `BookingsController`, `OutboxProcessorService`, `ServiceBusEventPublisher`, `FeatureFlagController`, and `OnBookingCreatedFunction`. Application Insights connection string configured in deployment pipeline and App Service settings. Telemetry flushing implemented for immediate event sending. Custom events successfully appearing in Application Insights logs.
+
+**Phase 8.2 (In Progress):** Demo page implementation for live demonstrations. Created `/demo` page combining three key components:
+- **Application Insights Query Results (Top Left):** Live KQL query execution via REST API, displays custom events from last hour with auto-refresh capability (every 10 seconds). Created `ApplicationInsightsController` with `/api/applicationinsights/query` endpoint using Azure Managed Identity authentication. Queries Application Insights via Azure Resource Manager API.
+- **Event-Driven Architecture Status (Top Right):** Mini health check with feature flag toggle, same functionality as Admin Dashboard but optimized for demo layout.
+- **Booking Management (Bottom, Full Width):** Full booking creation and management interface with full-width table for better visibility.
+
+**Demo Page Features:**
+- Auto-refresh toggle for Application Insights queries (10-second interval)
+- Manual refresh button for immediate updates
+- Back button to return to Admin Dashboard
+- Responsive layout: insights and status share top row, bookings use full width below
+- Automatic insights refresh after booking creation (2-second delay for ingestion)
+- Real-time feature flag toggle with propagation tracking
+- Complete booking CRUD operations embedded in demo page
+
+**Technical Implementation:**
+- `ApplicationInsightsController` uses Azure Managed Identity (`DefaultAzureCredential`) for authentication
+- Subscription ID retrieved from environment variables, configuration, or Azure Metadata Service
+- Resource group and Application Insights name configurable via environment variables
+- App Service managed identity requires "Reader" role on Application Insights resource
+- KQL queries executed via Azure Resource Manager API (`/api/query` endpoint)
+- Query results displayed in table format with dynamic columns and rows
+
+**Challenges Encountered:**
+- **Content-Type Header Error:** Initially attempted to set `Content-Type` header on `DefaultRequestHeaders`, but `StringContent` automatically sets this header. Solution: Removed manual `Content-Type` header assignment - `StringContent` handles it automatically.
+- **403 Forbidden Error:** App Service managed identity lacked permissions to query Application Insights. Solution: Granted "Reader" role on Application Insights resource using Azure CLI. Permissions propagate within 1-2 minutes.
+- **Subscription ID Configuration:** Subscription ID not available in App Service environment. Solution: Added `AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP` to deployment workflow as App Settings. Also supports Azure Metadata Service for automatic retrieval in Azure.
+
+**Status:** Demo page operational and ready for live demonstrations. Application Insights queries working after permission grant. Perfect one-stop shop for showcasing event-driven architecture with live data visualization.
+
 ---
 
 ## Next Steps
 
-1. **Event-Driven Architecture:** Continue with Phase 7 (Testing & Validation) - Phase 7.1, 7.2, and 7.3 (in progress) complete. Admin Dashboard now includes feature flag toggle for faster testing. Remaining: Complete Step 4 and 5 of Phase 7.3 (backlog processing validation), test error scenarios (7.4), and performance testing (7.5). Then proceed to Phase 8 (Monitoring & Observability) for Application Insights dashboards and alerts.
+1. **Event-Driven Architecture:** Phase 7 complete (Testing & Validation). Phase 8 in progress - Application Insights custom events implemented (8.1), demo page operational with live KQL queries (8.2). Remaining: Complete Phase 8.2 (Application Insights dashboard creation in Azure Portal), then Phase 8.3 (alerts setup), then Phase 9 (Documentation & Cleanup).
 2. **Ticket Activation:** Implement ticket activation timer with dual triggers (manual and QR code scan).
 3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality.
 4. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.

@@ -75,7 +75,7 @@ public class ApplicationInsightsController : ControllerBase
             var token = await credential.GetTokenAsync(
                 new TokenRequestContext(new[] { "https://management.azure.com/.default" }));
 
-            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Insights/components/{appInsightsName}/api/query?api-version=2021-05-01";
+            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Insights/components/{appInsightsName}/api/query?api-version=2020-02-02";
 
             var queryRequest = new
             {
