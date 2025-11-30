@@ -63,5 +63,22 @@ jobs:
             echo "Warning: APPLICATIONINSIGHTS_CONNECTION_STRING secret not found. Skipping App Insights configuration."
           fi
           
+          # Set Azure Subscription ID for Application Insights queries
+          if [ -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "Setting Azure Subscription ID..."
+            az webapp config appsettings set \
+              --name "${{ vars.WEBAPP_NAME }}" \
+              --resource-group "${{ vars.WEBAPP_RG }}" \
+              --settings AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          else
+            echo "Warning: AZURE_SUBSCRIPTION_ID secret not found."
+          fi
+          
+          # Set Azure Resource Group
+          az webapp config appsettings set \
+            --name "${{ vars.WEBAPP_NAME }}" \
+            --resource-group "${{ vars.WEBAPP_RG }}" \
+            --settings AZURE_RESOURCE_GROUP="${{ vars.WEBAPP_RG }}"
+          
           echo "Restarting App Service..."
           az webapp restart --name "${{ vars.WEBAPP_NAME }}" --resource-group "${{ vars.WEBAPP_RG }}"

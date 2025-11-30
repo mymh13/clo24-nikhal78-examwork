@@ -21,82 +21,80 @@
     
     @if (user?.Identity?.IsAuthenticated == true)
     {
-        <!-- Top Section: Application Insights Query Results -->
-        <div class="demo-section" style="margin-bottom: var(--spacing-xl);">
-            <h2>Application Insights - Custom Events</h2>
-            <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-                <button class="btn btn-primary" @onclick="RefreshInsights" disabled="@isLoadingInsights">
-                    @if (isLoadingInsights)
-                    {
-                        <text>Loading...</text>
-                    }
-                    else
-                    {
-                        <text>Refresh Events</text>
-                    }
-                </button>
-                <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" @bind="autoRefreshInsights" />
-                    <span>Auto-refresh (every 10s)</span>
-                </label>
-            </div>
-            
-            @if (!string.IsNullOrEmpty(insightsError))
-            {
-                <div class="error-message" style="margin-bottom: var(--spacing-md);">
-                    <p>@insightsError</p>
+        <!-- Top Section: Application Insights (Left) and Event-Driven Architecture Status (Right) -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
+            <!-- Left: Application Insights Query Results -->
+            <div class="demo-section">
+                <h2>Application Insights - Custom Events</h2>
+                <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+                    <button class="btn btn-primary" @onclick="RefreshInsights" disabled="@isLoadingInsights">
+                        @if (isLoadingInsights)
+                        {
+                            <text>Loading...</text>
+                        }
+                        else
+                        {
+                            <text>Refresh Events</text>
+                        }
+                    </button>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" @bind="autoRefreshInsights" />
+                        <span>Auto-refresh (every 10s)</span>
+                    </label>
                 </div>
-            }
-            
-            @if (insightsData != null && insightsData.Success && insightsData.Tables != null && insightsData.Tables.Any())
-            {
-                @foreach (var table in insightsData.Tables)
+                
+                @if (!string.IsNullOrEmpty(insightsError))
                 {
-                    <div style="margin-bottom: var(--spacing-lg);">
-                        <h3>@table.Name</h3>
-                        <div style="overflow-x: auto;">
-                            <table class="bookings-table" style="width: 100%;">
-                                <thead>
-                                    <tr>
-                                        @foreach (var column in table.Columns)
-                                        {
-                                            <th>@column.Name</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var row in table.Rows)
-                                    {
-                                        <tr>
-                                            @foreach (var cell in row)
-                                            {
-                                                <td>@(cell?.ToString() ?? "-")</td>
-                                            }
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="error-message" style="margin-bottom: var(--spacing-md);">
+                        <p>@insightsError</p>
                     </div>
                 }
-            }
-            else if (insightsData != null && !insightsData.Success)
-            {
-                <div class="error-message">
-                    <p>Error: @insightsData.Error</p>
-                </div>
-            }
-            else if (!isLoadingInsights)
-            {
-                <p style="color: var(--color-text-muted);">No data available. Click "Refresh Events" to load.</p>
-            }
-        </div>
+                
+                @if (insightsData != null && insightsData.Success && insightsData.Tables != null && insightsData.Tables.Any())
+                {
+                    @foreach (var table in insightsData.Tables)
+                    {
+                        <div style="margin-bottom: var(--spacing-lg);">
+                            <h3>@table.Name</h3>
+                            <div style="overflow-x: auto;">
+                                <table class="bookings-table" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            @foreach (var column in table.Columns)
+                                            {
+                                                <th>@column.Name</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in table.Rows)
+                                        {
+                                            <tr>
+                                                @foreach (var cell in row)
+                                                {
+                                                    <td>@(cell?.ToString() ?? "-")</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                }
+                else if (insightsData != null && !insightsData.Success)
+                {
+                    <div class="error-message">
+                        <p>Error: @insightsData.Error</p>
+                    </div>
+                }
+                else if (!isLoadingInsights)
+                {
+                    <p style="color: var(--color-text-muted);">No data available. Click "Refresh Events" to load.</p>
+                }
+            </div>
 
-        <hr class="section-divider" />
-
-        <!-- Middle Section: Feature Flag Toggle (Left) and Booking Management (Right) -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
-            <!-- Left: Event-Driven Architecture Status -->
+            <!-- Right: Event-Driven Architecture Status -->
             <div class="demo-section">
                 <h2>Event-Driven Architecture Status</h2>
                 <div class="mini-health-check" style="padding: var(--spacing-md); background: var(--bg-secondary); border-radius: 4px;">
@@ -185,9 +183,12 @@
                     }
                 </div>
             </div>
+        </div>
 
-            <!-- Right: Booking Management -->
-            <div class="demo-section">
+        <hr class="section-divider" />
+
+        <!-- Bottom Section: Booking Management (Full Width) -->
+        <div class="demo-section">
                 <h2>Booking Management</h2>
                 
                 <!-- Create Booking Form -->
@@ -316,7 +317,6 @@
                         </div>
                     }
                 </div>
-            </div>
         </div>
     }
     else

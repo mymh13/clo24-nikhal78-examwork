@@ -249,7 +249,49 @@ customEvents
    - **Visualization:** "Table"
    - Click **"Pin"**
 
-### Step 8: (Optional) Add Application Map
+### Step 8: Alternative Method - Add Queries Directly to Dashboard
+
+**If the Pin button is not available in Logs, you can add queries directly to the dashboard:**
+
+1. **Navigate to your dashboard:** Click the **"Dashboards"** tab → Open **"Event-Driven Architecture Demo"**
+2. **Click "Edit"** button (top right of the dashboard)
+3. **Click "+ Add"** button
+4. **Look for these tile types:**
+   - **"Logs query"** or **"Query"** - This allows you to enter KQL queries directly
+   - **"Application Insights query"** - Similar option
+   - **"Markdown"** - For text/labels between charts
+5. **If you find "Logs query" or "Query" tile:**
+   - Select it
+   - **Title:** "Bookings by Architecture Mode"
+   - **Query:** Paste your KQL query:
+     ```kusto
+     customEvents
+     | where name == "BookingCreated"
+     | where timestamp > ago(24h)
+     | summarize Count = count() by SystemType = tostring(customDimensions["SystemType"])
+     | render piechart
+     ```
+   - **Resource:** Select `examwork-insights-dev` Application Insights resource
+   - **Visualization:** Select "Pie chart"
+   - Click **"Done"** or **"Apply"**
+
+**If "Logs query" tile is NOT available either, use Workbooks (see Step 9):**
+
+### Step 9: Alternative Method - Use Workbooks
+
+**If dashboard tiles don't support queries, use Application Insights Workbooks:**
+
+1. **Navigate to Application Insights** → `examwork-insights-dev`
+2. Click **"Workbooks"** in the left menu (or search for it)
+3. Click **"+ New"** or **"Create"**
+4. **Add a query step:**
+   - Click **"+ Add"** → **"Add query"**
+   - Paste your KQL query
+   - Select visualization type
+5. **Save the workbook** for future use
+6. **Pin the workbook** to your dashboard (if pin option is available)
+
+### Step 10: (Optional) Add Application Map
 
 **Note:** The user mentioned seeing "Application map" in the tile options - this is a great visual for showing the architecture flow!
 
@@ -261,12 +303,30 @@ customEvents
    - Great for demonstrating the event-driven flow visually!
 4. Click **"Done"** to add it to the dashboard
 
-### Step 9: Save and View Dashboard
+### Step 11: Save and View Dashboard
 
 1. **Navigate to your dashboard:** Click the **"Dashboards"** tab → Open **"Event-Driven Architecture Demo"**
 2. **Arrange charts:** Drag and resize charts to organize them as needed
-3. **Save:** Changes are saved automatically
+3. **Save:** Click **"Done editing"** or **"Save"** button (if in edit mode)
 4. **Optional:** Click **"Share"** or **"Manage sharing"** to share the dashboard with others
+
+## Alternative: Use Workbooks Instead of Dashboard
+
+**If pinning queries to dashboards is not working, use Application Insights Workbooks:**
+
+1. **Navigate to Application Insights** → `examwork-insights-dev`
+2. Click **"Workbooks"** in the left menu
+3. Click **"+ New"** or **"Create"**
+4. **Add queries:**
+   - Click **"+ Add"** → **"Add query"** for each chart you want
+   - Paste your KQL queries
+   - Configure visualizations
+5. **Save the workbook** as "Event-Driven Architecture Demo"
+6. **Access it anytime** from Workbooks section
+
+**Workbooks are often more reliable for Application Insights queries than dashboard pinning.**
+
+See `docs/journal/dashboard_pin_alternatives.md` for detailed alternatives.
 
 ## Demonstration Workflow
 
