@@ -149,11 +149,26 @@ await Task.Delay(10000, cancellationToken); // Change 10000 to desired milliseco
 ### "Query failed: 403 Forbidden" Error
 
 **Solution:** The App Service managed identity needs "Reader" role on Application Insights:
+
+1. Get the App Service principal ID:
+```bash
+az webapp identity show \
+  --name examwork-web-dev \
+  --resource-group rg-examwork-dev \
+  --query principalId -o tsv
+```
+
+2. Grant the Reader role:
 ```bash
 az role assignment create \
   --assignee <app-service-principal-id> \
   --role "Reader" \
-  --scope /subscriptions/<subscription-id>/resourceGroups/rg-examwork-dev/providers/Microsoft.Insights/components/examwork-insights-dev
+  --scope /subscriptions/68bf6cf1-dc03-413f-89d7-9828f182b09d/resourceGroups/rg-examwork-dev/providers/Microsoft.Insights/components/examwork-insights-dev
+```
+
+**Note:** After granting permissions, wait 1-2 minutes for propagation. If the error persists, restart the App Service to refresh the managed identity token:
+```bash
+az webapp restart --name examwork-web-dev --resource-group rg-examwork-dev
 ```
 
 ### No Events Showing
