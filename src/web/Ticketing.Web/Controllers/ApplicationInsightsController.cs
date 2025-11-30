@@ -89,7 +89,7 @@ public class ApplicationInsightsController : ControllerBase
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Authorization = 
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
-            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            // Note: Content-Type is automatically set by StringContent, don't add it to request headers
 
             var response = await _httpClient.PostAsync(url, content);
             var responseContent = await response.Content.ReadAsStringAsync();

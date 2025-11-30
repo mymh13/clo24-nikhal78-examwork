@@ -13,10 +13,17 @@
 <PageTitle>Event-Driven Architecture Demo</PageTitle>
 
 <div class="container" style="max-width: 100%;">
-    <h1>Event-Driven Architecture Demo</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+        <h1 style="margin: 0;">Event-Driven Architecture Demo</h1>
+        @{
+            var user = HttpContextAccessor.HttpContext?.User;
+            var landingPageUrl = Ticketing.Web.Helpers.NavigationHelper.GetLandingPageUrl(user);
+        }
+        <a href="@landingPageUrl" class="btn btn-secondary" style="margin-left: auto;">Back to Dashboard</a>
+    </div>
     
     @{
-        var user = HttpContextAccessor.HttpContext?.User;
+        // user is already defined above
     }
     
     @if (user?.Identity?.IsAuthenticated == true)
