@@ -408,6 +408,12 @@ p {
     overflow: hidden;
 }
 
+/* Fixed layout for insights tables to enforce column widths */
+.bookings-table-container:has(.insights-cell-truncate) .bookings-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
 .bookings-table thead {
     background: var(--color-bg-secondary);
 }
@@ -429,16 +435,28 @@ p {
 /* Override for insights cells to ensure truncation */
 .bookings-table .insights-cell-truncate {
     max-width: 150px !important;
+    width: 150px !important;
     overflow: hidden !important;
+    word-wrap: break-word !important;
 }
 
 .bookings-table .insights-cell-truncate .text-truncate-cell {
     display: block !important;
     max-width: 100% !important;
+    width: 100% !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
     word-break: normal !important;
+    word-wrap: normal !important;
+}
+
+/* Ensure table headers also respect width constraints */
+.bookings-table:has(.insights-cell-truncate) th {
+    max-width: 150px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .bookings-table tbody tr:hover {
@@ -561,18 +579,23 @@ p {
 
 /* Insights table specific styles - using bookings-table structure with truncation */
 .insights-cell-truncate {
-    max-width: 150px;
-    overflow: hidden;
-    word-break: break-word;
+    max-width: 150px !important;
+    width: 150px !important;
+    overflow: hidden !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
 }
 
 .text-truncate-cell {
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+    display: block !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
 }
 
 /* Cell with truncation and expand button */

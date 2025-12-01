@@ -69,14 +69,14 @@
                                 </button>
                             </div>
                             <div class="bookings-table-container">
-                                <table class="bookings-table">
+                                <table class="bookings-table" style="table-layout: fixed; width: 100%;">
                                     <thead>
                                         <tr>
                                             @foreach (var column in table.Columns)
                                             {
-                                                <th>@column.Name</th>
+                                                <th style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@column.Name</th>
                                             }
-                                            <th style="width: 140px;">Actions</th>
+                                            <th style="width: 140px; min-width: 140px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
