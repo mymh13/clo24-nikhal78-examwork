@@ -246,8 +246,11 @@
                                         <tr>
                                             @foreach (var colDef in tableDefinition.Columns)
                                             {
+                                                var headerText = string.IsNullOrWhiteSpace(colDef.DisplayName) 
+                                                    ? (string.IsNullOrWhiteSpace(colDef.OriginalName) ? "Column" : colDef.OriginalName)
+                                                    : colDef.DisplayName;
                                                 <th class="insights-header-truncate" title="@colDef.Description">
-                                                    @colDef.DisplayName
+                                                    @headerText
                                                 </th>
                                             }
                                             <th style="width: 140px; min-width: 140px;">Actions</th>
@@ -265,8 +268,11 @@
                                             <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
                                                 @foreach (var colDef in tableDefinition.Columns)
                                                 {
+                                                    var descHeaderText = string.IsNullOrWhiteSpace(colDef.DisplayName) 
+                                                        ? (string.IsNullOrWhiteSpace(colDef.OriginalName) ? "Column" : colDef.OriginalName)
+                                                        : colDef.DisplayName;
                                                     <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left; width: 150px; max-width: 150px;">
-                                                        <strong>@colDef.DisplayName:</strong> @colDef.Description
+                                                        <strong>@descHeaderText:</strong> @(string.IsNullOrWhiteSpace(colDef.Description) ? "No description available" : colDef.Description)
                                                     </td>
                                                 }
                                                 <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
@@ -1143,7 +1149,13 @@ customEvents
 
     private string GetColumnDisplayName(string columnName)
     {
-        if (string.IsNullOrEmpty(columnName)) return columnName;
+        if (string.IsNullOrEmpty(columnName)) return "Unknown Column";
+
+        // Handle numeric column names (Application Insights sometimes uses "0", "1", "2", etc.)
+        if (int.TryParse(columnName, out _))
+        {
+            return $"Column {columnName}";
+        }
 
         // Map common Application Insights column names to descriptive headers
         var columnMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -1346,11 +1358,26 @@ customEvents
                 }
                 else
                 {
+                    // Handle numeric or empty column names
+                    string displayName;
+                    if (string.IsNullOrEmpty(colName))
+                    {
+                        displayName = $"Column {i + 1}";
+                    }
+                    else if (int.TryParse(colName, out _))
+                    {
+                        displayName = $"Column {colName}";
+                    }
+                    else
+                    {
+                        displayName = GetColumnDisplayName(colName);
+                    }
+                    
                     columns.Add(new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = GetColumnDisplayName(colName), 
+                        DisplayName = displayName, 
                         Description = GetColumnDescription(colName, table.Name) 
                     });
                 }
@@ -1472,12 +1499,27 @@ customEvents
                 }
                 else
                 {
+                    // Handle numeric or empty column names
+                    string displayName;
+                    if (string.IsNullOrEmpty(colName))
+                    {
+                        displayName = $"Column {i + 1}";
+                    }
+                    else if (int.TryParse(colName, out _))
+                    {
+                        displayName = $"Column {colName}";
+                    }
+                    else
+                    {
+                        displayName = GetColumnDisplayName(colName);
+                    }
+                    
                     // Default mapping
                     columns.Add(new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = GetColumnDisplayName(colName), 
+                        DisplayName = displayName, 
                         Description = GetColumnDescription(colName, table.Name) 
                     });
                 }
@@ -1565,11 +1607,26 @@ customEvents
                 }
                 else
                 {
+                    // Handle numeric or empty column names
+                    string displayName;
+                    if (string.IsNullOrEmpty(colName))
+                    {
+                        displayName = $"Column {i + 1}";
+                    }
+                    else if (int.TryParse(colName, out _))
+                    {
+                        displayName = $"Column {colName}";
+                    }
+                    else
+                    {
+                        displayName = GetColumnDisplayName(colName);
+                    }
+                    
                     columns.Add(new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = GetColumnDisplayName(colName), 
+                        DisplayName = displayName, 
                         Description = GetColumnDescription(colName, table.Name) 
                     });
                 }
@@ -1587,37 +1644,61 @@ customEvents
         for (int i = 0; i < table.Columns.Count; i++)
         {
             var col = table.Columns[i];
+            var colName = col.Name ?? "";
+            
+            // Handle numeric column names (Application Insights sometimes uses "0", "1", "2", etc.)
+            string displayName;
+            if (string.IsNullOrEmpty(colName))
+            {
+                displayName = $"Column {i + 1}";
+            }
+            else if (int.TryParse(colName, out var colNum))
+            {
+                displayName = $"Column {colNum + 1}";
+            }
+            else
+            {
+                displayName = GetColumnDisplayName(colName);
+            }
+            
             fallbackColumns.Add(new StaticColumnDefinition
             {
-                OriginalName = col.Name ?? "",
+                OriginalName = colName,
                 OriginalIndex = i,
-                DisplayName = GetColumnDisplayName(col.Name ?? ""),
-                Description = GetColumnDescription(col.Name ?? "", table.Name)
+                DisplayName = displayName,
+                Description = GetColumnDescription(colName, table.Name)
             });
         }
 
-        // Try to determine a better description based on table name
-        string tableDescription = "Data Table";
+        // Try to determine a better description based on table name and columns
+        string tableDescription;
         var lowerTableName = (table.Name ?? "").ToLowerInvariant();
-        if (lowerTableName.Contains("primaryresult") || lowerTableName.Contains("primary"))
+        
+        // Check column names to infer table type
+        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase) || 
+                                 c.Contains("event", StringComparison.OrdinalIgnoreCase)))
         {
-            tableDescription = "Primary Query Results - Main data returned from the Application Insights query";
+            tableDescription = "Event-Driven Architecture - Application Insights Event Data";
+        }
+        else if (lowerTableName.Contains("primaryresult") || lowerTableName.Contains("primary"))
+        {
+            tableDescription = "Application Insights - Primary Query Results";
         }
         else if (lowerTableName.Contains("queryproperties"))
         {
-            tableDescription = "Query Properties - Extended metadata about the query execution";
+            tableDescription = "Application Insights - Query Properties";
         }
         else if (lowerTableName.Contains("querystatus"))
         {
-            tableDescription = "Query Status - Status information about the query execution";
+            tableDescription = "Application Insights - Query Status";
         }
         else if (lowerTableName.Contains("custom") || lowerTableName.Contains("event"))
         {
-            tableDescription = "Custom Events - Application Insights custom event data";
+            tableDescription = "Application Insights - Custom Events";
         }
         else
         {
-            tableDescription = $"Data Table: {GetTableDisplayName(table)}";
+            tableDescription = $"Application Insights - {GetTableDisplayName(table)}";
         }
 
         return new StaticTableDefinition
