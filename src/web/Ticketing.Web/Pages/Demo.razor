@@ -251,11 +251,16 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if (!string.IsNullOrEmpty(visualizationTitle) && table.Name == "PrimaryResult")
+                                        @{
+                                            // Generate descriptive title based on table name and columns
+                                            string tableDescription = GetTableDescription(table);
+                                            var colCount = (table.Columns?.Count ?? 0) + 1;
+                                        }
+                                        @if (!string.IsNullOrEmpty(tableDescription))
                                         {
-                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-bg-tertiary);">
-                                                <td colspan="@(table.Columns.Count + 1)" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em;">
-                                                    📊 Query: @visualizationTitle
+                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-primary);">
+                                                <td colspan="@colCount" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em; text-align: center;">
+                                                    📊 @tableDescription
                                                 </td>
                                             </tr>
                                         }
@@ -1061,6 +1066,44 @@ customEvents
     {
         public string Name { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
+    }
+
+    private string GetTableDescription(QueryTable table)
+    {
+        if (table == null) return string.Empty;
+
+        // Check table name
+        if (table.Name == "PrimaryResult")
+        {
+            // Check columns to determine what type of data this is
+            var columnNames = table.Columns?.Select(c => c.Name ?? "").ToList() ?? new List<string>();
+            
+            if (columnNames.Contains("name") && columnNames.Contains("Count"))
+            {
+                return "Custom Events Summary - Shows count of each event type from the last hour";
+            }
+            else if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase) || c.Contains("Timestamp")))
+            {
+                return "Event Logs - Detailed event information with timestamps and execution statistics";
+            }
+            else
+            {
+                return "Query Results - Data returned from Application Insights query";
+            }
+        }
+        else if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
+                 table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
+                 table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Query Metadata - Information about the query execution and result structure";
+        }
+        else if (table.Columns != null && table.Columns.Any())
+        {
+            // Generic description based on column count
+            return $"Data Table - Contains {table.Columns.Count} columns with {table.Rows?.Count ?? 0} rows of data";
+        }
+
+        return string.Empty;
     }
 }
 
