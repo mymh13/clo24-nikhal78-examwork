@@ -164,9 +164,10 @@
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
                             <div style="margin-bottom: var(--spacing-md);">
-                                <h3 style="margin: 0;">Recent Bookings - Application Insights</h3>
+                                <h3 style="margin: 0;">Recent Bookings & Outbox Status - Live Application Insights Data</h3>
                                 <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: 4px;">
-                                    Shows the last 20 bookings created, their system type (Synchronous or Event-Driven), and timestamps. Use Booking IDs to reference bookings in the Booking Management section below.
+                                    Live data from Application Insights showing the last 20 bookings, their architecture mode (Synchronous vs Event-Driven), and outbox processing status. 
+                                    <strong>Toggle the feature flag above and create a booking to see the data update in real-time!</strong>
                                 </p>
                             </div>
                             <div class="bookings-table-container">
@@ -176,21 +177,25 @@
                                         <col style="width: 180px; max-width: 180px;" />
                                         <col style="width: 150px; max-width: 150px;" />
                                         <col style="width: 200px; max-width: 200px;" />
+                                        <col style="width: 200px; max-width: 200px;" />
                                         <col style="width: 140px; min-width: 140px;" />
                                     </colgroup>
                                     <tbody>
                                         <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
                                             <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
-                                                <strong>Booking ID:</strong> Unique identifier for the booking - use this to search in Booking Management below
+                                                <strong>Booking ID:</strong> Unique identifier - use this to search in Booking Management below
                                             </td>
                                             <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
-                                                <strong>Timestamp:</strong> Date and time when the booking was created (UTC)
+                                                <strong>Timestamp:</strong> When the booking was created (UTC)
                                             </td>
                                             <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
-                                                <strong>System Type:</strong> Architecture mode used - Synchronous (direct API) or Event-Driven (Service Bus)
+                                                <strong>System Type:</strong> Architecture mode - Synchronous (direct) or Event-Driven (Service Bus)
                                             </td>
                                             <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
-                                                <strong>Customer Email:</strong> Email address of the customer who made the booking
+                                                <strong>Customer Email:</strong> Email of the customer who made the booking
+                                            </td>
+                                            <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                <strong>Outbox Status:</strong> Processing status - shows if outbox event was processed (Event-Driven only)
                                             </td>
                                             <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
                                                 View full data or copy row
@@ -203,15 +208,31 @@
                                         {
                                             var currentRowIndex = rowIndex;
                                             // Find columns by name (more robust than index)
-                                            var timestamp = GetCellValueByName(row, primaryTable, "timestamp");
+                                            var timestamp = GetCellValueByName(row, primaryTable, "Timestamp");
                                             var bookingId = GetCellValueByName(row, primaryTable, "BookingId");
                                             var systemType = GetCellValueByName(row, primaryTable, "SystemType");
                                             var customerEmail = GetCellValueByName(row, primaryTable, "CustomerEmail");
+                                            var outboxStatus = GetCellValueByName(row, primaryTable, "OutboxStatus");
                                             
                                             // Format timestamp
                                             if (DateTime.TryParse(timestamp, out var dt))
                                             {
                                                 timestamp = dt.ToString("yyyy-MM-dd HH:mm:ss");
+                                            }
+                                            
+                                            // Determine outbox status color
+                                            var outboxColor = "#666";
+                                            if (outboxStatus.Contains("Processed"))
+                                            {
+                                                outboxColor = "#4caf50"; // Green for processed
+                                            }
+                                            else if (outboxStatus.Contains("Pending"))
+                                            {
+                                                outboxColor = "#ff9800"; // Orange for pending
+                                            }
+                                            else if (outboxStatus.Contains("N/A"))
+                                            {
+                                                outboxColor = "#2196F3"; // Blue for synchronous
                                             }
                                             
                                             <tr>
@@ -226,6 +247,9 @@
                                                 </td>
                                                 <td class="insights-cell-truncate" title="Customer Email: @customerEmail">
                                                     <span class="text-truncate-cell" title="@customerEmail">@customerEmail</span>
+                                                </td>
+                                                <td class="insights-cell-truncate" title="Outbox Status: @outboxStatus">
+                                                    <span class="text-truncate-cell" style="color: @outboxColor; font-weight: 500;">@outboxStatus</span>
                                                 </td>
                                                 <td>
                                                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -403,13 +427,28 @@
             var queryRequest = new
             {
                 Query = @"
-customEvents
+let bookings = customEvents
 | where name == ""BookingCreated"" and timestamp > ago(24h)
 | extend BookingId = tostring(customDimensions[""BookingId""])
 | extend SystemType = tostring(customDimensions[""SystemType""])
 | extend CustomerEmail = tostring(customDimensions[""CustomerEmail""])
-| project timestamp, BookingId, SystemType, CustomerEmail
-| order by timestamp desc
+| project BookingId, Timestamp = timestamp, SystemType, CustomerEmail;
+let outboxCreated = customEvents
+| where name == ""OutboxEventCreated"" and timestamp > ago(24h)
+| extend BookingId = tostring(customDimensions[""BookingId""])
+| extend OutboxEventId = tostring(customDimensions[""OutboxEventId""])
+| project BookingId, OutboxEventId;
+let outboxProcessed = customEvents
+| where name == ""OutboxEventProcessed"" and timestamp > ago(24h)
+| extend OutboxEventId = tostring(customDimensions[""OutboxEventId""])
+| extend ProcessingTimeMs = customMetrics[""ProcessingTimeMs""]
+| project OutboxEventId, ProcessingTimeMs;
+bookings
+| join kind=leftouter (outboxCreated) on BookingId
+| join kind=leftouter (outboxProcessed) on OutboxEventId
+| extend OutboxStatus = iff(isnotnull(ProcessingTimeMs), strcat(""Processed ("", round(ProcessingTimeMs, 0), ""ms)""), iff(SystemType == ""Event-Driven"", ""Pending"", ""N/A (Synchronous)""))
+| project Timestamp, BookingId, SystemType, CustomerEmail, OutboxStatus
+| order by Timestamp desc
 | take 20",
                 Timespan = "PT24H"
             };
