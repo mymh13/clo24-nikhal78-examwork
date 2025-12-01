@@ -123,22 +123,24 @@
 
         <!-- Application Insights Query Results (Full Width) -->
         <div class="demo-section" style="margin-bottom: var(--spacing-xl);">
-                <h2>Application Insights - Custom Events</h2>
-                <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
-                    <button class="btn btn-primary" @onclick="RefreshInsights" disabled="@isLoadingInsights">
-                        @if (isLoadingInsights)
-                        {
-                            <text>Loading...</text>
-                        }
-                        else
-                        {
-                            <text>Refresh Events</text>
-                        }
-                    </button>
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" @bind="autoRefreshInsights" />
-                        <span>Auto-refresh (every 10s)</span>
-                    </label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <h2 style="margin: 0;">Application Insights - Custom Events</h2>
+                    <div style="display: flex; gap: var(--spacing-md); align-items: center;">
+                        <button class="btn btn-primary" @onclick="RefreshInsights" disabled="@isLoadingInsights">
+                            @if (isLoadingInsights)
+                            {
+                                <text>Loading...</text>
+                            }
+                            else
+                            {
+                                <text>Refresh Events</text>
+                            }
+                        </button>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" @bind="autoRefreshInsights" />
+                            <span>Auto-refresh (every 10s)</span>
+                        </label>
+                    </div>
                 </div>
                 
                 @if (!string.IsNullOrEmpty(insightsError))
@@ -226,15 +228,21 @@
                     @foreach (var table in dataTables)
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
+                            @{
+                                // Get static table definition for this table
+                                var tableDefinition = GetStaticTableDefinition(table);
+                                // Remove "Application Insights -" prefix from title
+                                var tableTitle = GetStaticTableTitle(table);
+                                if (tableTitle.StartsWith("Application Insights -"))
+                                {
+                                    tableTitle = tableTitle.Substring("Application Insights -".Length).Trim();
+                                }
+                            }
                             <div style="margin-bottom: var(--spacing-md);">
-                                <h3 style="margin: 0;">@GetStaticTableTitle(table)</h3>
+                                <h3 style="margin: 0;">@tableTitle</h3>
                             </div>
                             <div class="bookings-table-container">
                                 <table class="bookings-table insights-fixed-table">
-                                    @{
-                                        // Get static table definition for this table
-                                        var tableDefinition = GetStaticTableDefinition(table);
-                                    }
                                     <colgroup>
                                         @foreach (var colDef in tableDefinition.Columns)
                                         {
@@ -242,44 +250,18 @@
                                         }
                                         <col style="width: 140px; min-width: 140px;" />
                                     </colgroup>
-                                    <thead>
-                                        <tr>
+                                    <tbody>
+                                        <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
                                             @foreach (var colDef in tableDefinition.Columns)
                                             {
-                                                var headerText = string.IsNullOrWhiteSpace(colDef.DisplayName) 
-                                                    ? (string.IsNullOrWhiteSpace(colDef.OriginalName) ? "Column" : colDef.OriginalName)
-                                                    : colDef.DisplayName;
-                                                <th class="insights-header-truncate" title="@colDef.Description">
-                                                    @headerText
-                                                </th>
+                                                <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left; width: 150px; max-width: 150px;">
+                                                    <strong>@colDef.DisplayName:</strong> @colDef.Description
+                                                </td>
                                             }
-                                            <th style="width: 140px; min-width: 140px;">Actions</th>
+                                            <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
+                                                View full data or copy row/table
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (!string.IsNullOrEmpty(tableDefinition.Description))
-                                        {
-                                            var colCount = tableDefinition.Columns.Count + 1;
-                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-primary);">
-                                                <td colspan="@colCount" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em; text-align: center;">
-                                                    📊 @tableDefinition.Description
-                                                </td>
-                                            </tr>
-                                            <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
-                                                @foreach (var colDef in tableDefinition.Columns)
-                                                {
-                                                    var descHeaderText = string.IsNullOrWhiteSpace(colDef.DisplayName) 
-                                                        ? (string.IsNullOrWhiteSpace(colDef.OriginalName) ? "Column" : colDef.OriginalName)
-                                                        : colDef.DisplayName;
-                                                    <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left; width: 150px; max-width: 150px;">
-                                                        <strong>@descHeaderText:</strong> @(string.IsNullOrWhiteSpace(colDef.Description) ? "No description available" : colDef.Description)
-                                                    </td>
-                                                }
-                                                <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
-                                                    View full data or copy row/table
-                                                </td>
-                                            </tr>
-                                        }
                                         @{
                                             var rowIndex = 0;
                                         }
@@ -1421,105 +1403,118 @@ customEvents
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
-                // Try to match by name first
-                StaticColumnDefinition? matchedCol = null;
+                // If column name is numeric or empty, use static mapping by position
+                bool isNumericColumn = int.TryParse(colName, out _) || string.IsNullOrEmpty(colName);
                 
-                if (lowerName.Contains("timestamp"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Event Timestamp", 
-                        Description = "The date and time when the event occurred (UTC)" 
-                    };
-                }
-                else if (lowerName == "level" || lowerName.Contains("severity"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Log Level", 
-                        Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
-                    };
-                }
-                else if (lowerName == "type")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Event Type", 
-                        Description = "The type or category of the event (Info, Stats, etc.)" 
-                    };
-                }
-                else if (lowerName.Contains("message") || lowerName.Contains("description"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Event Message", 
-                        Description = "A descriptive message about what happened or query execution details" 
-                    };
-                }
-                else if (lowerName.Contains("queryhash"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Query Hash", 
-                        Description = "A unique hash identifier for the query execution" 
-                    };
-                }
-                else if (lowerName.Contains("executiontime"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Execution Time", 
-                        Description = "How long the query took to execute in milliseconds" 
-                    };
-                }
-                else if (lowerName.Contains("resource_usage") || lowerName.Contains("dataset"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Query Statistics", 
-                        Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
-                    };
-                }
-                else if (lowerName.Contains("itemid") || lowerName.Contains("item_id"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Query ID", 
-                        Description = "Unique identifier for the query execution" 
-                    };
-                }
-                else if (lowerName.Contains("source"))
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Source", 
-                        Description = "The source system or component that generated this log entry" 
-                    };
-                }
+                StaticColumnDefinition matchedCol;
                 
-                // If no name match, use static mapping by position
-                if (matchedCol == null)
+                if (isNumericColumn && i < staticColumnMappings.Count)
                 {
-                    if (i < staticColumnMappings.Count)
+                    // Use static mapping by position for numeric columns
+                    matchedCol = new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName,
+                        OriginalIndex = i,
+                        DisplayName = staticColumnMappings[i].DisplayName, 
+                        Description = staticColumnMappings[i].Description 
+                    };
+                }
+                else
+                {
+                    // Try to match by name first
+                    if (lowerName.Contains("timestamp"))
                     {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Event Timestamp", 
+                            Description = "The date and time when the event occurred (UTC)" 
+                        };
+                    }
+                    else if (lowerName == "level" || lowerName.Contains("severity"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Log Level", 
+                            Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
+                        };
+                    }
+                    else if (lowerName == "type")
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Event Type", 
+                            Description = "The type or category of the event (Info, Stats, etc.)" 
+                        };
+                    }
+                    else if (lowerName.Contains("message") || lowerName.Contains("description"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Event Message", 
+                            Description = "A descriptive message about what happened or query execution details" 
+                        };
+                    }
+                    else if (lowerName.Contains("queryhash"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Query Hash", 
+                            Description = "A unique hash identifier for the query execution" 
+                        };
+                    }
+                    else if (lowerName.Contains("executiontime"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Execution Time", 
+                            Description = "How long the query took to execute in milliseconds" 
+                        };
+                    }
+                    else if (lowerName.Contains("resource_usage") || lowerName.Contains("dataset"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Query Statistics", 
+                            Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
+                        };
+                    }
+                    else if (lowerName.Contains("itemid") || lowerName.Contains("item_id"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Query ID", 
+                            Description = "Unique identifier for the query execution" 
+                        };
+                    }
+                    else if (lowerName.Contains("source"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Source", 
+                            Description = "The source system or component that generated this log entry" 
+                        };
+                    }
+                    else if (i < staticColumnMappings.Count)
+                    {
+                        // Fallback to position-based mapping
                         matchedCol = new StaticColumnDefinition 
                         { 
                             OriginalName = colName,
@@ -1530,7 +1525,7 @@ customEvents
                     }
                     else
                     {
-                        // Fallback for additional columns
+                        // Final fallback
                         matchedCol = new StaticColumnDefinition 
                         { 
                             OriginalName = colName,
@@ -1577,65 +1572,78 @@ customEvents
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
-                StaticColumnDefinition? matchedCol = null;
+                // If column name is numeric or empty, use static mapping by position
+                bool isNumericColumn = int.TryParse(colName, out _) || string.IsNullOrEmpty(colName);
                 
-                // Try to match by name first
-                if (lowerName.Contains("index") || lowerName == "0" || colName == "0")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Row Index", 
-                        Description = "The position of this row in the result set (0-based)" 
-                    };
-                }
-                else if (lowerName.Contains("queryresult") || lowerName == "1" || colName == "1")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Result Type", 
-                        Description = "The type of query result (QueryResult, QueryProperties, QueryStatus)" 
-                    };
-                }
-                else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended") || lowerName == "2" || colName == "2")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Property Type", 
-                        Description = "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)" 
-                    };
-                }
-                else if (lowerName.Contains("value") || lowerName == "3" || colName == "3")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Value", 
-                        Description = "The GUID or identifier value for this query result" 
-                    };
-                }
-                else if (lowerName.Contains("guid") || lowerName.Contains("id") || lowerName == "4" || colName == "4")
-                {
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "GUID", 
-                        Description = "Globally unique identifier for the query execution" 
-                    };
-                }
+                StaticColumnDefinition matchedCol;
                 
-                // If no name match, use static mapping by position
-                if (matchedCol == null)
+                if (isNumericColumn && i < metadataColumnMappings.Count)
                 {
-                    if (i < metadataColumnMappings.Count)
+                    // Use static mapping by position for numeric columns
+                    matchedCol = new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName,
+                        OriginalIndex = i,
+                        DisplayName = metadataColumnMappings[i].DisplayName, 
+                        Description = metadataColumnMappings[i].Description 
+                    };
+                }
+                else
+                {
+                    // Try to match by name first
+                    if (lowerName.Contains("index"))
                     {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Row Index", 
+                            Description = "The position of this row in the result set (0-based)" 
+                        };
+                    }
+                    else if (lowerName.Contains("queryresult"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Result Type", 
+                            Description = "The type of query result (QueryResult, QueryProperties, QueryStatus)" 
+                        };
+                    }
+                    else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Property Type", 
+                            Description = "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)" 
+                        };
+                    }
+                    else if (lowerName.Contains("value"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "Value", 
+                            Description = "The GUID or identifier value for this query result" 
+                        };
+                    }
+                    else if (lowerName.Contains("guid") || lowerName.Contains("id"))
+                    {
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = "GUID", 
+                            Description = "Globally unique identifier for the query execution" 
+                        };
+                    }
+                    else if (i < metadataColumnMappings.Count)
+                    {
+                        // Fallback to position-based mapping
                         matchedCol = new StaticColumnDefinition 
                         { 
                             OriginalName = colName,
@@ -1646,6 +1654,7 @@ customEvents
                     }
                     else
                     {
+                        // Final fallback
                         matchedCol = new StaticColumnDefinition 
                         { 
                             OriginalName = colName,
