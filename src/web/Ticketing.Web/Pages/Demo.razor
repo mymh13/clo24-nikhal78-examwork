@@ -68,15 +68,15 @@
                                     📋 Copy Table Data
                                 </button>
                             </div>
-                            <div class="insights-table-container">
-                                <table class="insights-table">
+                            <div class="bookings-table-container">
+                                <table class="bookings-table">
                                     <thead>
                                         <tr>
                                             @foreach (var column in table.Columns)
                                             {
                                                 <th>@column.Name</th>
                                             }
-                                            <th style="width: 120px;">Actions</th>
+                                            <th style="width: 140px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -87,30 +87,27 @@
                                         {
                                             var currentRowIndex = rowIndex;
                                             <tr>
-                                            @{
-                                                var cellIndex = 0;
-                                            }
-                                            @foreach (var cell in row)
-                                            {
-                                                var cellValue = cell?.ToString() ?? "-";
-                                                var isLongValue = cellValue.Length > 15;
-                                                var columnName = cellIndex < table.Columns.Count ? table.Columns[cellIndex].Name : "";
-                                                <td class="insights-table-cell">
-                                                    @if (isLongValue)
-                                                    {
-                                                        <div class="table-cell-container">
-                                                            <span class="table-cell-content text-truncate-very-small" title="@cellValue">@cellValue</span>
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-truncate-very-small" title="@(cellValue.Length > 12 ? cellValue : "")">@cellValue</span>
-                                                    }
-                                                </td>
-                                                cellIndex++;
-                                            }
+                                                @{
+                                                    var cellIndex = 0;
+                                                }
+                                                @foreach (var cell in row)
+                                                {
+                                                    var cellValue = cell?.ToString() ?? "-";
+                                                    var isLongValue = cellValue.Length > 15;
+                                                    <td class="insights-cell-truncate">
+                                                        @if (isLongValue)
+                                                        {
+                                                            <span class="text-truncate-cell" title="@cellValue">@cellValue</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span title="@(cellValue.Length > 12 ? cellValue : "")">@cellValue</span>
+                                                        }
+                                                    </td>
+                                                    cellIndex++;
+                                                }
                                                 <td>
-                                                    <div style="display: flex; gap: 4px;">
+                                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                                         <button class="cell-action-btn" @onclick="() => ViewRowDetails(table, currentRowIndex)" title="View full row data">
                                                             👁️ View
                                                         </button>

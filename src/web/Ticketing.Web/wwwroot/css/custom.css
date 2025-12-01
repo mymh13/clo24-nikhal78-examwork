@@ -544,64 +544,19 @@ p {
     display: inline-block;
 }
 
-/* Insights table specific styles */
-.insights-table-container {
-    max-width: 100%;
-    overflow-x: auto;
-}
-
-.insights-table {
-    width: 100%;
-    min-width: 600px;
-    max-width: 100%;
-    border-collapse: collapse;
-    background: var(--color-bg-primary);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    table-layout: fixed;
-}
-
-.insights-table th {
-    max-width: 120px;
+/* Insights table specific styles - using bookings-table structure with truncation */
+.insights-cell-truncate {
+    max-width: 150px;
     overflow: hidden;
 }
 
-.insights-table thead {
-    background: var(--color-bg-tertiary);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.insights-table th {
-    padding: var(--spacing-sm) var(--spacing-md);
-    text-align: left;
-    color: var(--color-primary);
-    font-weight: 600;
-    border-bottom: 2px solid var(--color-bg-tertiary);
+.text-truncate-cell {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.insights-table td {
-    padding: var(--spacing-sm) var(--spacing-md);
-    color: var(--color-text-primary);
-    border-bottom: 1px solid var(--color-bg-tertiary);
-    vertical-align: top;
-    max-width: 120px;
-    word-break: break-word;
-}
-
-.insights-table-cell {
-    max-width: 120px !important;
-    overflow: hidden;
-}
-
-.insights-table tbody tr:hover {
-    background: var(--color-bg-secondary);
-}
-
-.insights-table tbody tr:last-child td {
-    border-bottom: none;
+    vertical-align: middle;
 }
 
 /* Cell with truncation and expand button */
