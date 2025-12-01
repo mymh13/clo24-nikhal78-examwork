@@ -5,6 +5,7 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Authorization
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Helpers
 @attribute [Authorize(Roles = "Admin")]
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IHttpClientFactory HttpClientFactory
@@ -316,136 +317,7 @@
         <hr class="section-divider" />
 
         <!-- Bottom Section: Booking Management (Full Width) -->
-        <div class="demo-section">
-                <h2>Booking Management</h2>
-                
-                <!-- Create Booking Form -->
-                <div style="margin-bottom: var(--spacing-lg);">
-                    <h3>Create Booking</h3>
-                    <form @onsubmit="CreateBooking" @onsubmit:preventDefault="true" class="booking-form">
-                        <div class="form-group">
-                            <label for="customerEmail">Customer Email:</label>
-                            <input id="customerEmail" type="email" @bind="newBooking.CustomerEmail" class="form-input" placeholder="Enter customer email" required />
-                            <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
-                                User will be created automatically if they don't exist.
-                            </small>
-                        </div>
-                        <div class="form-group">
-                            <label for="customerName">Customer Name (optional):</label>
-                            <input id="customerName" type="text" @bind="newBooking.CustomerName" class="form-input" placeholder="Enter customer name" />
-                        </div>
-                        <div class="form-group">
-                            <label>Zones (select one or more):</label>
-                            <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: 8px;">
-                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" checked="@selectedZones.Contains("Zone A")" @onchange="@(() => ToggleZone("Zone A"))" />
-                                    <span>Zone A</span>
-                                </label>
-                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" checked="@selectedZones.Contains("Zone B")" @onchange="@(() => ToggleZone("Zone B"))" />
-                                    <span>Zone B</span>
-                                </label>
-                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" checked="@selectedZones.Contains("Zone C")" @onchange="@(() => ToggleZone("Zone C"))" />
-                                    <span>Zone C</span>
-                                </label>
-                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" checked="@selectedZones.Contains("Zone D")" @onchange="@(() => ToggleZone("Zone D"))" />
-                                    <span>Zone D</span>
-                                </label>
-                            </div>
-                            <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
-                                Each zone costs 20 SEK. Total: @(selectedZones.Count * 20) SEK base price.
-                            </small>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Create Booking</button>
-                    </form>
-                    @if (!string.IsNullOrEmpty(createResult))
-                    {
-                        <div class="@(createResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-sm);">
-                            <p>@createResult</p>
-                        </div>
-                    }
-                </div>
-
-                <hr style="margin: var(--spacing-lg) 0;" />
-
-                <!-- Get Bookings -->
-                <div>
-                    <h3>Get Bookings</h3>
-                    <form @onsubmit="GetBookings" @onsubmit:preventDefault="true" class="booking-form">
-                        <div class="form-group">
-                            <div style="display: flex; align-items: center; gap: var(--spacing-md);">
-                                <div style="flex: 1;">
-                                    <label for="searchCustomerId">Customer ID (User ID):</label>
-                                    <input id="searchCustomerId" type="text" @bind="searchCustomerId" class="form-input" placeholder="Enter customer ID to search" disabled="@listAll" />
-                                </div>
-                                <div class="form-group checkbox-group" style="margin-top: 25px;">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" @bind="listAll" />
-                                        <span>List All</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Get Bookings</button>
-                    </form>
-                    @if (bookings != null && bookings.Any())
-                    {
-                        <div class="bookings-table-container" style="margin-top: var(--spacing-md); max-height: 400px; overflow-y: auto;">
-                            <table class="bookings-table">
-                                <thead>
-                                    <tr>
-                                        <th>Customer ID</th>
-                                        <th>Customer Email</th>
-                                        <th>Zone</th>
-                                        <th>Price Modifier</th>
-                                        <th>Total Price</th>
-                                        <th>Booking ID</th>
-                                        <th>Booking Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var booking in bookings)
-                                    {
-                                        <tr>
-                                            <td>@booking.CustomerId</td>
-                                            <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
-                                            <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
-                                            <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
-                                            <td>@booking.TotalPrice.ToString("F2") SEK (@booking.BasePrice.ToString("F2") SEK base)</td>
-                                            <td>@booking.Id</td>
-                                            <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                            <td>
-                                                <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">Delete</button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
-                    {
-                        <div class="error-message" style="margin-top: var(--spacing-sm);">
-                            <p>@getResult</p>
-                        </div>
-                    }
-                    else if (!string.IsNullOrEmpty(getResult) && getResult == "No bookings found")
-                    {
-                        <div class="info-message" style="margin-top: var(--spacing-sm);">
-                            <p>No bookings found for this customer ID.</p>
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(deleteResult))
-                    {
-                        <div class="@(deleteResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-sm);">
-                            <p>@deleteResult</p>
-                        </div>
-                    }
-                </div>
-        </div>
+        <BookingManagement OnBookingCreated="OnBookingCreatedHandler" />
     }
     else
     {
@@ -529,15 +401,14 @@
     private const int PollingIntervalSeconds = 3;
     private const int MaxPropagationWaitSeconds = 60;
 
-    // Booking management state
-    private Booking newBooking = new();
-    private List<string> selectedZones = new();
-    private string searchCustomerId = string.Empty;
-    private bool listAll = false;
-    private string createResult = string.Empty;
-    private string getResult = string.Empty;
-    private List<Booking>? bookings = null;
-    private string deleteResult = string.Empty;
+    // Booking management callback
+    private async Task OnBookingCreatedHandler()
+    {
+        // Refresh insights after booking creation (wait a bit for ingestion)
+        await Task.Delay(2000);
+        await RefreshInsights();
+        await LoadMiniHealth();
+    }
 
     // Modal state
     private bool showModal = false;
@@ -641,136 +512,6 @@ customEvents
         }, cancellationToken);
     }
 
-    private void ToggleZone(string zone)
-    {
-        if (selectedZones.Contains(zone))
-        {
-            selectedZones.Remove(zone);
-        }
-        else
-        {
-            selectedZones.Add(zone);
-        }
-        newBooking.Zone = string.Join(", ", selectedZones);
-    }
-
-    private async Task CreateBooking()
-    {
-        createResult = string.Empty;
-        
-        if (selectedZones.Count == 0)
-        {
-            createResult = "Error: Please select at least one zone.";
-            return;
-        }
-        
-        newBooking.Zone = string.Join(", ", selectedZones);
-        
-        try
-        {
-            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
-            var response = await httpClient.PostAsJsonAsync("/api/bookings", newBooking);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                createResult = "Success: Ticket booked successfully!";
-                newBooking = new Booking();
-                selectedZones.Clear();
-                
-                // Refresh insights after booking creation (wait a bit for ingestion)
-                await Task.Delay(2000);
-                await RefreshInsights();
-                await LoadMiniHealth();
-            }
-            else
-            {
-                createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
-            }
-        }
-        catch
-        {
-            createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
-        }
-    }
-
-    private async Task GetBookings()
-    {
-        getResult = string.Empty;
-        bookings = null;
-        
-        try
-        {
-            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
-            HttpResponseMessage response;
-            
-            if (listAll)
-            {
-                response = await httpClient.GetAsync("/api/bookings/all");
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(searchCustomerId))
-                {
-                    getResult = "Error: Please enter a customer ID or select 'List All'.";
-                    return;
-                }
-                response = await httpClient.GetAsync($"/api/bookings/customer/{searchCustomerId}");
-            }
-            
-            if (response.IsSuccessStatusCode)
-            {
-                bookings = await response.Content.ReadFromJsonAsync<List<Booking>>();
-                
-                if (bookings == null || !bookings.Any())
-                {
-                    getResult = "No bookings found";
-                }
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                getResult = $"Error: {errorContent}";
-            }
-        }
-        catch (Exception ex)
-        {
-            getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
-        }
-    }
-
-    private async Task DeleteBooking(string bookingId, string customerId)
-    {
-        deleteResult = string.Empty;
-        
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Are you sure you want to delete booking {bookingId}? This action cannot be undone.");
-        
-        if (!confirmed)
-        {
-            return;
-        }
-
-        try
-        {
-            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
-            var response = await httpClient.DeleteAsync($"/api/bookings/{bookingId}?customerId={Uri.EscapeDataString(customerId)}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                deleteResult = "Success: Booking deleted successfully!";
-                await GetBookings();
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                deleteResult = $"Error: {errorContent}";
-            }
-        }
-        catch (Exception ex)
-        {
-            deleteResult = $"Error: An error occurred when trying to delete the booking. {ex.Message}";
-        }
-    }
 
     private async Task ToggleFeatureFlag()
     {
@@ -1067,224 +808,31 @@ customEvents
         public string Type { get; set; } = string.Empty;
     }
 
-    private string GetTableDisplayName(QueryTable table)
-    {
-        if (table == null) return "Unknown Table";
-
-        // Check table name and columns to determine display name
-        if (table.Name == "PrimaryResult")
-        {
-            var columnNames = table.Columns?.Select(c => c.Name ?? "").ToList() ?? new List<string>();
-            
-            if (columnNames.Contains("name") && columnNames.Contains("Count"))
-            {
-                return "Custom Events Summary";
-            }
-            else if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
-            {
-                return "Event Logs & Query Statistics";
-            }
-            else
-            {
-                return "Query Results";
-            }
-        }
-        else if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
-                 table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
-                 table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Query Metadata";
-        }
-
-        return table.Name;
-    }
-
     private string GetStaticTableTitle(QueryTable table)
     {
-        if (table == null) return "Unknown Table";
+        if (table == null || table.Columns == null) return "Unknown Table";
 
-        var columnNames = table.Columns?.Select(c => c.Name ?? "").ToList() ?? new List<string>();
+        var columnNames = table.Columns.Select(c => c.Name ?? "").ToList();
 
-        // Table 1: Custom Events Summary (name, Count)
+        // Static title determination - matches GetStaticTableDefinition logic
         if (columnNames.Contains("name") && columnNames.Contains("Count"))
         {
-            return "Event-Driven Architecture - Custom Events Summary";
+            return "Custom Events Summary";
         }
-
-        // Table 2: Event Logs with timestamps (matches the detection logic in GetStaticTableDefinition)
-        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)) || 
-            (table.Columns != null && table.Columns.Count >= 8 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
+        else if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)) || 
+                 (table.Columns.Count >= 8 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
             return "Event Logs";
         }
-
-        // Table 3: Query Metadata (matches the detection logic in GetStaticTableDefinition)
-        if ((table.Name != null && (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
-            table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
-            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))) ||
-            (table.Columns != null && table.Columns.Count >= 4 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
+        else if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
+                 table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
+                 table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase) ||
+                 (table.Columns.Count >= 4 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
             return "Outbox Metadata";
         }
 
-        // Fallback
-        return "Application Insights - Query Results";
-    }
-
-    private string GetColumnDisplayName(string columnName)
-    {
-        if (string.IsNullOrEmpty(columnName)) return "Unknown Column";
-
-        // Handle numeric column names (Application Insights sometimes uses "0", "1", "2", etc.)
-        if (int.TryParse(columnName, out _))
-        {
-            return $"Column {columnName}";
-        }
-
-        // Map common Application Insights column names to descriptive headers
-        var columnMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            // Timestamp columns
-            { "timestamp", "Event Timestamp" },
-            { "Timestamp", "Event Timestamp" },
-            
-            // Log level/type columns
-            { "Level", "Log Level" },
-            { "level", "Log Level" },
-            { "Type", "Event Type" },
-            { "type", "Event Type" },
-            { "Severity", "Severity Level" },
-            { "severity", "Severity Level" },
-            
-            // Message/description columns
-            { "Message", "Event Message" },
-            { "message", "Event Message" },
-            { "Description", "Description" },
-            { "description", "Description" },
-            
-            // Count/numeric columns
-            { "Count", "Event Count" },
-            { "count", "Event Count" },
-            { "Value", "Value" },
-            { "value", "Value" },
-            
-            // Event name columns
-            { "name", "Event Name" },
-            { "Name", "Event Name" },
-            { "EventName", "Event Name" },
-            { "eventName", "Event Name" },
-            
-            // Query execution columns
-            { "QueryHash", "Query Hash" },
-            { "queryHash", "Query Hash" },
-            { "ExecutionTime", "Execution Time (ms)" },
-            { "executionTime", "Execution Time (ms)" },
-            
-            // ID columns
-            { "Id", "Identifier" },
-            { "id", "Identifier" },
-            { "BookingId", "Booking ID" },
-            { "bookingId", "Booking ID" },
-            { "EventId", "Event ID" },
-            { "eventId", "Event ID" },
-            { "CustomerId", "Customer ID" },
-            { "customerId", "Customer ID" },
-            { "OutboxEventId", "Outbox Event ID" },
-            { "outboxEventId", "Outbox Event ID" },
-            
-            // System type columns
-            { "SystemType", "System Type" },
-            { "systemType", "System Type" },
-            { "ArchitectureMode", "Architecture Mode" },
-            { "architectureMode", "Architecture Mode" },
-            
-            // Query metadata columns
-            { "QueryResult", "Result Type" },
-            { "queryResult", "Result Type" },
-            { "QueryProperties", "Property Type" },
-            { "queryProperties", "Property Type" },
-            { "QueryStatus", "Status" },
-            { "queryStatus", "Status" },
-            { "PrimaryResult", "Primary Result" },
-            { "primaryResult", "Primary Result" },
-            { "@ExtendedProperties", "Extended Properties" },
-            
-            // Index/position columns
-            { "Index", "Row Index" },
-            { "index", "Row Index" },
-            { "Position", "Position" },
-            { "position", "Position" },
-            
-            // Resource usage columns
-            { "resource_usage", "Resource Usage" },
-            { "ResourceUsage", "Resource Usage" },
-            { "input_dataset_statistics", "Dataset Statistics" },
-            { "InputDatasetStatistics", "Dataset Statistics" }
-        };
-
-        // Check for exact match first
-        if (columnMappings.TryGetValue(columnName, out var displayName))
-        {
-            return displayName;
-        }
-
-        // Check for partial matches (e.g., columns containing certain keywords)
-        var lowerColumnName = columnName.ToLowerInvariant();
-        
-        if (lowerColumnName.Contains("timestamp") || lowerColumnName.Contains("time"))
-            return "Timestamp";
-        if (lowerColumnName.Contains("id") && !lowerColumnName.Contains("guid"))
-            return "ID";
-        if (lowerColumnName.Contains("guid"))
-            return "GUID";
-        if (lowerColumnName.Contains("email"))
-            return "Email Address";
-        if (lowerColumnName.Contains("name"))
-            return "Name";
-        if (lowerColumnName.Contains("count"))
-            return "Count";
-        if (lowerColumnName.Contains("price") || lowerColumnName.Contains("cost"))
-            return "Price";
-        if (lowerColumnName.Contains("status"))
-            return "Status";
-        if (lowerColumnName.Contains("type"))
-            return "Type";
-        if (lowerColumnName.Contains("mode"))
-            return "Mode";
-
-        // Default: return original name with proper casing
-        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(columnName.Replace("_", " "));
-    }
-
-    private string GetColumnDescription(string columnName, string tableName)
-    {
-        if (string.IsNullOrEmpty(columnName)) return string.Empty;
-
-        var descriptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "timestamp", "The date and time when the event occurred (UTC)" },
-            { "Level", "The severity level of the log entry (Info, Warning, Error, etc.)" },
-            { "Type", "The type or category of the event" },
-            { "Message", "A descriptive message about what happened" },
-            { "Count", "The number of occurrences of this event" },
-            { "name", "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed)" },
-            { "QueryHash", "A unique hash identifier for the query execution" },
-            { "ExecutionTime", "How long the query took to execute in milliseconds" },
-            { "BookingId", "Unique identifier for a booking/ticket" },
-            { "EventId", "Unique identifier for an event" },
-            { "CustomerId", "Unique identifier for a customer/user" },
-            { "SystemType", "Whether the event was processed in Synchronous or Event-Driven mode" },
-            { "ArchitectureMode", "The architecture mode active when the event occurred" },
-            { "QueryResult", "The type of query result (PrimaryResult, QueryProperties, etc.)" },
-            { "Index", "The position of this row in the result set" }
-        };
-
-        if (descriptions.TryGetValue(columnName, out var description))
-        {
-            return description;
-        }
-
-        return $"Column: {GetColumnDisplayName(columnName)}";
+        return "Query Results";
     }
 
     private class StaticTableDefinition
@@ -1303,444 +851,194 @@ customEvents
 
     private StaticTableDefinition GetStaticTableDefinition(QueryTable table)
     {
-        if (table == null || table.Columns == null) 
+        if (table == null || table.Columns == null || table.Columns.Count == 0) 
         {
-            return new StaticTableDefinition { Description = "Unknown Table" };
+            return new StaticTableDefinition { Description = "Unknown Table", Columns = new List<StaticColumnDefinition>() };
         }
 
+        // Static mappings based on table structure - no dynamic detection
+        // Table 1: Custom Events Summary (has "name" and "Count" columns)
         var columnNames = table.Columns.Select(c => c.Name ?? "").ToList();
-
-        // Table 1: Custom Events Summary (name, Count)
         if (columnNames.Contains("name") && columnNames.Contains("Count"))
         {
-            var columns = new List<StaticColumnDefinition>();
-            for (int i = 0; i < table.Columns.Count; i++)
-            {
-                var col = table.Columns[i];
-                var colName = col.Name ?? "";
-                var lowerName = colName.ToLowerInvariant();
-                
-                if (lowerName == "name")
-                {
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Event Name", 
-                        Description = "The name of the custom event tracked in Application Insights (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished, ModeSwitch)" 
-                    });
-                }
-                else if (colName == "Count")
-                {
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Event Count", 
-                        Description = "The total number of times this event occurred in the last hour, showing activity in the event-driven architecture" 
-                    });
-                }
-                else
-                {
-                    // Handle numeric or empty column names
-                    string displayName;
-                    if (string.IsNullOrEmpty(colName))
-                    {
-                        displayName = $"Column {i + 1}";
-                    }
-                    else if (int.TryParse(colName, out _))
-                    {
-                        displayName = $"Column {colName}";
-                    }
-                    else
-                    {
-                        displayName = GetColumnDisplayName(colName);
-                    }
-                    
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = displayName, 
-                        Description = GetColumnDescription(colName, table.Name) 
-                    });
-                }
-            }
-            
-            return new StaticTableDefinition
-            {
-                Description = "Summary of all custom events tracked in Application Insights for the event-driven ticketing system. Shows event counts for bookings, outbox processing, Service Bus publishing, and mode switches.",
-                Columns = columns
-            };
+            return GetCustomEventsSummaryDefinition(table);
         }
 
-        // Table 2: Event Logs with timestamps (complex table with many columns)
-        // Application Insights often returns these as numeric columns "0", "1", "2", etc.
-        // We'll map them statically based on position and known structure
+        // Table 2: Event Logs (has timestamp column or 8+ numeric columns)
         if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)) || 
             (table.Columns.Count >= 8 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
-            var columns = new List<StaticColumnDefinition>();
-            
-            // Static mapping for Application Insights query execution logs
-            // Based on typical structure: timestamp, level, type, message, queryHash, executionTime, resource_usage, itemId, etc.
-            var staticColumnMappings = new List<(string DisplayName, string Description)>
-            {
-                ("Event Timestamp", "The date and time when the event occurred (UTC)"),
-                ("Log Level", "The severity level of the log entry (Info, Warning, Error, etc.)"),
-                ("Event Type", "The type or category of the event (Info, Stats, etc.)"),
-                ("Event Message", "A descriptive message about what happened or query execution details"),
-                ("Query Hash", "A unique hash identifier for the query execution"),
-                ("Execution Time", "How long the query took to execute in milliseconds"),
-                ("Query Statistics", "Detailed query execution statistics including resource usage and dataset information (JSON format)"),
-                ("Query ID", "Unique identifier for the query execution"),
-                ("Source", "The source system or component that generated this log entry")
-            };
-            
-            for (int i = 0; i < table.Columns.Count; i++)
-            {
-                var col = table.Columns[i];
-                var colName = col.Name ?? "";
-                var lowerName = colName.ToLowerInvariant();
-                
-                // If column name is numeric or empty, use static mapping by position
-                bool isNumericColumn = int.TryParse(colName, out _) || string.IsNullOrEmpty(colName);
-                
-                StaticColumnDefinition matchedCol;
-                
-                if (isNumericColumn && i < staticColumnMappings.Count)
-                {
-                    // Use static mapping by position for numeric columns
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = staticColumnMappings[i].DisplayName, 
-                        Description = staticColumnMappings[i].Description 
-                    };
-                }
-                else
-                {
-                    // Try to match by name first
-                    if (lowerName.Contains("timestamp"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Event Timestamp", 
-                            Description = "The date and time when the event occurred (UTC)" 
-                        };
-                    }
-                    else if (lowerName == "level" || lowerName.Contains("severity"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Log Level", 
-                            Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
-                        };
-                    }
-                    else if (lowerName == "type")
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Event Type", 
-                            Description = "The type or category of the event (Info, Stats, etc.)" 
-                        };
-                    }
-                    else if (lowerName.Contains("message") || lowerName.Contains("description"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Event Message", 
-                            Description = "A descriptive message about what happened or query execution details" 
-                        };
-                    }
-                    else if (lowerName.Contains("queryhash"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Query Hash", 
-                            Description = "A unique hash identifier for the query execution" 
-                        };
-                    }
-                    else if (lowerName.Contains("executiontime"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Execution Time", 
-                            Description = "How long the query took to execute in milliseconds" 
-                        };
-                    }
-                    else if (lowerName.Contains("resource_usage") || lowerName.Contains("dataset"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Query Statistics", 
-                            Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
-                        };
-                    }
-                    else if (lowerName.Contains("itemid") || lowerName.Contains("item_id"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Query ID", 
-                            Description = "Unique identifier for the query execution" 
-                        };
-                    }
-                    else if (lowerName.Contains("source"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Source", 
-                            Description = "The source system or component that generated this log entry" 
-                        };
-                    }
-                    else if (i < staticColumnMappings.Count)
-                    {
-                        // Fallback to position-based mapping
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = staticColumnMappings[i].DisplayName, 
-                            Description = staticColumnMappings[i].Description 
-                        };
-                    }
-                    else
-                    {
-                        // Final fallback
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = $"Column {i + 1}", 
-                            Description = "Additional query result data" 
-                        };
-                    }
-                }
-                
-                columns.Add(matchedCol);
-            }
-
-            return new StaticTableDefinition
-            {
-                Description = "Event Logs - Application Insights event logs showing query execution details, timestamps, log levels, event types, and query statistics from the event-driven ticketing system",
-                Columns = columns
-            };
+            return GetEventLogsDefinition(table);
         }
 
-        // Table 3: Query Metadata (QueryResult, QueryProperties, QueryStatus)
-        // Application Insights returns these with numeric columns "0", "1", "2", etc.
-        // Static mapping: 0=Row Index, 1=Result Type, 2=Property Type, 3=Value, 4=GUID
+        // Table 3: Outbox Metadata (has QueryResult/QueryProperties/QueryStatus in name or 4+ numeric columns)
         if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
             table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
             table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase) ||
             (table.Columns.Count >= 4 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
-            var columns = new List<StaticColumnDefinition>();
-            
-            // Static column definitions for Query Metadata tables
-            var metadataColumnMappings = new List<(string DisplayName, string Description)>
-            {
-                ("Row Index", "The position of this row in the result set (0-based)"),
-                ("Result Type", "The type of query result (QueryResult, QueryProperties, QueryStatus)"),
-                ("Property Type", "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)"),
-                ("Value", "The GUID or identifier value for this query result"),
-                ("GUID", "Globally unique identifier for the query execution")
-            };
-            
-            for (int i = 0; i < table.Columns.Count; i++)
-            {
-                var col = table.Columns[i];
-                var colName = col.Name ?? "";
-                var lowerName = colName.ToLowerInvariant();
-                
-                // If column name is numeric or empty, use static mapping by position
-                bool isNumericColumn = int.TryParse(colName, out _) || string.IsNullOrEmpty(colName);
-                
-                StaticColumnDefinition matchedCol;
-                
-                if (isNumericColumn && i < metadataColumnMappings.Count)
-                {
-                    // Use static mapping by position for numeric columns
-                    matchedCol = new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = metadataColumnMappings[i].DisplayName, 
-                        Description = metadataColumnMappings[i].Description 
-                    };
-                }
-                else
-                {
-                    // Try to match by name first
-                    if (lowerName.Contains("index"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Row Index", 
-                            Description = "The position of this row in the result set (0-based)" 
-                        };
-                    }
-                    else if (lowerName.Contains("queryresult"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Result Type", 
-                            Description = "The type of query result (QueryResult, QueryProperties, QueryStatus)" 
-                        };
-                    }
-                    else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Property Type", 
-                            Description = "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)" 
-                        };
-                    }
-                    else if (lowerName.Contains("value"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "Value", 
-                            Description = "The GUID or identifier value for this query result" 
-                        };
-                    }
-                    else if (lowerName.Contains("guid") || lowerName.Contains("id"))
-                    {
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = "GUID", 
-                            Description = "Globally unique identifier for the query execution" 
-                        };
-                    }
-                    else if (i < metadataColumnMappings.Count)
-                    {
-                        // Fallback to position-based mapping
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = metadataColumnMappings[i].DisplayName, 
-                            Description = metadataColumnMappings[i].Description 
-                        };
-                    }
-                    else
-                    {
-                        // Final fallback
-                        matchedCol = new StaticColumnDefinition 
-                        { 
-                            OriginalName = colName,
-                            OriginalIndex = i,
-                            DisplayName = $"Column {i + 1}", 
-                            Description = "Additional query metadata" 
-                        };
-                    }
-                }
-                
-                columns.Add(matchedCol);
-            }
-
-            return new StaticTableDefinition
-            {
-                Description = "Outbox Metadata - Application Insights query metadata showing outbox event processing details, query result types (QueryResult, QueryProperties, QueryStatus), and execution identifiers",
-                Columns = columns
-            };
+            return GetOutboxMetadataDefinition(table);
         }
 
-        // Fallback: Use dynamic mapping - preserve original order
-        var fallbackColumns = new List<StaticColumnDefinition>();
+        // Default: Unknown table structure
+        return GetDefaultDefinition(table);
+    }
+
+    private StaticTableDefinition GetCustomEventsSummaryDefinition(QueryTable table)
+    {
+        var columns = new List<StaticColumnDefinition>();
         for (int i = 0; i < table.Columns.Count; i++)
         {
-            var col = table.Columns[i];
-            var colName = col.Name ?? "";
-            
-            // Handle numeric column names (Application Insights sometimes uses "0", "1", "2", etc.)
-            string displayName;
-            if (string.IsNullOrEmpty(colName))
+            var colName = table.Columns[i].Name ?? "";
+            if (colName.Equals("name", StringComparison.OrdinalIgnoreCase))
             {
-                displayName = $"Column {i + 1}";
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = "Event Name", 
+                    Description = "The name of the custom event tracked in Application Insights (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished, ModeSwitch)" 
+                });
             }
-            else if (int.TryParse(colName, out var colNum))
+            else if (colName == "Count")
             {
-                displayName = $"Column {colNum + 1}";
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = "Event Count", 
+                    Description = "The total number of times this event occurred in the last hour, showing activity in the event-driven architecture" 
+                });
             }
             else
             {
-                displayName = GetColumnDisplayName(colName);
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = $"Column {i + 1}", 
+                    Description = "Additional column data" 
+                });
             }
-            
-            fallbackColumns.Add(new StaticColumnDefinition
-            {
-                OriginalName = colName,
-                OriginalIndex = i,
-                DisplayName = displayName,
-                Description = GetColumnDescription(colName, table.Name)
-            });
         }
-
-        // Try to determine a better description based on table name and columns
-        string tableDescription;
-        var lowerTableName = (table.Name ?? "").ToLowerInvariant();
         
-        // Check column names to infer table type
-        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase) || 
-                                 c.Contains("event", StringComparison.OrdinalIgnoreCase)))
+        return new StaticTableDefinition
         {
-            tableDescription = "Event-Driven Architecture - Application Insights Event Data";
-        }
-        else if (lowerTableName.Contains("primaryresult") || lowerTableName.Contains("primary"))
+            Description = "Summary of all custom events tracked in Application Insights for the event-driven ticketing system. Shows event counts for bookings, outbox processing, Service Bus publishing, and mode switches.",
+            Columns = columns
+        };
+    }
+
+    private StaticTableDefinition GetEventLogsDefinition(QueryTable table)
+    {
+        var columns = new List<StaticColumnDefinition>();
+        var staticMappings = new List<(string DisplayName, string Description)>
         {
-            tableDescription = "Application Insights - Primary Query Results";
-        }
-        else if (lowerTableName.Contains("queryproperties"))
+            ("Event Timestamp", "The date and time when the event occurred (UTC)"),
+            ("Log Level", "The severity level of the log entry (Info, Warning, Error, etc.)"),
+            ("Event Type", "The type or category of the event (Info, Stats, etc.)"),
+            ("Event Message", "A descriptive message about what happened or query execution details"),
+            ("Query Hash", "A unique hash identifier for the query execution"),
+            ("Execution Time", "How long the query took to execute in milliseconds"),
+            ("Query Statistics", "Detailed query execution statistics including resource usage and dataset information (JSON format)"),
+            ("Query ID", "Unique identifier for the query execution"),
+            ("Source", "The source system or component that generated this log entry")
+        };
+        
+        for (int i = 0; i < table.Columns.Count; i++)
         {
-            tableDescription = "Application Insights - Query Properties";
-        }
-        else if (lowerTableName.Contains("querystatus"))
-        {
-            tableDescription = "Application Insights - Query Status";
-        }
-        else if (lowerTableName.Contains("custom") || lowerTableName.Contains("event"))
-        {
-            tableDescription = "Application Insights - Custom Events";
-        }
-        else
-        {
-            tableDescription = $"Application Insights - {GetTableDisplayName(table)}";
+            var colName = table.Columns[i].Name ?? "";
+            if (i < staticMappings.Count)
+            {
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = staticMappings[i].DisplayName, 
+                    Description = staticMappings[i].Description 
+                });
+            }
+            else
+            {
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = $"Column {i + 1}", 
+                    Description = "Additional query result data" 
+                });
+            }
         }
 
         return new StaticTableDefinition
         {
-            Description = tableDescription,
-            Columns = fallbackColumns
+            Description = "Event Logs - Application Insights event logs showing query execution details, timestamps, log levels, event types, and query statistics from the event-driven ticketing system",
+            Columns = columns
+        };
+    }
+
+    private StaticTableDefinition GetOutboxMetadataDefinition(QueryTable table)
+    {
+        var columns = new List<StaticColumnDefinition>();
+        var staticMappings = new List<(string DisplayName, string Description)>
+        {
+            ("Row Index", "The position of this row in the result set (0-based)"),
+            ("Result Type", "The type of query result (QueryResult, QueryProperties, QueryStatus)"),
+            ("Property Type", "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)"),
+            ("Value", "The GUID or identifier value for this query result"),
+            ("GUID", "Globally unique identifier for the query execution")
+        };
+        
+        for (int i = 0; i < table.Columns.Count; i++)
+        {
+            var colName = table.Columns[i].Name ?? "";
+            if (i < staticMappings.Count)
+            {
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = staticMappings[i].DisplayName, 
+                    Description = staticMappings[i].Description 
+                });
+            }
+            else
+            {
+                columns.Add(new StaticColumnDefinition 
+                { 
+                    OriginalName = colName,
+                    OriginalIndex = i,
+                    DisplayName = $"Column {i + 1}", 
+                    Description = "Additional query metadata" 
+                });
+            }
+        }
+
+        return new StaticTableDefinition
+        {
+            Description = "Outbox Metadata - Application Insights query metadata showing outbox event processing details, query result types (QueryResult, QueryProperties, QueryStatus), and execution identifiers",
+            Columns = columns
+        };
+    }
+
+    private StaticTableDefinition GetDefaultDefinition(QueryTable table)
+    {
+        var columns = new List<StaticColumnDefinition>();
+        for (int i = 0; i < table.Columns.Count; i++)
+        {
+            columns.Add(new StaticColumnDefinition
+            {
+                OriginalName = table.Columns[i].Name ?? "",
+                OriginalIndex = i,
+                DisplayName = $"Column {i + 1}",
+                Description = "Query result data"
+            });
+        }
+
+        return new StaticTableDefinition
+        {
+            Description = "Application Insights Query Results",
+            Columns = columns
         };
     }
 
@@ -1758,4 +1056,3 @@ customEvents
         return "-";
     }
 }
-

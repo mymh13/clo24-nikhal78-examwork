@@ -1,0 +1,280 @@
+@namespace Ticketing.Web.Helpers
+@using Ticketing.Contracts.Bookings
+@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JSRuntime
+
+<div class="demo-section">
+    <h2>Booking Management</h2>
+    
+    <!-- Create Booking Form -->
+    <div style="margin-bottom: var(--spacing-lg);">
+        <h3>Create Booking</h3>
+        <form @onsubmit="CreateBooking" @onsubmit:preventDefault="true" class="booking-form">
+            <div class="form-group">
+                <label for="customerEmail">Customer Email:</label>
+                <input id="customerEmail" type="email" @bind="newBooking.CustomerEmail" class="form-input" placeholder="Enter customer email" required />
+                <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                    User will be created automatically if they don't exist.
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="customerName">Customer Name (optional):</label>
+                <input id="customerName" type="text" @bind="newBooking.CustomerName" class="form-input" placeholder="Enter customer name" />
+            </div>
+            <div class="form-group">
+                <label>Zones (select one or more):</label>
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: 8px;">
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked="@selectedZones.Contains("Zone A")" @onchange="@(() => ToggleZone("Zone A"))" />
+                        <span>Zone A</span>
+                    </label>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked="@selectedZones.Contains("Zone B")" @onchange="@(() => ToggleZone("Zone B"))" />
+                        <span>Zone B</span>
+                    </label>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked="@selectedZones.Contains("Zone C")" @onchange="@(() => ToggleZone("Zone C"))" />
+                        <span>Zone C</span>
+                    </label>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked="@selectedZones.Contains("Zone D")" @onchange="@(() => ToggleZone("Zone D"))" />
+                        <span>Zone D</span>
+                    </label>
+                </div>
+                <small style="color: var(--color-text-muted); font-size: 0.85em; margin-top: 5px; display: block;">
+                    Each zone costs 20 SEK. Total: @(selectedZones.Count * 20) SEK base price.
+                </small>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Booking</button>
+        </form>
+        @if (!string.IsNullOrEmpty(createResult))
+        {
+            <div class="@(createResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-sm);">
+                <p>@createResult</p>
+            </div>
+        }
+    </div>
+
+    <hr style="margin: var(--spacing-lg) 0;" />
+
+    <!-- Get Bookings -->
+    <div>
+        <h3>Get Bookings</h3>
+        <form @onsubmit="GetBookings" @onsubmit:preventDefault="true" class="booking-form">
+            <div class="form-group">
+                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                    <div style="flex: 1;">
+                        <label for="searchCustomerId">Customer ID (User ID):</label>
+                        <input id="searchCustomerId" type="text" @bind="searchCustomerId" class="form-input" placeholder="Enter customer ID to search" disabled="@listAll" />
+                    </div>
+                    <div class="form-group checkbox-group" style="margin-top: 25px;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" @bind="listAll" />
+                            <span>List All</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Bookings</button>
+        </form>
+        @if (bookings != null && bookings.Any())
+        {
+            <div class="bookings-table-container" style="margin-top: var(--spacing-md); max-height: 400px; overflow-y: auto;">
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Customer Email</th>
+                            <th>Zone</th>
+                            <th>Price Modifier</th>
+                            <th>Total Price</th>
+                            <th>Booking ID</th>
+                            <th>Booking Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in bookings)
+                        {
+                            <tr>
+                                <td>@booking.CustomerId</td>
+                                <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
+                                <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
+                                <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
+                                <td>@booking.TotalPrice.ToString("F2") SEK (@booking.BasePrice.ToString("F2") SEK base)</td>
+                                <td>@booking.Id</td>
+                                <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
+        {
+            <div class="error-message" style="margin-top: var(--spacing-sm);">
+                <p>@getResult</p>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(getResult) && getResult == "No bookings found")
+        {
+            <div class="info-message" style="margin-top: var(--spacing-sm);">
+                <p>No bookings found for this customer ID.</p>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(deleteResult))
+        {
+            <div class="@(deleteResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-sm);">
+                <p>@deleteResult</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnBookingCreated { get; set; }
+
+    private Booking newBooking = new();
+    private List<string> selectedZones = new();
+    private string searchCustomerId = string.Empty;
+    private bool listAll = false;
+    private string createResult = string.Empty;
+    private string getResult = string.Empty;
+    private List<Booking>? bookings = null;
+    private string deleteResult = string.Empty;
+
+    private void ToggleZone(string zone)
+    {
+        if (selectedZones.Contains(zone))
+        {
+            selectedZones.Remove(zone);
+        }
+        else
+        {
+            selectedZones.Add(zone);
+        }
+        newBooking.Zone = string.Join(", ", selectedZones);
+    }
+
+    private async Task CreateBooking()
+    {
+        createResult = string.Empty;
+        
+        if (selectedZones.Count == 0)
+        {
+            createResult = "Error: Please select at least one zone.";
+            return;
+        }
+        
+        newBooking.Zone = string.Join(", ", selectedZones);
+        
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
+            var response = await httpClient.PostAsJsonAsync("/api/bookings", newBooking);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                createResult = "Success: Ticket booked successfully!";
+                newBooking = new Booking();
+                selectedZones.Clear();
+                
+                if (OnBookingCreated.HasDelegate)
+                {
+                    await OnBookingCreated.InvokeAsync();
+                }
+            }
+            else
+            {
+                createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+            }
+        }
+        catch
+        {
+            createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+        }
+    }
+
+    private async Task GetBookings()
+    {
+        getResult = string.Empty;
+        bookings = null;
+        
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
+            HttpResponseMessage response;
+            
+            if (listAll)
+            {
+                response = await httpClient.GetAsync("/api/bookings/all");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(searchCustomerId))
+                {
+                    getResult = "Error: Please enter a customer ID or select 'List All'.";
+                    return;
+                }
+                response = await httpClient.GetAsync($"/api/bookings/customer/{searchCustomerId}");
+            }
+            
+            if (response.IsSuccessStatusCode)
+            {
+                bookings = await response.Content.ReadFromJsonAsync<List<Booking>>();
+                
+                if (bookings == null || !bookings.Any())
+                {
+                    getResult = "No bookings found";
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                getResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
+        }
+    }
+
+    private async Task DeleteBooking(string bookingId, string customerId)
+    {
+        deleteResult = string.Empty;
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to delete booking {bookingId}? This action cannot be undone.");
+        
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient("BlazorServer");
+            var response = await httpClient.DeleteAsync($"/api/bookings/{bookingId}?customerId={Uri.EscapeDataString(customerId)}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                deleteResult = "Success: Booking deleted successfully!";
+                await GetBookings();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                deleteResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            deleteResult = $"Error: An error occurred when trying to delete the booking. {ex.Message}";
+        }
+    }
+}
+
