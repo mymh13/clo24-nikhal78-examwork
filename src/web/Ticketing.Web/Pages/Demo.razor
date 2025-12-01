@@ -227,7 +227,7 @@
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                                <h3 style="margin: 0;">@table.Name</h3>
+                                <h3 style="margin: 0;">@GetTableDisplayName(table)</h3>
                                 <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(table)">
                                     📋 Copy Table Data
                                 </button>
@@ -237,7 +237,7 @@
                                     <colgroup>
                                         @foreach (var column in table.Columns)
                                         {
-                                            <col style="width: 200px; max-width: 200px;" />
+                                            <col style="width: 170px; max-width: 170px;" />
                                         }
                                         <col style="width: 140px; min-width: 140px;" />
                                     </colgroup>
@@ -245,25 +245,12 @@
                                         <tr>
                                             @foreach (var column in table.Columns)
                                             {
-                                                <th class="insights-header-truncate">@column.Name</th>
+                                                <th class="insights-header-truncate" title="@GetColumnDescription(column.Name, table.Name)">@GetColumnDisplayName(column.Name)</th>
                                             }
                                             <th style="width: 140px; min-width: 140px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @{
-                                            // Generate descriptive title based on table name and columns
-                                            string tableDescription = GetTableDescription(table);
-                                            var colCount = (table.Columns?.Count ?? 0) + 1;
-                                        }
-                                        @if (!string.IsNullOrEmpty(tableDescription))
-                                        {
-                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-primary);">
-                                                <td colspan="@colCount" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em; text-align: center;">
-                                                    📊 @tableDescription
-                                                </td>
-                                            </tr>
-                                        }
                                         @{
                                             var rowIndex = 0;
                                         }
@@ -1068,42 +1055,186 @@ customEvents
         public string Type { get; set; } = string.Empty;
     }
 
-    private string GetTableDescription(QueryTable table)
+    private string GetTableDisplayName(QueryTable table)
     {
-        if (table == null) return string.Empty;
+        if (table == null) return "Unknown Table";
 
-        // Check table name
+        // Check table name and columns to determine display name
         if (table.Name == "PrimaryResult")
         {
-            // Check columns to determine what type of data this is
             var columnNames = table.Columns?.Select(c => c.Name ?? "").ToList() ?? new List<string>();
             
             if (columnNames.Contains("name") && columnNames.Contains("Count"))
             {
-                return "Custom Events Summary - Shows count of each event type from the last hour";
+                return "Custom Events Summary";
             }
-            else if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase) || c.Contains("Timestamp")))
+            else if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
             {
-                return "Event Logs - Detailed event information with timestamps and execution statistics";
+                return "Event Logs & Query Statistics";
             }
             else
             {
-                return "Query Results - Data returned from Application Insights query";
+                return "Query Results";
             }
         }
         else if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
                  table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
                  table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
         {
-            return "Query Metadata - Information about the query execution and result structure";
-        }
-        else if (table.Columns != null && table.Columns.Any())
-        {
-            // Generic description based on column count
-            return $"Data Table - Contains {table.Columns.Count} columns with {table.Rows?.Count ?? 0} rows of data";
+            return "Query Metadata";
         }
 
-        return string.Empty;
+        return table.Name;
+    }
+
+    private string GetColumnDisplayName(string columnName)
+    {
+        if (string.IsNullOrEmpty(columnName)) return columnName;
+
+        // Map common Application Insights column names to descriptive headers
+        var columnMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Timestamp columns
+            { "timestamp", "Event Timestamp" },
+            { "Timestamp", "Event Timestamp" },
+            
+            // Log level/type columns
+            { "Level", "Log Level" },
+            { "level", "Log Level" },
+            { "Type", "Event Type" },
+            { "type", "Event Type" },
+            { "Severity", "Severity Level" },
+            { "severity", "Severity Level" },
+            
+            // Message/description columns
+            { "Message", "Event Message" },
+            { "message", "Event Message" },
+            { "Description", "Description" },
+            { "description", "Description" },
+            
+            // Count/numeric columns
+            { "Count", "Event Count" },
+            { "count", "Event Count" },
+            { "Value", "Value" },
+            { "value", "Value" },
+            
+            // Event name columns
+            { "name", "Event Name" },
+            { "Name", "Event Name" },
+            { "EventName", "Event Name" },
+            { "eventName", "Event Name" },
+            
+            // Query execution columns
+            { "QueryHash", "Query Hash" },
+            { "queryHash", "Query Hash" },
+            { "ExecutionTime", "Execution Time (ms)" },
+            { "executionTime", "Execution Time (ms)" },
+            
+            // ID columns
+            { "Id", "Identifier" },
+            { "id", "Identifier" },
+            { "BookingId", "Booking ID" },
+            { "bookingId", "Booking ID" },
+            { "EventId", "Event ID" },
+            { "eventId", "Event ID" },
+            { "CustomerId", "Customer ID" },
+            { "customerId", "Customer ID" },
+            { "OutboxEventId", "Outbox Event ID" },
+            { "outboxEventId", "Outbox Event ID" },
+            
+            // System type columns
+            { "SystemType", "System Type" },
+            { "systemType", "System Type" },
+            { "ArchitectureMode", "Architecture Mode" },
+            { "architectureMode", "Architecture Mode" },
+            
+            // Query metadata columns
+            { "QueryResult", "Result Type" },
+            { "queryResult", "Result Type" },
+            { "QueryProperties", "Property Type" },
+            { "queryProperties", "Property Type" },
+            { "QueryStatus", "Status" },
+            { "queryStatus", "Status" },
+            { "PrimaryResult", "Primary Result" },
+            { "primaryResult", "Primary Result" },
+            { "@ExtendedProperties", "Extended Properties" },
+            
+            // Index/position columns
+            { "Index", "Row Index" },
+            { "index", "Row Index" },
+            { "Position", "Position" },
+            { "position", "Position" },
+            
+            // Resource usage columns
+            { "resource_usage", "Resource Usage" },
+            { "ResourceUsage", "Resource Usage" },
+            { "input_dataset_statistics", "Dataset Statistics" },
+            { "InputDatasetStatistics", "Dataset Statistics" }
+        };
+
+        // Check for exact match first
+        if (columnMappings.TryGetValue(columnName, out var displayName))
+        {
+            return displayName;
+        }
+
+        // Check for partial matches (e.g., columns containing certain keywords)
+        var lowerColumnName = columnName.ToLowerInvariant();
+        
+        if (lowerColumnName.Contains("timestamp") || lowerColumnName.Contains("time"))
+            return "Timestamp";
+        if (lowerColumnName.Contains("id") && !lowerColumnName.Contains("guid"))
+            return "ID";
+        if (lowerColumnName.Contains("guid"))
+            return "GUID";
+        if (lowerColumnName.Contains("email"))
+            return "Email Address";
+        if (lowerColumnName.Contains("name"))
+            return "Name";
+        if (lowerColumnName.Contains("count"))
+            return "Count";
+        if (lowerColumnName.Contains("price") || lowerColumnName.Contains("cost"))
+            return "Price";
+        if (lowerColumnName.Contains("status"))
+            return "Status";
+        if (lowerColumnName.Contains("type"))
+            return "Type";
+        if (lowerColumnName.Contains("mode"))
+            return "Mode";
+
+        // Default: return original name with proper casing
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(columnName.Replace("_", " "));
+    }
+
+    private string GetColumnDescription(string columnName, string tableName)
+    {
+        if (string.IsNullOrEmpty(columnName)) return string.Empty;
+
+        var descriptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "timestamp", "The date and time when the event occurred (UTC)" },
+            { "Level", "The severity level of the log entry (Info, Warning, Error, etc.)" },
+            { "Type", "The type or category of the event" },
+            { "Message", "A descriptive message about what happened" },
+            { "Count", "The number of occurrences of this event" },
+            { "name", "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed)" },
+            { "QueryHash", "A unique hash identifier for the query execution" },
+            { "ExecutionTime", "How long the query took to execute in milliseconds" },
+            { "BookingId", "Unique identifier for a booking/ticket" },
+            { "EventId", "Unique identifier for an event" },
+            { "CustomerId", "Unique identifier for a customer/user" },
+            { "SystemType", "Whether the event was processed in Synchronous or Event-Driven mode" },
+            { "ArchitectureMode", "The architecture mode active when the event occurred" },
+            { "QueryResult", "The type of query result (PrimaryResult, QueryProperties, etc.)" },
+            { "Index", "The position of this row in the result set" }
+        };
+
+        if (descriptions.TryGetValue(columnName, out var description))
+        {
+            return description;
+        }
+
+        return $"Column: {GetColumnDisplayName(columnName)}";
     }
 }
 
