@@ -12,7 +12,7 @@
 
 <PageTitle>Event-Driven Architecture Demo</PageTitle>
 
-<div class="container" style="max-width: 100%;">
+<div class="container demo-page-container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
         <h1 style="margin: 0;">Event-Driven Architecture Demo</h1>
         @{
@@ -62,26 +62,65 @@
                     @foreach (var table in insightsData.Tables)
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
-                            <h3>@table.Name</h3>
-                            <div style="overflow-x: auto;">
-                                <table class="bookings-table" style="width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                                <h3 style="margin: 0;">@table.Name</h3>
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(table)">
+                                    📋 Copy Table Data
+                                </button>
+                            </div>
+                            <div class="insights-table-container">
+                                <table class="insights-table">
                                     <thead>
                                         <tr>
                                             @foreach (var column in table.Columns)
                                             {
                                                 <th>@column.Name</th>
                                             }
+                                            <th style="width: 120px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @{
+                                            var rowIndex = 0;
+                                        }
                                         @foreach (var row in table.Rows)
                                         {
+                                            var currentRowIndex = rowIndex;
                                             <tr>
-                                                @foreach (var cell in row)
-                                                {
-                                                    <td>@(cell?.ToString() ?? "-")</td>
-                                                }
+                                            @{
+                                                var cellIndex = 0;
+                                            }
+                                            @foreach (var cell in row)
+                                            {
+                                                var cellValue = cell?.ToString() ?? "-";
+                                                var isLongValue = cellValue.Length > 20;
+                                                var columnName = cellIndex < table.Columns.Count ? table.Columns[cellIndex].Name : "";
+                                                <td style="max-width: 200px;">
+                                                    @if (isLongValue)
+                                                    {
+                                                        <div class="table-cell-container">
+                                                            <span class="table-cell-content text-truncate-small" title="@cellValue">@cellValue</span>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span title="@(cellValue.Length > 15 ? cellValue : "")">@cellValue</span>
+                                                    }
+                                                </td>
+                                                cellIndex++;
+                                            }
+                                                <td>
+                                                    <div style="display: flex; gap: 4px;">
+                                                        <button class="cell-action-btn" @onclick="() => ViewRowDetails(table, currentRowIndex)" title="View full row data">
+                                                            👁️ View
+                                                        </button>
+                                                        <button class="cell-action-btn" @onclick="() => CopyRowData(table, currentRowIndex)" title="Copy row data">
+                                                            📋 Copy
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
+                                            rowIndex++;
                                         }
                                     </tbody>
                                 </table>
@@ -332,6 +371,57 @@
     }
 </div>
 
+<!-- Modal for viewing row details -->
+@if (showModal && selectedRowData != null)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Row Details - @selectedTableName</h3>
+                <button class="modal-close-btn" @onclick="CloseModal" title="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: var(--spacing-md);">
+                    <button class="btn btn-secondary" @onclick="CopyModalData" style="margin-bottom: var(--spacing-md);">
+                        📋 Copy All Data
+                    </button>
+                </div>
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <h4 style="color: var(--color-primary); margin-bottom: var(--spacing-sm);">Table View</h4>
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (selectedTable != null && selectedRowIndex >= 0 && selectedRowIndex < selectedTable.Rows.Count)
+                            {
+                                var row = selectedTable.Rows[selectedRowIndex];
+                                @for (int i = 0; i < selectedTable.Columns.Count && i < row.Count; i++)
+                                {
+                                    <tr>
+                                        <td><strong>@selectedTable.Columns[i].Name</strong></td>
+                                        <td>@(row[i]?.ToString() ?? "-")</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h4 style="color: var(--color-primary); margin-bottom: var(--spacing-sm);">JSON Format</h4>
+                    <div class="json-display">@selectedRowJson</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     // Application Insights state
     private QueryResult? insightsData;
@@ -366,6 +456,14 @@
     private string getResult = string.Empty;
     private List<Booking>? bookings = null;
     private string deleteResult = string.Empty;
+
+    // Modal state
+    private bool showModal = false;
+    private QueryTable? selectedTable = null;
+    private int selectedRowIndex = -1;
+    private string selectedTableName = string.Empty;
+    private string selectedRowJson = string.Empty;
+    private Dictionary<string, object?>? selectedRowData = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -727,6 +825,123 @@ customEvents
         propagationCancellationTokenSource?.Cancel();
         propagationCancellationTokenSource?.Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private void ViewRowDetails(QueryTable table, int rowIndex)
+    {
+        if (rowIndex < 0 || rowIndex >= table.Rows.Count) return;
+
+        selectedTable = table;
+        selectedRowIndex = rowIndex;
+        selectedTableName = table.Name;
+        
+        var row = table.Rows[rowIndex];
+        selectedRowData = new Dictionary<string, object?>();
+        var jsonDict = new Dictionary<string, object?>();
+
+        for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+        {
+            var columnName = table.Columns[i].Name;
+            var value = row[i];
+            selectedRowData[columnName] = value;
+            jsonDict[columnName] = value;
+        }
+
+        selectedRowJson = System.Text.Json.JsonSerializer.Serialize(jsonDict, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        showModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        selectedTable = null;
+        selectedRowIndex = -1;
+        selectedTableName = string.Empty;
+        selectedRowJson = string.Empty;
+        selectedRowData = null;
+        StateHasChanged();
+    }
+
+    private async Task CopyRowData(QueryTable table, int rowIndex)
+    {
+        if (rowIndex < 0 || rowIndex >= table.Rows.Count) return;
+
+        var row = table.Rows[rowIndex];
+        var data = new Dictionary<string, object?>();
+
+        for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+        {
+            data[table.Columns[i].Name] = row[i];
+        }
+
+        var json = System.Text.Json.JsonSerializer.Serialize(data, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+            await JSRuntime.InvokeVoidAsync("alert", "Row data copied to clipboard!");
+        }
+        catch
+        {
+            // Fallback if clipboard API fails
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to copy to clipboard. Please use the View button to see the data.");
+        }
+    }
+
+    private async Task CopyTableData(QueryTable table)
+    {
+        var tableData = new
+        {
+            TableName = table.Name,
+            Columns = table.Columns.Select(c => new { c.Name, c.Type }).ToList(),
+            Rows = table.Rows.Select(row =>
+            {
+                var rowDict = new Dictionary<string, object?>();
+                for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+                {
+                    rowDict[table.Columns[i].Name] = row[i];
+                }
+                return rowDict;
+            }).ToList()
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(tableData, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+            await JSRuntime.InvokeVoidAsync("alert", "Table data copied to clipboard!");
+        }
+        catch
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to copy to clipboard.");
+        }
+    }
+
+    private async Task CopyModalData()
+    {
+        if (string.IsNullOrEmpty(selectedRowJson)) return;
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", selectedRowJson);
+            await JSRuntime.InvokeVoidAsync("alert", "Data copied to clipboard!");
+        }
+        catch
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to copy to clipboard.");
+        }
     }
 
     private class MiniHealthStatus
