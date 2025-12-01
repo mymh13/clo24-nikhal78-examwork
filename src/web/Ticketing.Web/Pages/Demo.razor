@@ -234,23 +234,38 @@
                             </div>
                             <div class="bookings-table-container">
                                 <table class="bookings-table insights-fixed-table">
+                                    @{
+                                        // Get static table definition for this table
+                                        var tableDefinition = GetStaticTableDefinition(table);
+                                    }
                                     <colgroup>
-                                        @foreach (var column in table.Columns)
+                                        @foreach (var colDef in tableDefinition.Columns)
                                         {
-                                            <col style="width: 170px; max-width: 170px;" />
+                                            <col style="width: 150px; max-width: 150px;" />
                                         }
                                         <col style="width: 140px; min-width: 140px;" />
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            @foreach (var column in table.Columns)
+                                            @foreach (var colDef in tableDefinition.Columns)
                                             {
-                                                <th class="insights-header-truncate" title="@GetColumnDescription(column.Name, table.Name)">@GetColumnDisplayName(column.Name)</th>
+                                                <th class="insights-header-truncate" title="@colDef.Description">
+                                                    @colDef.DisplayName
+                                                </th>
                                             }
                                             <th style="width: 140px; min-width: 140px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @if (!string.IsNullOrEmpty(tableDefinition.Description))
+                                        {
+                                            var colCount = tableDefinition.Columns.Count + 1;
+                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-primary);">
+                                                <td colspan="@colCount" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em; text-align: center;">
+                                                    📊 @tableDefinition.Description
+                                                </td>
+                                            </tr>
+                                        }
                                         @{
                                             var rowIndex = 0;
                                         }
@@ -258,17 +273,13 @@
                                         {
                                             var currentRowIndex = rowIndex;
                                             <tr>
-                                                @{
-                                                    var cellIndex = 0;
-                                                }
-                                                @foreach (var cell in row)
+                                                @foreach (var colDef in tableDefinition.Columns)
                                                 {
-                                                    var cellValue = cell?.ToString() ?? "-";
+                                                    var cellValue = GetCellValue(row, table, colDef.OriginalName);
                                                     var shouldTruncate = cellValue.Length > 15;
                                                     <td class="insights-cell-truncate">
                                                         <span class="text-truncate-cell" title="@(shouldTruncate ? cellValue : "")">@cellValue</span>
                                                     </td>
-                                                    cellIndex++;
                                                 }
                                                 <td>
                                                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
@@ -1235,6 +1246,283 @@ customEvents
         }
 
         return $"Column: {GetColumnDisplayName(columnName)}";
+    }
+
+    private class StaticTableDefinition
+    {
+        public string Description { get; set; } = string.Empty;
+        public List<StaticColumnDefinition> Columns { get; set; } = new();
+    }
+
+    private class StaticColumnDefinition
+    {
+        public string OriginalName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private StaticTableDefinition GetStaticTableDefinition(QueryTable table)
+    {
+        if (table == null || table.Columns == null) 
+        {
+            return new StaticTableDefinition { Description = "Unknown Table" };
+        }
+
+        var columnNames = table.Columns.Select(c => c.Name ?? "").ToList();
+
+        // Table 1: Custom Events Summary (name, Count)
+        if (columnNames.Contains("name") && columnNames.Contains("Count"))
+        {
+            return new StaticTableDefinition
+            {
+                Description = "Custom Events Summary - Shows count of each event type from the last hour",
+                Columns = new List<StaticColumnDefinition>
+                {
+                    new StaticColumnDefinition 
+                    { 
+                        OriginalName = "name", 
+                        DisplayName = "Event Name", 
+                        Description = "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished)" 
+                    },
+                    new StaticColumnDefinition 
+                    { 
+                        OriginalName = "Count", 
+                        DisplayName = "Event Count", 
+                        Description = "The total number of times this event occurred in the last hour" 
+                    }
+                }
+            };
+        }
+
+        // Table 2: Event Logs with timestamps (complex table with many columns)
+        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
+        {
+            var columns = new List<StaticColumnDefinition>();
+            
+            // Map known columns
+            foreach (var col in table.Columns)
+            {
+                var colName = col.Name ?? "";
+                var lowerName = colName.ToLowerInvariant();
+                
+                if (lowerName.Contains("timestamp"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Event Timestamp", 
+                        Description = "The date and time when the event occurred (UTC)" 
+                    });
+                }
+                else if (lowerName == "level" || lowerName.Contains("severity"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Log Level", 
+                        Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
+                    });
+                }
+                else if (lowerName == "type")
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Event Type", 
+                        Description = "The type or category of the event (Info, Stats, etc.)" 
+                    });
+                }
+                else if (lowerName.Contains("message") || lowerName.Contains("description"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Event Message", 
+                        Description = "A descriptive message about what happened or query execution details" 
+                    });
+                }
+                else if (lowerName.Contains("queryhash"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Query Hash", 
+                        Description = "A unique hash identifier for the query execution" 
+                    });
+                }
+                else if (lowerName.Contains("executiontime"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Execution Time", 
+                        Description = "How long the query took to execute in milliseconds" 
+                    });
+                }
+                else if (lowerName.Contains("resource_usage") || lowerName.Contains("dataset"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Query Statistics", 
+                        Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
+                    });
+                }
+                else if (lowerName.Contains("id") && !lowerName.Contains("guid"))
+                {
+                    var displayName = colName.Contains("Booking") ? "Booking ID" :
+                                     colName.Contains("Event") ? "Event ID" :
+                                     colName.Contains("Customer") ? "Customer ID" :
+                                     colName.Contains("Outbox") ? "Outbox Event ID" :
+                                     "Identifier";
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = displayName, 
+                        Description = $"Unique identifier: {colName}" 
+                    });
+                }
+                else if (lowerName.Contains("guid"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "GUID", 
+                        Description = "Globally unique identifier" 
+                    });
+                }
+                else
+                {
+                    // Default mapping
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = GetColumnDisplayName(colName), 
+                        Description = GetColumnDescription(colName, table.Name) 
+                    });
+                }
+            }
+
+            return new StaticTableDefinition
+            {
+                Description = "Event Logs & Query Statistics - Detailed event information with timestamps, log levels, and query execution statistics",
+                Columns = columns
+            };
+        }
+
+        // Table 3: Query Metadata (QueryResult, QueryProperties, QueryStatus)
+        if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
+            table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
+            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
+        {
+            var columns = new List<StaticColumnDefinition>();
+            
+            foreach (var col in table.Columns)
+            {
+                var colName = col.Name ?? "";
+                var lowerName = colName.ToLowerInvariant();
+                
+                if (lowerName.Contains("index") || lowerName == "0" || colName == "0")
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Row Index", 
+                        Description = "The position of this row in the result set (0-based)" 
+                    });
+                }
+                else if (lowerName.Contains("queryresult"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Result Type", 
+                        Description = "The type of query result (PrimaryResult, QueryProperties, QueryStatus)" 
+                    });
+                }
+                else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Property Type", 
+                        Description = "Extended properties or metadata about the query" 
+                    });
+                }
+                else if (lowerName.Contains("querystatus"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Status", 
+                        Description = "The status of the query execution" 
+                    });
+                }
+                else if (lowerName.Contains("primaryresult"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Primary Result", 
+                        Description = "The main result identifier" 
+                    });
+                }
+                else if (lowerName.Contains("guid") || lowerName.Contains("id"))
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = "Identifier", 
+                        Description = "Unique identifier for this query result" 
+                    });
+                }
+                else
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName, 
+                        DisplayName = GetColumnDisplayName(colName), 
+                        Description = GetColumnDescription(colName, table.Name) 
+                    });
+                }
+            }
+
+            return new StaticTableDefinition
+            {
+                Description = "Query Metadata - Information about the query execution and result structure",
+                Columns = columns
+            };
+        }
+
+        // Fallback: Use dynamic mapping
+        var fallbackColumns = table.Columns.Select(col => new StaticColumnDefinition
+        {
+            OriginalName = col.Name ?? "",
+            DisplayName = GetColumnDisplayName(col.Name ?? ""),
+            Description = GetColumnDescription(col.Name ?? "", table.Name)
+        }).ToList();
+
+        return new StaticTableDefinition
+        {
+            Description = $"Data Table - {table.Name}",
+            Columns = fallbackColumns
+        };
+    }
+
+    private string GetCellValue(List<object?> row, QueryTable table, string columnName)
+    {
+        if (row == null || table?.Columns == null) return "-";
+        
+        // Find the index of the column by original name
+        for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+        {
+            if (string.Equals(table.Columns[i].Name, columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return row[i]?.ToString() ?? "-";
+            }
+        }
+        
+        return "-";
     }
 }
 

@@ -445,8 +445,8 @@ p {
 
 /* Header truncation */
 .insights-header-truncate {
-    max-width: 170px !important;
-    width: 170px !important;
+    max-width: 150px !important;
+    width: 150px !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -456,8 +456,8 @@ p {
 
 /* Cell truncation - force all cells to respect width */
 .insights-cell-truncate {
-    max-width: 170px !important;
-    width: 170px !important;
+    max-width: 150px !important;
+    width: 150px !important;
     overflow: hidden !important;
     word-break: normal !important;
     word-wrap: normal !important;
@@ -480,8 +480,8 @@ p {
 
 /* Ensure colgroup widths are enforced */
 .insights-fixed-table col {
-    width: 170px !important;
-    max-width: 170px !important;
+    width: 150px !important;
+    max-width: 150px !important;
 }
 
 .bookings-table tbody tr:hover {
