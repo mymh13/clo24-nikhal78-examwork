@@ -93,18 +93,18 @@
                                             @foreach (var cell in row)
                                             {
                                                 var cellValue = cell?.ToString() ?? "-";
-                                                var isLongValue = cellValue.Length > 20;
+                                                var isLongValue = cellValue.Length > 15;
                                                 var columnName = cellIndex < table.Columns.Count ? table.Columns[cellIndex].Name : "";
-                                                <td style="max-width: 200px;">
+                                                <td class="insights-table-cell">
                                                     @if (isLongValue)
                                                     {
                                                         <div class="table-cell-container">
-                                                            <span class="table-cell-content text-truncate-small" title="@cellValue">@cellValue</span>
+                                                            <span class="table-cell-content text-truncate-very-small" title="@cellValue">@cellValue</span>
                                                         </div>
                                                     }
                                                     else
                                                     {
-                                                        <span title="@(cellValue.Length > 15 ? cellValue : "")">@cellValue</span>
+                                                        <span class="text-truncate-very-small" title="@(cellValue.Length > 12 ? cellValue : "")">@cellValue</span>
                                                     }
                                                 </td>
                                                 cellIndex++;

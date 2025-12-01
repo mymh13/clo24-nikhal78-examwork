@@ -230,11 +230,11 @@ Completed Azure Functions implementation for event consumption. Created Function
 - Significantly speeds up testing and perfect for live demonstrations
 - **Cold Start Behavior Observed:** First toggle after idle period takes 3-7 checks (9-21 seconds) due to Azure App Service B1 tier cold start. Subsequent toggles are faster (1-3 checks, 3-9 seconds) once application is warmed up. Polling UX provides real-time feedback regardless of timing. Documented in ADR-014 v1.1.
 
-### Phase 8: Monitoring & Observability (In Progress)
+### Phase 8: Monitoring & Observability (In Progress - Phase 8.1 & 8.2 Complete)
 **Phase 8.1 (Complete):** Application Insights custom events integration. Created `ITelemetryService` interface and `ApplicationInsightsTelemetryService` implementation with comprehensive event tracking. Custom events tracked: `BookingCreated`, `OutboxEventCreated`, `OutboxEventProcessed`, `ServiceBusEventPublished`, `FeatureFlagToggled`, `ModeSwitch`. All events include `SystemType` property to distinguish Synchronous vs Event-Driven modes. Integrated telemetry throughout event flow: `BookingsController`, `OutboxProcessorService`, `ServiceBusEventPublisher`, `FeatureFlagController`, and `OnBookingCreatedFunction`. Application Insights connection string configured in deployment pipeline and App Service settings. Telemetry flushing implemented for immediate event sending. Custom events successfully appearing in Application Insights logs.
 
-**Phase 8.2 (In Progress):** Demo page implementation for live demonstrations. Created `/demo` page combining three key components:
-- **Application Insights Query Results (Top Left):** Live KQL query execution via REST API, displays custom events from last hour with auto-refresh capability (every 10 seconds). Created `ApplicationInsightsController` with `/api/applicationinsights/query` endpoint using Azure Managed Identity authentication. Queries Application Insights via Azure Resource Manager API.
+**Phase 8.2 (Complete):** Demo page implementation for live demonstrations. Created `/demo` page combining three key components:
+- **Application Insights Query Results (Top Left):** Live KQL query execution via REST API, displays custom events from last hour with auto-refresh capability (every 10 seconds). Created `ApplicationInsightsController` with `/api/applicationinsights/query` endpoint using Azure Managed Identity authentication. Queries Application Insights via Azure Resource Manager API with API version `2020-02-02`.
 - **Event-Driven Architecture Status (Top Right):** Mini health check with feature flag toggle, same functionality as Admin Dashboard but optimized for demo layout.
 - **Booking Management (Bottom, Full Width):** Full booking creation and management interface with full-width table for better visibility.
 
@@ -252,15 +252,16 @@ Completed Azure Functions implementation for event consumption. Created Function
 - Subscription ID retrieved from environment variables, configuration, or Azure Metadata Service
 - Resource group and Application Insights name configurable via environment variables
 - App Service managed identity requires "Reader" role on Application Insights resource
-- KQL queries executed via Azure Resource Manager API (`/api/query` endpoint)
+- KQL queries executed via Azure Resource Manager API (`/api/query` endpoint) with API version `2020-02-02`
 - Query results displayed in table format with dynamic columns and rows
 
 **Challenges Encountered:**
 - **Content-Type Header Error:** Initially attempted to set `Content-Type` header on `DefaultRequestHeaders`, but `StringContent` automatically sets this header. Solution: Removed manual `Content-Type` header assignment - `StringContent` handles it automatically.
 - **403 Forbidden Error:** App Service managed identity lacked permissions to query Application Insights. Solution: Granted "Reader" role on Application Insights resource using Azure CLI. Permissions propagate within 1-2 minutes.
 - **Subscription ID Configuration:** Subscription ID not available in App Service environment. Solution: Added `AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP` to deployment workflow as App Settings. Also supports Azure Metadata Service for automatic retrieval in Azure.
+- **API Version Error:** Initial API version `2021-05-01` not supported for Application Insights query endpoint. Error message indicated supported versions. Solution: Updated API version to `2020-02-02` (latest stable supported version) in `ApplicationInsightsController`.
 
-**Status:** Demo page operational and ready for live demonstrations. Application Insights queries working after permission grant. Perfect one-stop shop for showcasing event-driven architecture with live data visualization.
+**Status:** Demo page operational and ready for live demonstrations. Application Insights queries working after permission grant and API version fix. Perfect one-stop shop for showcasing event-driven architecture with live data visualization.
 
 ---
 

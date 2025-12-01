@@ -528,6 +528,14 @@ p {
     display: inline-block;
 }
 
+.text-truncate-very-small {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+}
+
 .text-truncate-medium {
     max-width: 300px;
     overflow: hidden;
@@ -550,7 +558,12 @@ p {
     background: var(--color-bg-primary);
     border-radius: var(--radius-sm);
     overflow: hidden;
-    table-layout: auto;
+    table-layout: fixed;
+}
+
+.insights-table th {
+    max-width: 120px;
+    overflow: hidden;
 }
 
 .insights-table thead {
@@ -574,8 +587,13 @@ p {
     color: var(--color-text-primary);
     border-bottom: 1px solid var(--color-bg-tertiary);
     vertical-align: top;
-    max-width: 200px;
+    max-width: 120px;
     word-break: break-word;
+}
+
+.insights-table-cell {
+    max-width: 120px !important;
+    overflow: hidden;
 }
 
 .insights-table tbody tr:hover {
