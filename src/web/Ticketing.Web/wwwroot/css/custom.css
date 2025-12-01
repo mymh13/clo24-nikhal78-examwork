@@ -446,6 +446,7 @@ p {
 /* Header truncation */
 .insights-header-truncate {
     max-width: 200px !important;
+    width: 200px !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -461,6 +462,7 @@ p {
     word-break: normal !important;
     word-wrap: normal !important;
     padding: var(--spacing-sm) var(--spacing-md) !important;
+    position: relative !important;
 }
 
 .insights-cell-truncate .text-truncate-cell {
@@ -473,6 +475,13 @@ p {
     word-break: normal !important;
     word-wrap: normal !important;
     line-height: 1.4 !important;
+    position: relative !important;
+}
+
+/* Ensure colgroup widths are enforced */
+.insights-fixed-table col {
+    width: 200px !important;
+    max-width: 200px !important;
 }
 
 .bookings-table tbody tr:hover {

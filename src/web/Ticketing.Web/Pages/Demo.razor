@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using System.Net.Http.Json
 @using System.Text.Json
+@using System.Linq
 @using Microsoft.AspNetCore.Authorization
 @using Ticketing.Contracts.Bookings
 @attribute [Authorize(Roles = "Admin")]
@@ -149,7 +150,10 @@
                 
                 @if (insightsData != null && insightsData.Success && insightsData.Tables != null && insightsData.Tables.Any())
                 {
-                    @foreach (var table in insightsData.Tables)
+                    @foreach (var table in insightsData.Tables.Where(t => 
+                        t.Name == "PrimaryResult" || 
+                        (t.Name != "Visualization" && t.Name != "QueryProperties" && t.Name != "QueryStatus" && 
+                         !t.Name.StartsWith("@") && t.Rows != null && t.Rows.Any())))
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
