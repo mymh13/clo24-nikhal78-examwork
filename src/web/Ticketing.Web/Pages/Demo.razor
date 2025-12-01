@@ -441,12 +441,15 @@ let outboxCreated = customEvents
 let outboxProcessed = customEvents
 | where name == ""OutboxEventProcessed"" and timestamp > ago(24h)
 | extend OutboxEventId = tostring(customDimensions[""OutboxEventId""])
-| extend ProcessingTimeMs = customMetrics[""ProcessingTimeMs""]
+| extend ProcessingTimeMs = toreal(customMetrics[""ProcessingTimeMs""])
 | project OutboxEventId, ProcessingTimeMs;
 bookings
 | join kind=leftouter (outboxCreated) on BookingId
 | join kind=leftouter (outboxProcessed) on OutboxEventId
-| extend OutboxStatus = iff(isnotnull(ProcessingTimeMs), strcat(""Processed ("", round(ProcessingTimeMs, 0), ""ms)""), iff(SystemType == ""Event-Driven"", ""Pending"", ""N/A (Synchronous)""))
+| extend OutboxStatus = case(
+    isnotnull(ProcessingTimeMs), strcat(""Processed ("", tostring(round(ProcessingTimeMs, 0)), ""ms)""),
+    SystemType == ""Event-Driven"", ""Pending"",
+    ""N/A (Synchronous)"")
 | project Timestamp, BookingId, SystemType, CustomerEmail, OutboxStatus
 | order by Timestamp desc
 | take 20",
