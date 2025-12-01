@@ -156,24 +156,74 @@
                     if (visualizationTable != null && visualizationTable.Rows != null && visualizationTable.Rows.Any())
                     {
                         // Try to extract Title from the Visualization table
+                        // The Visualization table might have the title in a JSON string in one of the cells
                         var visRow = visualizationTable.Rows.FirstOrDefault();
                         if (visRow != null && visualizationTable.Columns != null)
                         {
+                            // First, try to find a "Title" column
                             for (int i = 0; i < visualizationTable.Columns.Count && i < visRow.Count; i++)
                             {
                                 if (visualizationTable.Columns[i].Name == "Title" && visRow[i] != null)
                                 {
-                                    visualizationTitle = visRow[i]?.ToString();
-                                    break;
+                                    var titleValue = visRow[i]?.ToString();
+                                    if (!string.IsNullOrEmpty(titleValue) && titleValue != "null")
+                                    {
+                                        visualizationTitle = titleValue;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // If no Title column found, try to parse JSON from cells
+                            if (string.IsNullOrEmpty(visualizationTitle))
+                            {
+                                foreach (var cell in visRow)
+                                {
+                                    var cellValue = cell?.ToString();
+                                    if (!string.IsNullOrEmpty(cellValue) && cellValue.Contains("\"Title\""))
+                                    {
+                                        try
+                                        {
+                                            using var doc = System.Text.Json.JsonDocument.Parse(cellValue);
+                                            if (doc.RootElement.TryGetProperty("Title", out var titleProp))
+                                            {
+                                                var titleVal = titleProp.GetString();
+                                                if (!string.IsNullOrEmpty(titleVal) && titleVal != "null")
+                                                {
+                                                    visualizationTitle = titleVal;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            // Not valid JSON, continue
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                     
-                    @foreach (var table in insightsData.Tables.Where(t => 
-                        t.Name == "PrimaryResult" || 
-                        (t.Name != "Visualization" && t.Name != "QueryProperties" && t.Name != "QueryStatus" && 
-                         !t.Name.StartsWith("@") && t.Rows != null && t.Rows.Any())))
+                    // Filter tables - exclude all metadata tables completely
+                    // Also exclude any table that contains Visualization JSON in its cells
+                    var dataTables = insightsData.Tables.Where(t => 
+                        t != null && 
+                        t.Name != "Visualization" && 
+                        t.Name != "QueryProperties" && 
+                        t.Name != "QueryStatus" && 
+                        !t.Name.StartsWith("@") && 
+                        t.Rows != null && 
+                        t.Rows.Any() && 
+                        t.Rows.Count > 0 &&
+                        // Exclude tables where rows contain Visualization JSON metadata
+                        !t.Rows.Any(row => row != null && row.Any(cell => 
+                            cell != null && 
+                            cell.ToString()?.Contains("\"Visualization\"") == true &&
+                            cell.ToString()?.Contains("\"Title\"") == true &&
+                            cell.ToString()?.Contains("\"XColumn\"") == true))).ToList();
+                    
+                    @foreach (var table in dataTables)
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
@@ -203,9 +253,9 @@
                                     <tbody>
                                         @if (!string.IsNullOrEmpty(visualizationTitle) && table.Name == "PrimaryResult")
                                         {
-                                            <tr style="background-color: var(--color-bg-tertiary);">
-                                                <td colspan="@(table.Columns.Count + 1)" style="padding: var(--spacing-sm) var(--spacing-md); font-weight: 600; color: var(--color-primary);">
-                                                    Query Title: @visualizationTitle
+                                            <tr style="background-color: var(--color-bg-tertiary); border-bottom: 2px solid var(--color-bg-tertiary);">
+                                                <td colspan="@(table.Columns.Count + 1)" style="padding: var(--spacing-md); font-weight: 600; color: var(--color-primary); font-size: 1.05em;">
+                                                    📊 Query: @visualizationTitle
                                                 </td>
                                             </tr>
                                         }
