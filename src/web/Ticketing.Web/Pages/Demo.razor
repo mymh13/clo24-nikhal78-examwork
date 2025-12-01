@@ -153,82 +153,86 @@
                 
                 @if (insightsData != null && insightsData.Success && insightsData.Tables != null && insightsData.Tables.Any())
                 {
-                    // Filter tables - exclude all metadata tables completely
-                    // Also exclude any table that contains Visualization JSON in its cells
-                    var dataTables = insightsData.Tables.Where(t => 
+                    // Get the primary result table (exclude metadata tables)
+                    var primaryTable = insightsData.Tables.FirstOrDefault(t => 
                         t != null && 
-                        t.Name != "Visualization" && 
-                        t.Name != "QueryProperties" && 
-                        t.Name != "QueryStatus" && 
-                        !t.Name.StartsWith("@") && 
+                        t.Name == "PrimaryResult" &&
                         t.Rows != null && 
-                        t.Rows.Any() && 
-                        t.Rows.Count > 0 &&
-                        // Exclude tables where rows contain Visualization JSON metadata
-                        !t.Rows.Any(row => row != null && row.Any(cell => 
-                            cell != null && 
-                            cell.ToString()?.Contains("\"Visualization\"") == true &&
-                            cell.ToString()?.Contains("\"Title\"") == true &&
-                            cell.ToString()?.Contains("\"XColumn\"") == true))).ToList();
+                        t.Rows.Any());
                     
-                    @foreach (var table in dataTables)
+                    @if (primaryTable != null)
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
-                            @{
-                                // Get static table definition for this table
-                                var tableDefinition = GetStaticTableDefinition(table);
-                                // Remove "Application Insights -" prefix from title
-                                var tableTitle = GetStaticTableTitle(table);
-                                if (tableTitle.StartsWith("Application Insights -"))
-                                {
-                                    tableTitle = tableTitle.Substring("Application Insights -".Length).Trim();
-                                }
-                            }
                             <div style="margin-bottom: var(--spacing-md);">
-                                <h3 style="margin: 0;">@tableTitle</h3>
+                                <h3 style="margin: 0;">Recent Bookings - Application Insights</h3>
+                                <p style="color: var(--color-text-muted); font-size: 0.9em; margin-top: 4px;">
+                                    Shows the last 20 bookings created, their system type (Synchronous or Event-Driven), and timestamps. Use Booking IDs to reference bookings in the Booking Management section below.
+                                </p>
                             </div>
                             <div class="bookings-table-container">
                                 <table class="bookings-table insights-fixed-table">
                                     <colgroup>
-                                        @foreach (var colDef in tableDefinition.Columns)
-                                        {
-                                            <col style="width: 150px; max-width: 150px;" />
-                                        }
+                                        <col style="width: 200px; max-width: 200px;" />
+                                        <col style="width: 180px; max-width: 180px;" />
+                                        <col style="width: 150px; max-width: 150px;" />
+                                        <col style="width: 200px; max-width: 200px;" />
                                         <col style="width: 140px; min-width: 140px;" />
                                     </colgroup>
                                     <tbody>
                                         <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
-                                            @foreach (var colDef in tableDefinition.Columns)
-                                            {
-                                                <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left; width: 150px; max-width: 150px;">
-                                                    <strong>@colDef.DisplayName:</strong> @colDef.Description
-                                                </td>
-                                            }
+                                            <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                <strong>Booking ID:</strong> Unique identifier for the booking - use this to search in Booking Management below
+                                            </td>
+                                            <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                <strong>Timestamp:</strong> Date and time when the booking was created (UTC)
+                                            </td>
+                                            <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                <strong>System Type:</strong> Architecture mode used - Synchronous (direct API) or Event-Driven (Service Bus)
+                                            </td>
+                                            <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                <strong>Customer Email:</strong> Email address of the customer who made the booking
+                                            </td>
                                             <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
-                                                View full data or copy row/table
+                                                View full data or copy row
                                             </td>
                                         </tr>
                                         @{
                                             var rowIndex = 0;
                                         }
-                                        @foreach (var row in table.Rows)
+                                        @foreach (var row in primaryTable.Rows)
                                         {
                                             var currentRowIndex = rowIndex;
+                                            // Find columns by name (more robust than index)
+                                            var timestamp = GetCellValueByName(row, primaryTable, "timestamp");
+                                            var bookingId = GetCellValueByName(row, primaryTable, "BookingId");
+                                            var systemType = GetCellValueByName(row, primaryTable, "SystemType");
+                                            var customerEmail = GetCellValueByName(row, primaryTable, "CustomerEmail");
+                                            
+                                            // Format timestamp
+                                            if (DateTime.TryParse(timestamp, out var dt))
+                                            {
+                                                timestamp = dt.ToString("yyyy-MM-dd HH:mm:ss");
+                                            }
+                                            
                                             <tr>
-                                                @foreach (var colDef in tableDefinition.Columns)
-                                                {
-                                                    var cellValue = GetCellValue(row, colDef);
-                                                    var shouldTruncate = cellValue.Length > 15;
-                                                    <td class="insights-cell-truncate" title="@colDef.Description">
-                                                        <span class="text-truncate-cell" title="@(shouldTruncate ? cellValue : "")">@cellValue</span>
-                                                    </td>
-                                                }
+                                                <td class="insights-cell-truncate" title="Booking ID: @bookingId">
+                                                    <span class="text-truncate-cell" title="@bookingId">@bookingId</span>
+                                                </td>
+                                                <td class="insights-cell-truncate" title="Timestamp: @timestamp">
+                                                    <span class="text-truncate-cell">@timestamp</span>
+                                                </td>
+                                                <td class="insights-cell-truncate" title="System Type: @systemType">
+                                                    <span class="text-truncate-cell" style="color: @(systemType == "Event-Driven" ? "#4caf50" : "#2196F3"); font-weight: 500;">@systemType</span>
+                                                </td>
+                                                <td class="insights-cell-truncate" title="Customer Email: @customerEmail">
+                                                    <span class="text-truncate-cell" title="@customerEmail">@customerEmail</span>
+                                                </td>
                                                 <td>
                                                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                                        <button class="cell-action-btn" @onclick="() => ViewRowDetails(table, currentRowIndex)" title="View full row data">
+                                                        <button class="cell-action-btn" @onclick="() => ViewRowDetails(primaryTable, currentRowIndex)" title="View full row data">
                                                             👁️ View
                                                         </button>
-                                                        <button class="cell-action-btn" @onclick="() => CopyRowData(table, currentRowIndex)" title="Copy row data">
+                                                        <button class="cell-action-btn" @onclick="() => CopyRowData(primaryTable, currentRowIndex)" title="Copy row data">
                                                             📋 Copy
                                                         </button>
                                                     </div>
@@ -240,11 +244,15 @@
                                 </table>
                             </div>
                             <div style="margin-top: var(--spacing-sm); text-align: right;">
-                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(table)">
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(primaryTable)">
                                     📋 Copy Table Data
                                 </button>
                             </div>
                         </div>
+                    }
+                    else
+                    {
+                        <p style="color: var(--color-text-muted);">No booking data available. Create a booking to see it appear here.</p>
                     }
                 }
                 else if (insightsData != null && !insightsData.Success)
@@ -396,10 +404,14 @@
             {
                 Query = @"
 customEvents
-| where timestamp > ago(1h)
-| summarize Count = count() by name
-| order by Count desc",
-                Timespan = "PT1H"
+| where name == ""BookingCreated"" and timestamp > ago(24h)
+| extend BookingId = tostring(customDimensions[""BookingId""])
+| extend SystemType = tostring(customDimensions[""SystemType""])
+| extend CustomerEmail = tostring(customDimensions[""CustomerEmail""])
+| project timestamp, BookingId, SystemType, CustomerEmail
+| order by timestamp desc
+| take 20",
+                Timespan = "PT24H"
             };
 
             var response = await httpClient.PostAsJsonAsync("/api/applicationinsights/query", queryRequest);
@@ -1048,6 +1060,28 @@ customEvents
         }
         
         // Fallback: try to find by name if index is invalid
+        return "-";
+    }
+
+    private string GetCellValueByIndex(List<object?> row, int index)
+    {
+        if (row == null || index < 0 || index >= row.Count) return "-";
+        return row[index]?.ToString() ?? "-";
+    }
+
+    private string GetCellValueByName(List<object?> row, QueryTable table, string columnName)
+    {
+        if (row == null || table?.Columns == null) return "-";
+        
+        // Find column index by name (case-insensitive)
+        for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+        {
+            if (table.Columns[i]?.Name?.Equals(columnName, StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return row[i]?.ToString() ?? "-";
+            }
+        }
+        
         return "-";
     }
 }
