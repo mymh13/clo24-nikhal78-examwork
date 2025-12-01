@@ -93,16 +93,9 @@
                                                 @foreach (var cell in row)
                                                 {
                                                     var cellValue = cell?.ToString() ?? "-";
-                                                    var isLongValue = cellValue.Length > 15;
+                                                    var shouldTruncate = cellValue.Length > 15;
                                                     <td class="insights-cell-truncate">
-                                                        @if (isLongValue)
-                                                        {
-                                                            <span class="text-truncate-cell" title="@cellValue">@cellValue</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span title="@(cellValue.Length > 12 ? cellValue : "")">@cellValue</span>
-                                                        }
+                                                        <span class="text-truncate-cell" title="@(shouldTruncate ? cellValue : "")">@cellValue</span>
                                                     </td>
                                                     cellIndex++;
                                                 }
