@@ -265,6 +265,17 @@
                                                     📊 @tableDefinition.Description
                                                 </td>
                                             </tr>
+                                            <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
+                                                @foreach (var colDef in tableDefinition.Columns)
+                                                {
+                                                    <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                        <strong>@colDef.DisplayName:</strong> @colDef.Description
+                                                    </td>
+                                                }
+                                                <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic;">
+                                                    <strong>Actions:</strong> View full data or copy row/table
+                                                </td>
+                                            </tr>
                                         }
                                         @{
                                             var rowIndex = 0;
@@ -275,9 +286,9 @@
                                             <tr>
                                                 @foreach (var colDef in tableDefinition.Columns)
                                                 {
-                                                    var cellValue = GetCellValue(row, table, colDef.OriginalName);
+                                                    var cellValue = GetCellValue(row, colDef);
                                                     var shouldTruncate = cellValue.Length > 15;
-                                                    <td class="insights-cell-truncate">
+                                                    <td class="insights-cell-truncate" title="@colDef.Description">
                                                         <span class="text-truncate-cell" title="@(shouldTruncate ? cellValue : "")">@cellValue</span>
                                                     </td>
                                                 }
@@ -1259,6 +1270,7 @@ customEvents
         public string OriginalName { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public int OriginalIndex { get; set; } = -1; // Index in the original table
     }
 
     private StaticTableDefinition GetStaticTableDefinition(QueryTable table)
@@ -1273,24 +1285,49 @@ customEvents
         // Table 1: Custom Events Summary (name, Count)
         if (columnNames.Contains("name") && columnNames.Contains("Count"))
         {
+            var columns = new List<StaticColumnDefinition>();
+            for (int i = 0; i < table.Columns.Count; i++)
+            {
+                var col = table.Columns[i];
+                var colName = col.Name ?? "";
+                var lowerName = colName.ToLowerInvariant();
+                
+                if (lowerName == "name")
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName,
+                        OriginalIndex = i,
+                        DisplayName = "Event Name", 
+                        Description = "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished)" 
+                    });
+                }
+                else if (colName == "Count")
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName,
+                        OriginalIndex = i,
+                        DisplayName = "Event Count", 
+                        Description = "The total number of times this event occurred in the last hour" 
+                    });
+                }
+                else
+                {
+                    columns.Add(new StaticColumnDefinition 
+                    { 
+                        OriginalName = colName,
+                        OriginalIndex = i,
+                        DisplayName = GetColumnDisplayName(colName), 
+                        Description = GetColumnDescription(colName, table.Name) 
+                    });
+                }
+            }
+            
             return new StaticTableDefinition
             {
                 Description = "Custom Events Summary - Shows count of each event type from the last hour",
-                Columns = new List<StaticColumnDefinition>
-                {
-                    new StaticColumnDefinition 
-                    { 
-                        OriginalName = "name", 
-                        DisplayName = "Event Name", 
-                        Description = "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished)" 
-                    },
-                    new StaticColumnDefinition 
-                    { 
-                        OriginalName = "Count", 
-                        DisplayName = "Event Count", 
-                        Description = "The total number of times this event occurred in the last hour" 
-                    }
-                }
+                Columns = columns
             };
         }
 
@@ -1299,9 +1336,10 @@ customEvents
         {
             var columns = new List<StaticColumnDefinition>();
             
-            // Map known columns
-            foreach (var col in table.Columns)
+            // Map known columns - preserve original order
+            for (int i = 0; i < table.Columns.Count; i++)
             {
+                var col = table.Columns[i];
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
@@ -1309,7 +1347,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Event Timestamp", 
                         Description = "The date and time when the event occurred (UTC)" 
                     });
@@ -1318,7 +1357,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Log Level", 
                         Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
                     });
@@ -1327,7 +1367,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Event Type", 
                         Description = "The type or category of the event (Info, Stats, etc.)" 
                     });
@@ -1336,7 +1377,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Event Message", 
                         Description = "A descriptive message about what happened or query execution details" 
                     });
@@ -1345,7 +1387,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Query Hash", 
                         Description = "A unique hash identifier for the query execution" 
                     });
@@ -1354,7 +1397,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Execution Time", 
                         Description = "How long the query took to execute in milliseconds" 
                     });
@@ -1363,7 +1407,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Query Statistics", 
                         Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
                     });
@@ -1377,7 +1422,8 @@ customEvents
                                      "Identifier";
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = displayName, 
                         Description = $"Unique identifier: {colName}" 
                     });
@@ -1386,7 +1432,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "GUID", 
                         Description = "Globally unique identifier" 
                     });
@@ -1396,7 +1443,8 @@ customEvents
                     // Default mapping
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = GetColumnDisplayName(colName), 
                         Description = GetColumnDescription(colName, table.Name) 
                     });
@@ -1417,8 +1465,9 @@ customEvents
         {
             var columns = new List<StaticColumnDefinition>();
             
-            foreach (var col in table.Columns)
+            for (int i = 0; i < table.Columns.Count; i++)
             {
+                var col = table.Columns[i];
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
@@ -1426,7 +1475,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Row Index", 
                         Description = "The position of this row in the result set (0-based)" 
                     });
@@ -1435,7 +1485,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Result Type", 
                         Description = "The type of query result (PrimaryResult, QueryProperties, QueryStatus)" 
                     });
@@ -1444,7 +1495,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Property Type", 
                         Description = "Extended properties or metadata about the query" 
                     });
@@ -1453,7 +1505,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Status", 
                         Description = "The status of the query execution" 
                     });
@@ -1462,7 +1515,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Primary Result", 
                         Description = "The main result identifier" 
                     });
@@ -1471,7 +1525,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = "Identifier", 
                         Description = "Unique identifier for this query result" 
                     });
@@ -1480,7 +1535,8 @@ customEvents
                 {
                     columns.Add(new StaticColumnDefinition 
                     { 
-                        OriginalName = colName, 
+                        OriginalName = colName,
+                        OriginalIndex = i,
                         DisplayName = GetColumnDisplayName(colName), 
                         Description = GetColumnDescription(colName, table.Name) 
                     });
@@ -1494,34 +1550,62 @@ customEvents
             };
         }
 
-        // Fallback: Use dynamic mapping
-        var fallbackColumns = table.Columns.Select(col => new StaticColumnDefinition
+        // Fallback: Use dynamic mapping - preserve original order
+        var fallbackColumns = new List<StaticColumnDefinition>();
+        for (int i = 0; i < table.Columns.Count; i++)
         {
-            OriginalName = col.Name ?? "",
-            DisplayName = GetColumnDisplayName(col.Name ?? ""),
-            Description = GetColumnDescription(col.Name ?? "", table.Name)
-        }).ToList();
+            var col = table.Columns[i];
+            fallbackColumns.Add(new StaticColumnDefinition
+            {
+                OriginalName = col.Name ?? "",
+                OriginalIndex = i,
+                DisplayName = GetColumnDisplayName(col.Name ?? ""),
+                Description = GetColumnDescription(col.Name ?? "", table.Name)
+            });
+        }
+
+        // Try to determine a better description based on table name
+        string tableDescription = "Data Table";
+        var lowerTableName = (table.Name ?? "").ToLowerInvariant();
+        if (lowerTableName.Contains("primaryresult") || lowerTableName.Contains("primary"))
+        {
+            tableDescription = "Primary Query Results - Main data returned from the Application Insights query";
+        }
+        else if (lowerTableName.Contains("queryproperties"))
+        {
+            tableDescription = "Query Properties - Extended metadata about the query execution";
+        }
+        else if (lowerTableName.Contains("querystatus"))
+        {
+            tableDescription = "Query Status - Status information about the query execution";
+        }
+        else if (lowerTableName.Contains("custom") || lowerTableName.Contains("event"))
+        {
+            tableDescription = "Custom Events - Application Insights custom event data";
+        }
+        else
+        {
+            tableDescription = $"Data Table: {GetTableDisplayName(table)}";
+        }
 
         return new StaticTableDefinition
         {
-            Description = $"Data Table - {table.Name}",
+            Description = tableDescription,
             Columns = fallbackColumns
         };
     }
 
-    private string GetCellValue(List<object?> row, QueryTable table, string columnName)
+    private string GetCellValue(List<object?> row, StaticColumnDefinition colDef)
     {
-        if (row == null || table?.Columns == null) return "-";
+        if (row == null || colDef == null) return "-";
         
-        // Find the index of the column by original name
-        for (int i = 0; i < table.Columns.Count && i < row.Count; i++)
+        // Use the original index directly - this ensures we get the correct column
+        if (colDef.OriginalIndex >= 0 && colDef.OriginalIndex < row.Count)
         {
-            if (string.Equals(table.Columns[i].Name, columnName, StringComparison.OrdinalIgnoreCase))
-            {
-                return row[i]?.ToString() ?? "-";
-            }
+            return row[colDef.OriginalIndex]?.ToString() ?? "-";
         }
         
+        // Fallback: try to find by name if index is invalid
         return "-";
     }
 }
