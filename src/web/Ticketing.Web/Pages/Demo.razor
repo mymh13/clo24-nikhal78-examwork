@@ -226,11 +226,8 @@
                     @foreach (var table in dataTables)
                     {
                         <div style="margin-bottom: var(--spacing-lg);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
-                                <h3 style="margin: 0;">@GetTableDisplayName(table)</h3>
-                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(table)">
-                                    📋 Copy Table Data
-                                </button>
+                            <div style="margin-bottom: var(--spacing-md);">
+                                <h3 style="margin: 0;">@GetStaticTableTitle(table)</h3>
                             </div>
                             <div class="bookings-table-container">
                                 <table class="bookings-table insights-fixed-table">
@@ -268,12 +265,12 @@
                                             <tr style="background-color: var(--color-bg-secondary); border-bottom: 1px solid var(--color-border);">
                                                 @foreach (var colDef in tableDefinition.Columns)
                                                 {
-                                                    <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left;">
+                                                    <td class="insights-cell-truncate" style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; text-align: left; width: 150px; max-width: 150px;">
                                                         <strong>@colDef.DisplayName:</strong> @colDef.Description
                                                     </td>
                                                 }
-                                                <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic;">
-                                                    <strong>Actions:</strong> View full data or copy row/table
+                                                <td style="padding: 8px; font-size: 0.85em; color: var(--color-text-secondary); font-style: italic; width: 140px; min-width: 140px;">
+                                                    View full data or copy row/table
                                                 </td>
                                             </tr>
                                         }
@@ -307,6 +304,11 @@
                                         }
                                     </tbody>
                                 </table>
+                            </div>
+                            <div style="margin-top: var(--spacing-sm); text-align: right;">
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => CopyTableData(table)">
+                                    📋 Copy Table Data
+                                </button>
                             </div>
                         </div>
                     }
@@ -1109,6 +1111,36 @@ customEvents
         return table.Name;
     }
 
+    private string GetStaticTableTitle(QueryTable table)
+    {
+        if (table == null) return "Unknown Table";
+
+        var columnNames = table.Columns?.Select(c => c.Name ?? "").ToList() ?? new List<string>();
+
+        // Table 1: Custom Events Summary (name, Count)
+        if (columnNames.Contains("name") && columnNames.Contains("Count"))
+        {
+            return "Event-Driven Architecture - Custom Events Summary";
+        }
+
+        // Table 2: Event Logs with timestamps
+        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "Event-Driven Architecture - Event Logs & Processing Details";
+        }
+
+        // Table 3: Query Metadata
+        if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
+            table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
+            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Application Insights - Query Execution Metadata";
+        }
+
+        // Fallback
+        return "Application Insights - Query Results";
+    }
+
     private string GetColumnDisplayName(string columnName)
     {
         if (string.IsNullOrEmpty(columnName)) return columnName;
@@ -1299,7 +1331,7 @@ customEvents
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Event Name", 
-                        Description = "The name of the custom event (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished)" 
+                        Description = "The name of the custom event tracked in Application Insights (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished, ModeSwitch)" 
                     });
                 }
                 else if (colName == "Count")
@@ -1309,7 +1341,7 @@ customEvents
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Event Count", 
-                        Description = "The total number of times this event occurred in the last hour" 
+                        Description = "The total number of times this event occurred in the last hour, showing activity in the event-driven architecture" 
                     });
                 }
                 else
@@ -1326,7 +1358,7 @@ customEvents
             
             return new StaticTableDefinition
             {
-                Description = "Custom Events Summary - Shows count of each event type from the last hour",
+                Description = "Summary of all custom events tracked in Application Insights for the event-driven ticketing system. Shows event counts for bookings, outbox processing, Service Bus publishing, and mode switches.",
                 Columns = columns
             };
         }
@@ -1453,7 +1485,7 @@ customEvents
 
             return new StaticTableDefinition
             {
-                Description = "Event Logs & Query Statistics - Detailed event information with timestamps, log levels, and query execution statistics",
+                Description = "Detailed event logs from the event-driven architecture including booking creation, outbox event processing, Service Bus message publishing, and system mode switches. Shows timestamps, event types, system architecture mode (Synchronous/Event-Driven), and associated identifiers.",
                 Columns = columns
             };
         }
@@ -1545,7 +1577,7 @@ customEvents
 
             return new StaticTableDefinition
             {
-                Description = "Query Metadata - Information about the query execution and result structure",
+                Description = "Metadata about the Application Insights KQL query execution, including result types, query properties, and execution status. This information helps understand query performance and result structure.",
                 Columns = columns
             };
         }
