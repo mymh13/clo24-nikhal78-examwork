@@ -5,7 +5,7 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Authorization
 @using Ticketing.Contracts.Bookings
-@using Ticketing.Web.Helpers
+@using Ticketing.Web.Components
 @attribute [Authorize(Roles = "Admin")]
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IHttpClientFactory HttpClientFactory
@@ -153,61 +153,6 @@
                 
                 @if (insightsData != null && insightsData.Success && insightsData.Tables != null && insightsData.Tables.Any())
                 {
-                    // Extract title from Visualization table if it exists
-                    var visualizationTable = insightsData.Tables.FirstOrDefault(t => t.Name == "Visualization");
-                    string? visualizationTitle = null;
-                    if (visualizationTable != null && visualizationTable.Rows != null && visualizationTable.Rows.Any())
-                    {
-                        // Try to extract Title from the Visualization table
-                        // The Visualization table might have the title in a JSON string in one of the cells
-                        var visRow = visualizationTable.Rows.FirstOrDefault();
-                        if (visRow != null && visualizationTable.Columns != null)
-                        {
-                            // First, try to find a "Title" column
-                            for (int i = 0; i < visualizationTable.Columns.Count && i < visRow.Count; i++)
-                            {
-                                if (visualizationTable.Columns[i].Name == "Title" && visRow[i] != null)
-                                {
-                                    var titleValue = visRow[i]?.ToString();
-                                    if (!string.IsNullOrEmpty(titleValue) && titleValue != "null")
-                                    {
-                                        visualizationTitle = titleValue;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            // If no Title column found, try to parse JSON from cells
-                            if (string.IsNullOrEmpty(visualizationTitle))
-                            {
-                                foreach (var cell in visRow)
-                                {
-                                    var cellValue = cell?.ToString();
-                                    if (!string.IsNullOrEmpty(cellValue) && cellValue.Contains("\"Title\""))
-                                    {
-                                        try
-                                        {
-                                            using var doc = System.Text.Json.JsonDocument.Parse(cellValue);
-                                            if (doc.RootElement.TryGetProperty("Title", out var titleProp))
-                                            {
-                                                var titleVal = titleProp.GetString();
-                                                if (!string.IsNullOrEmpty(titleVal) && titleVal != "null")
-                                                {
-                                                    visualizationTitle = titleVal;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            // Not valid JSON, continue
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
                     // Filter tables - exclude all metadata tables completely
                     // Also exclude any table that contains Visualization JSON in its cells
                     var dataTables = insightsData.Tables.Where(t => 
@@ -1023,21 +968,71 @@ customEvents
 
     private StaticTableDefinition GetDefaultDefinition(QueryTable table)
     {
+        // Static descriptions for Application Insights query results
+        // Based on typical KQL query structure: customEvents | summarize Count = count() by name
         var columns = new List<StaticColumnDefinition>();
+        
+        // Static column mappings for typical Application Insights query results
+        var defaultColumnMappings = new List<(string DisplayName, string Description)>
+        {
+            ("Event Name", "The name of the custom event from Application Insights (e.g., BookingCreated, OutboxEventProcessed)"),
+            ("Event Count", "The number of times this event occurred in the specified time range"),
+            ("Timestamp", "The date and time when the event occurred"),
+            ("Event Data", "Additional event data or metadata"),
+            ("Query Result", "Application Insights query execution result"),
+            ("Column 6", "Additional query result column"),
+            ("Column 7", "Additional query result column"),
+            ("Column 8", "Additional query result column"),
+            ("Column 9", "Additional query result column"),
+            ("Column 10", "Additional query result column")
+        };
+        
         for (int i = 0; i < table.Columns.Count; i++)
         {
+            var colName = table.Columns[i].Name ?? "";
+            
+            // Try to match by column name first
+            string displayName;
+            string description;
+            
+            if (colName.Equals("name", StringComparison.OrdinalIgnoreCase))
+            {
+                displayName = "Event Name";
+                description = "The name of the custom event from Application Insights (e.g., BookingCreated, OutboxEventProcessed, ServiceBusEventPublished, ModeSwitch)";
+            }
+            else if (colName == "Count")
+            {
+                displayName = "Event Count";
+                description = "The number of times this event occurred in the specified time range";
+            }
+            else if (colName.Contains("timestamp", StringComparison.OrdinalIgnoreCase))
+            {
+                displayName = "Timestamp";
+                description = "The date and time when the event occurred (UTC)";
+            }
+            else if (i < defaultColumnMappings.Count)
+            {
+                displayName = defaultColumnMappings[i].DisplayName;
+                description = defaultColumnMappings[i].Description;
+            }
+            else
+            {
+                displayName = $"Column {i + 1}";
+                description = "Application Insights query result data";
+            }
+            
             columns.Add(new StaticColumnDefinition
             {
-                OriginalName = table.Columns[i].Name ?? "",
+                OriginalName = colName,
                 OriginalIndex = i,
-                DisplayName = $"Column {i + 1}",
-                Description = "Query result data"
+                DisplayName = displayName,
+                Description = description
             });
         }
 
         return new StaticTableDefinition
         {
-            Description = "Application Insights Query Results",
+            Description = "Application Insights Query Results - Custom events and query execution data from the event-driven ticketing system",
             Columns = columns
         };
     }
