@@ -28,10 +28,100 @@
     
     @if (user?.Identity?.IsAuthenticated == true)
     {
-        <!-- Top Section: Application Insights (Left) and Event-Driven Architecture Status (Right) -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-xl); margin-bottom: var(--spacing-xl);">
-            <!-- Left: Application Insights Query Results -->
-            <div class="demo-section">
+        <!-- Top Section: Event-Driven Architecture Status (Full Width) -->
+        <div class="demo-section" style="margin-bottom: var(--spacing-xl);">
+            <h2>Event-Driven Architecture Status</h2>
+            <div class="mini-health-check" style="padding: var(--spacing-md); background: var(--bg-secondary); border-radius: 4px;">
+                @if (miniHealth != null)
+                {
+                    <div style="margin-bottom: var(--spacing-sm);">
+                        <strong>App Configuration:</strong> 
+                        @if (miniHealth.AppConfigurationConfigured)
+                        {
+                            <span style="color: #4caf50;"> ✓ Configured (@miniHealth.AppConfigurationName)</span>
+                            <span style="color: #666; margin-left: 8px;">- Sentinel: @miniHealth.SentinelValue</span>
+                        }
+                        else
+                        {
+                            <span style="color: #f44336;"> ✗ Not configured</span>
+                        }
+                    </div>
+                    <div style="margin-bottom: var(--spacing-sm);">
+                        <strong>Feature Manager:</strong> 
+                        @if (miniHealth.FeatureManagerAvailable)
+                        {
+                            <span style="color: #4caf50;"> ✓ Available</span>
+                            <span style="color: #666; margin-left: 8px;">- @miniHealth.FeatureFlagDisplay</span>
+                        }
+                        else
+                        {
+                            <span style="color: #f44336;"> ✗ Not available</span>
+                        }
+                    </div>
+                    <div style="margin-bottom: var(--spacing-sm);">
+                        <strong>Outbox Service:</strong> 
+                        @if (miniHealth.OutboxServiceStatus == "Operational")
+                        {
+                            <span style="color: #4caf50;"> ✓ Registered - Operational</span>
+                            <span style="color: #666; margin-left: 8px;">(@miniHealth.OutboxPendingEventsCount pending events)</span>
+                        }
+                        else
+                        {
+                            <span style="color: #f44336;"> ✗ @miniHealth.OutboxServiceStatus</span>
+                        }
+                    </div>
+                    <div style="margin-top: var(--spacing-md);">
+                        <button class="btn btn-primary" @onclick="ToggleFeatureFlag" disabled="@(isToggling || isCooldown || isWaitingForPropagation)" style="width: 100%;">
+                            @if (isToggling)
+                            {
+                                <text>Toggling...</text>
+                            }
+                            else if (isCooldown)
+                            {
+                                <text>Please wait... (@cooldownRemainingSeconds)s</text>
+                            }
+                            else if (isWaitingForPropagation)
+                            {
+                                <text>Waiting for propagation...</text>
+                            }
+                            else
+                            {
+                                <text>Toggle Feature Flag (@(miniHealth.FeatureFlagValue == true ? "Disable" : "Enable") Event-Driven Mode)</text>
+                            }
+                        </button>
+                        @if (!string.IsNullOrEmpty(toggleMessage))
+                        {
+                            <p class="toggle-message" style="margin-top: var(--spacing-sm); color: @(toggleMessage.Contains("Error") ? "#f44336" : "#4caf50");">@toggleMessage</p>
+                        }
+                        @if (isWaitingForPropagation)
+                        {
+                            <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 4px;">
+                                <div class="spinner-border spinner-border-sm text-warning" role="status" style="margin-right: 8px;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                @propagationStatus
+                            </div>
+                        }
+                        else if (propagationComplete)
+                        {
+                            <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 4px;">
+                                <span class="oi oi-check" aria-hidden="true" style="margin-right: 8px;"></span>
+                                @propagationStatus
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>Loading health status...</p>
+                }
+            </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Application Insights Query Results (Full Width) -->
+        <div class="demo-section" style="margin-bottom: var(--spacing-xl);">
                 <h2>Application Insights - Custom Events</h2>
                 <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
                     <button class="btn btn-primary" @onclick="RefreshInsights" disabled="@isLoadingInsights">
@@ -69,12 +159,19 @@
                                 </button>
                             </div>
                             <div class="bookings-table-container">
-                                <table class="bookings-table" style="table-layout: fixed; width: 100%;">
+                                <table class="bookings-table insights-fixed-table">
+                                    <colgroup>
+                                        @foreach (var column in table.Columns)
+                                        {
+                                            <col style="width: 200px; max-width: 200px;" />
+                                        }
+                                        <col style="width: 140px; min-width: 140px;" />
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             @foreach (var column in table.Columns)
                                             {
-                                                <th style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@column.Name</th>
+                                                <th class="insights-header-truncate">@column.Name</th>
                                             }
                                             <th style="width: 140px; min-width: 140px;">Actions</th>
                                         </tr>
@@ -128,97 +225,6 @@
                 {
                     <p style="color: var(--color-text-muted);">No data available. Click "Refresh Events" to load.</p>
                 }
-            </div>
-
-            <!-- Right: Event-Driven Architecture Status -->
-            <div class="demo-section">
-                <h2>Event-Driven Architecture Status</h2>
-                <div class="mini-health-check" style="padding: var(--spacing-md); background: var(--bg-secondary); border-radius: 4px;">
-                    @if (miniHealth != null)
-                    {
-                        <div style="margin-bottom: var(--spacing-sm);">
-                            <strong>App Configuration:</strong> 
-                            @if (miniHealth.AppConfigurationConfigured)
-                            {
-                                <span style="color: #4caf50;"> ✓ Configured (@miniHealth.AppConfigurationName)</span>
-                                <span style="color: #666; margin-left: 8px;">- Sentinel: @miniHealth.SentinelValue</span>
-                            }
-                            else
-                            {
-                                <span style="color: #f44336;"> ✗ Not configured</span>
-                            }
-                        </div>
-                        <div style="margin-bottom: var(--spacing-sm);">
-                            <strong>Feature Manager:</strong> 
-                            @if (miniHealth.FeatureManagerAvailable)
-                            {
-                                <span style="color: #4caf50;"> ✓ Available</span>
-                                <span style="color: #666; margin-left: 8px;">- @miniHealth.FeatureFlagDisplay</span>
-                            }
-                            else
-                            {
-                                <span style="color: #f44336;"> ✗ Not available</span>
-                            }
-                        </div>
-                        <div style="margin-bottom: var(--spacing-sm);">
-                            <strong>Outbox Service:</strong> 
-                            @if (miniHealth.OutboxServiceStatus == "Operational")
-                            {
-                                <span style="color: #4caf50;"> ✓ Registered - Operational</span>
-                                <span style="color: #666; margin-left: 8px;">(@miniHealth.OutboxPendingEventsCount pending events)</span>
-                            }
-                            else
-                            {
-                                <span style="color: #f44336;"> ✗ @miniHealth.OutboxServiceStatus</span>
-                            }
-                        </div>
-                        <div style="margin-top: var(--spacing-md);">
-                            <button class="btn btn-primary" @onclick="ToggleFeatureFlag" disabled="@(isToggling || isCooldown || isWaitingForPropagation)" style="width: 100%;">
-                                @if (isToggling)
-                                {
-                                    <text>Toggling...</text>
-                                }
-                                else if (isCooldown)
-                                {
-                                    <text>Please wait... (@cooldownRemainingSeconds)s</text>
-                                }
-                                else if (isWaitingForPropagation)
-                                {
-                                    <text>Waiting for propagation...</text>
-                                }
-                                else
-                                {
-                                    <text>Toggle Feature Flag (@(miniHealth.FeatureFlagValue == true ? "Disable" : "Enable") Event-Driven Mode)</text>
-                                }
-                            </button>
-                            @if (!string.IsNullOrEmpty(toggleMessage))
-                            {
-                                <p class="toggle-message" style="margin-top: var(--spacing-sm); color: @(toggleMessage.Contains("Error") ? "#f44336" : "#4caf50");">@toggleMessage</p>
-                            }
-                            @if (isWaitingForPropagation)
-                            {
-                                <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 4px;">
-                                    <div class="spinner-border spinner-border-sm text-warning" role="status" style="margin-right: 8px;">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    @propagationStatus
-                                </div>
-                            }
-                            else if (propagationComplete)
-                            {
-                                <div style="margin-top: var(--spacing-sm); padding: var(--spacing-sm); background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 4px;">
-                                    <span class="oi oi-check" aria-hidden="true" style="margin-right: 8px;"></span>
-                                    @propagationStatus
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <p>Loading health status...</p>
-                    }
-                </div>
-            </div>
         </div>
 
         <hr class="section-divider" />
