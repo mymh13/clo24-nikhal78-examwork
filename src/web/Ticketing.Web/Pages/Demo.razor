@@ -1129,18 +1129,20 @@ customEvents
             return "Event-Driven Architecture - Custom Events Summary";
         }
 
-        // Table 2: Event Logs with timestamps
-        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
+        // Table 2: Event Logs with timestamps (matches the detection logic in GetStaticTableDefinition)
+        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)) || 
+            (table.Columns != null && table.Columns.Count >= 8 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
-            return "Event-Driven Architecture - Event Logs & Processing Details";
+            return "Event Logs";
         }
 
-        // Table 3: Query Metadata
-        if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
+        // Table 3: Query Metadata (matches the detection logic in GetStaticTableDefinition)
+        if ((table.Name != null && (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
             table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
-            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
+            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))) ||
+            (table.Columns != null && table.Columns.Count >= 4 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
-            return "Application Insights - Query Execution Metadata";
+            return "Outbox Metadata";
         }
 
         // Fallback
@@ -1391,153 +1393,183 @@ customEvents
         }
 
         // Table 2: Event Logs with timestamps (complex table with many columns)
-        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)))
+        // Application Insights often returns these as numeric columns "0", "1", "2", etc.
+        // We'll map them statically based on position and known structure
+        if (columnNames.Any(c => c.Contains("timestamp", StringComparison.OrdinalIgnoreCase)) || 
+            (table.Columns.Count >= 8 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
             var columns = new List<StaticColumnDefinition>();
             
-            // Map known columns - preserve original order
+            // Static mapping for Application Insights query execution logs
+            // Based on typical structure: timestamp, level, type, message, queryHash, executionTime, resource_usage, itemId, etc.
+            var staticColumnMappings = new List<(string DisplayName, string Description)>
+            {
+                ("Event Timestamp", "The date and time when the event occurred (UTC)"),
+                ("Log Level", "The severity level of the log entry (Info, Warning, Error, etc.)"),
+                ("Event Type", "The type or category of the event (Info, Stats, etc.)"),
+                ("Event Message", "A descriptive message about what happened or query execution details"),
+                ("Query Hash", "A unique hash identifier for the query execution"),
+                ("Execution Time", "How long the query took to execute in milliseconds"),
+                ("Query Statistics", "Detailed query execution statistics including resource usage and dataset information (JSON format)"),
+                ("Query ID", "Unique identifier for the query execution"),
+                ("Source", "The source system or component that generated this log entry")
+            };
+            
             for (int i = 0; i < table.Columns.Count; i++)
             {
                 var col = table.Columns[i];
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
+                // Try to match by name first
+                StaticColumnDefinition? matchedCol = null;
+                
                 if (lowerName.Contains("timestamp"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Event Timestamp", 
                         Description = "The date and time when the event occurred (UTC)" 
-                    });
+                    };
                 }
                 else if (lowerName == "level" || lowerName.Contains("severity"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Log Level", 
                         Description = "The severity level of the log entry (Info, Warning, Error, etc.)" 
-                    });
+                    };
                 }
                 else if (lowerName == "type")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Event Type", 
                         Description = "The type or category of the event (Info, Stats, etc.)" 
-                    });
+                    };
                 }
                 else if (lowerName.Contains("message") || lowerName.Contains("description"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Event Message", 
                         Description = "A descriptive message about what happened or query execution details" 
-                    });
+                    };
                 }
                 else if (lowerName.Contains("queryhash"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Query Hash", 
                         Description = "A unique hash identifier for the query execution" 
-                    });
+                    };
                 }
                 else if (lowerName.Contains("executiontime"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Execution Time", 
                         Description = "How long the query took to execute in milliseconds" 
-                    });
+                    };
                 }
                 else if (lowerName.Contains("resource_usage") || lowerName.Contains("dataset"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Query Statistics", 
                         Description = "Detailed query execution statistics including resource usage and dataset information (JSON format)" 
-                    });
+                    };
                 }
-                else if (lowerName.Contains("id") && !lowerName.Contains("guid"))
+                else if (lowerName.Contains("itemid") || lowerName.Contains("item_id"))
                 {
-                    var displayName = colName.Contains("Booking") ? "Booking ID" :
-                                     colName.Contains("Event") ? "Event ID" :
-                                     colName.Contains("Customer") ? "Customer ID" :
-                                     colName.Contains("Outbox") ? "Outbox Event ID" :
-                                     "Identifier";
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = displayName, 
-                        Description = $"Unique identifier: {colName}" 
-                    });
+                        DisplayName = "Query ID", 
+                        Description = "Unique identifier for the query execution" 
+                    };
                 }
-                else if (lowerName.Contains("guid"))
+                else if (lowerName.Contains("source"))
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = "GUID", 
-                        Description = "Globally unique identifier" 
-                    });
+                        DisplayName = "Source", 
+                        Description = "The source system or component that generated this log entry" 
+                    };
                 }
-                else
+                
+                // If no name match, use static mapping by position
+                if (matchedCol == null)
                 {
-                    // Handle numeric or empty column names
-                    string displayName;
-                    if (string.IsNullOrEmpty(colName))
+                    if (i < staticColumnMappings.Count)
                     {
-                        displayName = $"Column {i + 1}";
-                    }
-                    else if (int.TryParse(colName, out _))
-                    {
-                        displayName = $"Column {colName}";
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = staticColumnMappings[i].DisplayName, 
+                            Description = staticColumnMappings[i].Description 
+                        };
                     }
                     else
                     {
-                        displayName = GetColumnDisplayName(colName);
+                        // Fallback for additional columns
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = $"Column {i + 1}", 
+                            Description = "Additional query result data" 
+                        };
                     }
-                    
-                    // Default mapping
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = displayName, 
-                        Description = GetColumnDescription(colName, table.Name) 
-                    });
                 }
+                
+                columns.Add(matchedCol);
             }
 
             return new StaticTableDefinition
             {
-                Description = "Detailed event logs from the event-driven architecture including booking creation, outbox event processing, Service Bus message publishing, and system mode switches. Shows timestamps, event types, system architecture mode (Synchronous/Event-Driven), and associated identifiers.",
+                Description = "Event Logs - Application Insights event logs showing query execution details, timestamps, log levels, event types, and query statistics from the event-driven ticketing system",
                 Columns = columns
             };
         }
 
         // Table 3: Query Metadata (QueryResult, QueryProperties, QueryStatus)
+        // Application Insights returns these with numeric columns "0", "1", "2", etc.
+        // Static mapping: 0=Row Index, 1=Result Type, 2=Property Type, 3=Value, 4=GUID
         if (table.Name.Contains("QueryResult", StringComparison.OrdinalIgnoreCase) || 
             table.Name.Contains("QueryProperties", StringComparison.OrdinalIgnoreCase) || 
-            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase))
+            table.Name.Contains("QueryStatus", StringComparison.OrdinalIgnoreCase) ||
+            (table.Columns.Count >= 4 && table.Columns.Any(c => int.TryParse(c.Name ?? "", out _))))
         {
             var columns = new List<StaticColumnDefinition>();
+            
+            // Static column definitions for Query Metadata tables
+            var metadataColumnMappings = new List<(string DisplayName, string Description)>
+            {
+                ("Row Index", "The position of this row in the result set (0-based)"),
+                ("Result Type", "The type of query result (QueryResult, QueryProperties, QueryStatus)"),
+                ("Property Type", "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)"),
+                ("Value", "The GUID or identifier value for this query result"),
+                ("GUID", "Globally unique identifier for the query execution")
+            };
             
             for (int i = 0; i < table.Columns.Count; i++)
             {
@@ -1545,96 +1577,91 @@ customEvents
                 var colName = col.Name ?? "";
                 var lowerName = colName.ToLowerInvariant();
                 
+                StaticColumnDefinition? matchedCol = null;
+                
+                // Try to match by name first
                 if (lowerName.Contains("index") || lowerName == "0" || colName == "0")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Row Index", 
                         Description = "The position of this row in the result set (0-based)" 
-                    });
+                    };
                 }
-                else if (lowerName.Contains("queryresult"))
+                else if (lowerName.Contains("queryresult") || lowerName == "1" || colName == "1")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Result Type", 
-                        Description = "The type of query result (PrimaryResult, QueryProperties, QueryStatus)" 
-                    });
+                        Description = "The type of query result (QueryResult, QueryProperties, QueryStatus)" 
+                    };
                 }
-                else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended"))
+                else if (lowerName.Contains("queryproperties") || lowerName.Contains("extended") || lowerName == "2" || colName == "2")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
                         DisplayName = "Property Type", 
-                        Description = "Extended properties or metadata about the query" 
-                    });
+                        Description = "The property category (PrimaryResult, @ExtendedProperties, QueryStatus)" 
+                    };
                 }
-                else if (lowerName.Contains("querystatus"))
+                else if (lowerName.Contains("value") || lowerName == "3" || colName == "3")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = "Status", 
-                        Description = "The status of the query execution" 
-                    });
+                        DisplayName = "Value", 
+                        Description = "The GUID or identifier value for this query result" 
+                    };
                 }
-                else if (lowerName.Contains("primaryresult"))
+                else if (lowerName.Contains("guid") || lowerName.Contains("id") || lowerName == "4" || colName == "4")
                 {
-                    columns.Add(new StaticColumnDefinition 
+                    matchedCol = new StaticColumnDefinition 
                     { 
                         OriginalName = colName,
                         OriginalIndex = i,
-                        DisplayName = "Primary Result", 
-                        Description = "The main result identifier" 
-                    });
+                        DisplayName = "GUID", 
+                        Description = "Globally unique identifier for the query execution" 
+                    };
                 }
-                else if (lowerName.Contains("guid") || lowerName.Contains("id"))
+                
+                // If no name match, use static mapping by position
+                if (matchedCol == null)
                 {
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = "Identifier", 
-                        Description = "Unique identifier for this query result" 
-                    });
-                }
-                else
-                {
-                    // Handle numeric or empty column names
-                    string displayName;
-                    if (string.IsNullOrEmpty(colName))
+                    if (i < metadataColumnMappings.Count)
                     {
-                        displayName = $"Column {i + 1}";
-                    }
-                    else if (int.TryParse(colName, out _))
-                    {
-                        displayName = $"Column {colName}";
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = metadataColumnMappings[i].DisplayName, 
+                            Description = metadataColumnMappings[i].Description 
+                        };
                     }
                     else
                     {
-                        displayName = GetColumnDisplayName(colName);
+                        matchedCol = new StaticColumnDefinition 
+                        { 
+                            OriginalName = colName,
+                            OriginalIndex = i,
+                            DisplayName = $"Column {i + 1}", 
+                            Description = "Additional query metadata" 
+                        };
                     }
-                    
-                    columns.Add(new StaticColumnDefinition 
-                    { 
-                        OriginalName = colName,
-                        OriginalIndex = i,
-                        DisplayName = displayName, 
-                        Description = GetColumnDescription(colName, table.Name) 
-                    });
                 }
+                
+                columns.Add(matchedCol);
             }
 
             return new StaticTableDefinition
             {
-                Description = "Metadata about the Application Insights KQL query execution, including result types, query properties, and execution status. This information helps understand query performance and result structure.",
+                Description = "Outbox Metadata - Application Insights query metadata showing outbox event processing details, query result types (QueryResult, QueryProperties, QueryStatus), and execution identifiers",
                 Columns = columns
             };
         }
