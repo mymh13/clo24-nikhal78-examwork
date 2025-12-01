@@ -43,9 +43,30 @@ During week 6, work focused on refining the demo page user experience and improv
 ## Completed Activities
 
 ### Demo Page UX Improvements
+- **Layout Reorganization:** Reorganized page layout to optimize space usage:
+  - **Event-Driven Architecture Status** moved to top (full width) for quick visibility
+  - **Application Insights Query Results** positioned below (full width) to maximize horizontal space for tables
+  - This layout provides better use of screen real estate and improves readability
 - **Container Width Constraints:** Added `demo-page-container` class with `max-width: 95vw` to prevent horizontal scrolling on wide screens. Applied to main container to ensure page fits within viewport without requiring horizontal scrollbars.
-- **Text Truncation:** Implemented automatic truncation for table cell values longer than 20 characters. Long values display with ellipsis (`...`) and show full text on hover via `title` attribute. Added CSS classes: `text-truncate-small` (120px max-width), `text-truncate-medium` (300px max-width).
-- **Column Headers:** Enhanced table headers with sticky positioning on scroll. Added clear "Actions" column header for row operations. Headers remain visible when scrolling through long tables.
+- **Metadata Table Filtering:** Implemented filtering to exclude Application Insights metadata tables that contain raw JSON configuration:
+  - Filters out `Visualization` table (contains visualization config JSON)
+  - Filters out `QueryProperties` table (contains query metadata)
+  - Filters out `QueryStatus` table (contains status info)
+  - Filters out tables starting with `@` (extended properties)
+  - Only displays `PrimaryResult` and other data tables with actual query results
+  - Prevents raw JSON code from appearing as table fields
+- **Fixed Table Layout with Column Constraints:**
+  - Implemented `table-layout: fixed` with `<colgroup>` to enforce column widths
+  - Data columns set to 200px width via colgroup
+  - Actions column set to 140px fixed width
+  - Prevents columns from expanding beyond defined widths regardless of content
+- **Text Truncation:** Implemented automatic truncation for table cell values longer than 15 characters:
+  - Long values display with ellipsis (`...`) and show full text on hover via `title` attribute
+  - All cells use `text-truncate-cell` class with `white-space: nowrap` and `text-overflow: ellipsis`
+  - CSS rules use `!important` flags to ensure truncation overrides any conflicting styles
+  - Headers also truncate with same rules for consistency
+  - Column width enforced at 200px with `width: 200px !important` (not just max-width)
+- **Column Headers:** Enhanced table headers with proper truncation. Added clear "Actions" column header for row operations. Headers respect same width constraints as cells.
 - **Copy Functionality:** 
   - Added "📋 Copy" button for each row to copy individual row data as formatted JSON
   - Added "📋 Copy Table Data" button for entire tables to copy all table data as JSON
@@ -58,13 +79,14 @@ During week 6, work focused on refining the demo page user experience and improv
   - Modal includes "📋 Copy All Data" button to copy JSON to clipboard
   - Modal is responsive, scrollable, and can be closed via close button or clicking outside
 - **Table Styling Improvements:**
-  - Created dedicated `insights-table` CSS class with proper overflow handling
-  - Cell max-width: 200px to prevent overflow
-  - Word-break for long values to handle edge cases
-  - Responsive container with horizontal scroll if needed (min-width: 600px)
-  - Improved hover states and visual feedback
+  - Switched from custom `insights-table` to `bookings-table` class for consistency
+  - Added `insights-fixed-table` class with `table-layout: fixed !important`
+  - Cell width: 200px enforced with `!important` flags
+  - Word-break: normal to prevent breaking in middle of words
+  - Position: relative on cells to ensure truncation works properly
+  - Colgroup CSS rules to enforce column widths
 
-**Status:** Demo page UX significantly improved. Tables no longer overflow viewport, long values are truncated with clear indicators, and users can easily view and copy full data via modal. Ready for professional live demonstrations.
+**Status:** Demo page UX significantly improved and fully operational. Layout optimized for better space usage, metadata tables filtered out, tables properly constrained with fixed layout, long values truncated correctly, and users can easily view and copy full data via modal. Ready for professional live demonstrations.
 
 ---
 
@@ -77,22 +99,31 @@ During week 6, work focused on refining the demo page user experience and improv
 - **Copy Functionality:** Clipboard API integration makes it easy to share data for debugging or documentation purposes.
 
 ### Challenges Encountered
-- **Container Overflow:** Initial implementation allowed tables to expand beyond viewport width, causing horizontal scrolling. Solution: Added `max-width: 95vw` to main container and `max-width: 200px` to table cells with proper overflow handling.
-- **Long Value Display:** Long GUIDs and JSON strings made tables hard to read. Solution: Implemented truncation with ellipsis and modal for full data viewing.
-- **Column Header Clarity:** Without clear headers, it was difficult to understand what each column represented. Solution: Enhanced headers with sticky positioning and clear labeling.
+- **Container Overflow:** Initial implementation allowed tables to expand beyond viewport width, causing horizontal scrolling. Solution: Added `max-width: 95vw` to main container and enforced fixed table layout with colgroup column widths.
+- **Long Value Display:** Long GUIDs and JSON strings (especially query execution statistics) made tables hard to read and broke layout. Solution: Implemented truncation with ellipsis, enforced with `!important` CSS flags, and modal for full data viewing. Used `table-layout: fixed` with colgroup to prevent column expansion.
+- **Metadata Tables:** Application Insights API returns multiple tables including metadata tables (Visualization, QueryProperties, QueryStatus) that contain raw JSON configuration. These appeared as broken table displays with raw code. Solution: Added filtering logic to exclude metadata tables and only display actual data tables (PrimaryResult and similar).
+- **Truncation Not Working:** Initial truncation CSS wasn't being applied due to table layout allowing columns to expand. Solution: Implemented `table-layout: fixed` with `<colgroup>` to enforce column widths, added `width: 200px !important` (not just max-width), and used `!important` flags on all truncation rules to override conflicting styles.
+- **Column Header Clarity:** Without clear headers, it was difficult to understand what each column represented. Solution: Enhanced headers with proper truncation and clear labeling, matching cell truncation behavior.
 
 ### Lessons Learned
 - **Viewport Constraints:** Always consider viewport width when designing tables with dynamic data. Use `max-width` constraints and overflow handling to prevent horizontal scrolling.
-- **Text Truncation:** For tables with potentially long values, implement truncation with tooltips or modals to maintain readability while preserving access to full data.
+- **Fixed Table Layout:** For tables with dynamic content, use `table-layout: fixed` with `<colgroup>` to enforce column widths. This prevents columns from expanding beyond defined widths regardless of content length. Essential for truncation to work properly.
+- **CSS Specificity and !important:** When dealing with table layouts and truncation, sometimes `!important` flags are necessary to override default browser table rendering behavior. Use `width` (not just `max-width`) with `!important` to truly enforce column constraints.
+- **API Response Filtering:** When consuming APIs that return multiple result sets (like Application Insights), always filter out metadata/configuration tables that aren't meant for user display. Check table names and content before rendering.
+- **Text Truncation:** For tables with potentially long values, implement truncation with tooltips or modals to maintain readability while preserving access to full data. Use `white-space: nowrap` and `text-overflow: ellipsis` together for proper truncation.
 - **User Feedback:** Copy operations should provide immediate feedback (alerts, toasts) so users know the action succeeded.
 - **Modal Design:** Modals should display data in multiple formats (table for readability, JSON for technical users) to accommodate different use cases.
-- **CSS Organization:** Dedicated CSS classes for specific components (e.g., `insights-table`, `modal-*`) improve maintainability and consistency.
+- **CSS Organization:** Dedicated CSS classes for specific components (e.g., `insights-fixed-table`, `modal-*`) improve maintainability and consistency. Reusing existing classes (like `bookings-table`) when appropriate maintains visual consistency.
+- **Layout Optimization:** Reorganizing page layout (moving status to top, giving data tables full width) can significantly improve usability and make better use of screen space.
 
 ### Key Achievements
-- **Improved Demo Page UX:** Container constraints, text truncation, and modal popup make the demo page professional and easy to use for live demonstrations.
+- **Improved Demo Page UX:** Layout reorganization, container constraints, metadata filtering, fixed table layout, text truncation, and modal popup make the demo page professional and easy to use for live demonstrations.
 - **Enhanced Data Accessibility:** Copy functionality and modal viewing make it easy to access and share full data without cluttering the main view.
+- **Proper Table Rendering:** Fixed table layout with colgroup ensures columns respect defined widths, preventing layout breaks from long content.
+- **Metadata Filtering:** Successfully filtered out Application Insights metadata tables, preventing raw JSON code from appearing in the UI.
+- **Reliable Truncation:** Long strings (including complex JSON query statistics) are now properly truncated at 200px with ellipsis, maintaining table layout integrity.
 - **Responsive Design:** Page now works well on different screen sizes without horizontal scrolling issues.
-- **Professional Appearance:** Clean table styling with proper overflow handling creates a polished user experience.
+- **Professional Appearance:** Clean table styling with proper overflow handling and consistent formatting creates a polished user experience.
 
 ### What Could Be Improved
 - **Toast Notifications:** Replace alert dialogs with toast notifications for copy operations to provide less intrusive feedback.
