@@ -95,6 +95,18 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Get Bookings</button>
             </form>
+            @if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
+            {
+                <div class="error-message" style="margin-top: var(--spacing-sm);">
+                    <p>@getResult</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(getResult) && getResult == "No bookings found")
+            {
+                <div class="info-message" style="margin-top: var(--spacing-sm);">
+                    <p>No bookings found for this customer ID.</p>
+                </div>
+            }
             <BookingTable 
                 Bookings="bookings" 
                 ShowCustomerInfo="true"
@@ -102,18 +114,6 @@
                 CanActivate="true"
                 OnBookingUpdated="GetBookings"
                 OnBookingDeleted="HandleBookingDeleted" />
-            else if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
-            {
-                <div class="error-message">
-                    <p>@getResult</p>
-                </div>
-            }
-            else if (!string.IsNullOrEmpty(getResult) && getResult == "No bookings found")
-            {
-                <div class="info-message">
-                    <p>No bookings found for this customer ID.</p>
-                </div>
-            }
             @if (!string.IsNullOrEmpty(deleteResult))
             {
                 <div class="@(deleteResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-md);">
@@ -131,7 +131,7 @@
     private bool listAll = false;
     private string createResult = string.Empty;
     private string getResult = string.Empty;
-    private List<Booking>? bookings = null;
+    private List<Booking> bookings = new();
     private string deleteResult = string.Empty;
 
     private void ToggleZone(string zone)
@@ -186,7 +186,7 @@
     private async Task GetBookings()
     {
         getResult = string.Empty;
-        bookings = null;
+        bookings = new();
         
         try
         {
