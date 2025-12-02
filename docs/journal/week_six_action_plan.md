@@ -44,34 +44,35 @@
 
 ## Priority 2: Testing Implementation
 
-### 2.1 Unit Tests - Price Calculations
+### 2.1 Unit Tests - Price Calculations ✓ COMPLETE
 **Time Estimate:** 3-4 hours  
 **Priority:** HIGH  
-**Dependencies:** None
+**Dependencies:** None  
+**Status:** ✓ Complete (2025-12-02)
 
 **Tasks:**
-- [ ] Create test project (`Ticketing.Web.Tests` or similar)
-- [ ] Add xUnit and NSubstitute packages
-- [ ] Write unit tests for `PriceCalculationHelper.CalculatePriceModifier()`:
-  - [ ] Child (<12 years) → 0.0 modifier
-  - [ ] Student (12-65 years) → 0.5 modifier
-  - [ ] Pensioner (65+ years) → 0.5 modifier
-  - [ ] Standard (12-65, non-student) → 1.0 modifier
-  - [ ] Null DateOfBirth with IsStudent → 0.5 modifier
-  - [ ] Null DateOfBirth without IsStudent → 1.0 modifier
-  - [ ] Edge cases (exactly 12, exactly 65, birthday today)
-- [ ] Write unit tests for `PriceCalculationHelper.CalculateTotalPrice()`:
-  - [ ] Zero zones → 0m
-  - [ ] Single zone with different modifiers
-  - [ ] Multiple zones with different modifiers
-  - [ ] Custom base price per zone
-- [ ] Run tests and verify coverage
+- [x] Create test project (`Ticketing.Web.Tests`)
+- [x] Add xUnit and NSubstitute packages
+- [x] Write unit tests for `PriceCalculationHelper.CalculatePriceModifier()`:
+  - [x] Child (<12 years) → 0.0 modifier
+  - [x] Student (12-65 years) → 0.5 modifier
+  - [x] Pensioner (65+ years) → 0.5 modifier
+  - [x] Standard (12-65, non-student) → 1.0 modifier
+  - [x] Null DateOfBirth with IsStudent → 0.5 modifier
+  - [x] Null DateOfBirth without IsStudent → 1.0 modifier
+  - [x] Edge cases (exactly 12, exactly 65, birthday today)
+- [x] Write unit tests for `PriceCalculationHelper.CalculateTotalPrice()`:
+  - [x] Zero zones → 0m
+  - [x] Single zone with different modifiers
+  - [x] Multiple zones with different modifiers
+  - [x] Custom base price per zone
+- [x] Run tests and verify coverage
 
-**Deliverable:** Test project with passing unit tests for price calculations
+**Deliverable:** ✓ Test project with passing unit tests for price calculations (22 tests, all passing)
 
-**Files to Create:**
-- `src/tests/Ticketing.Web.Tests/Ticketing.Web.Tests.csproj`
-- `src/tests/Ticketing.Web.Tests/Helpers/PriceCalculationHelperTests.cs`
+**Files Created:**
+- ✓ `src/tests/Ticketing.Web.Tests/Ticketing.Web.Tests.csproj`
+- ✓ `src/tests/Ticketing.Web.Tests/Helpers/PriceCalculationHelperTests.cs`
 
 ---
 
@@ -106,12 +107,167 @@
 
 ## Priority 3: Feature Implementation
 
-### 3.1 Ticket Activation Timer
-**Time Estimate:** 4-6 hours  
-**Priority:** MEDIUM  
-**Dependencies:** None
+### 3.1 Ticket Activation Timer (Multi-Step Implementation)
 
 **Important:** If ticket activation timers are implemented, they should be tied to the event-driven Azure tools already in place for a minimalistic design.
+
+**Implementation Strategy:** Break down into 4 incremental steps for better manageability and testing.
+
+---
+
+#### 3.1.1 Step 1: Add Activation Fields to Booking Model ✓ COMPLETE
+**Time Estimate:** 30-45 minutes  
+**Priority:** MEDIUM  
+**Dependencies:** None  
+**Status:** ✓ Complete (2025-12-02)
+
+**Tasks:**
+- [x] Create `TicketStatus` enum:
+  - [x] `Created` - Ticket booked but not activated
+  - [x] `Activated` - Ticket activated by user
+  - [x] `Valid` - Ticket is currently valid (within validity period)
+  - [x] `Expired` - Ticket validity period has passed
+- [x] Add fields to `Booking` model:
+  - [x] `ActivatedAt` (DateTime?, nullable) - When ticket was activated
+  - [x] `ValidFrom` (DateTime?, nullable) - Start of validity period
+  - [x] `ValidTo` (DateTime?, nullable) - End of validity period
+  - [x] `Status` (TicketStatus enum, default: Created)
+- [x] Update Cosmos DB serialization if needed (CosmosJsonSerializer already handles enum serialization)
+- [x] Verify existing bookings still work (backward compatibility - all new fields nullable/default, build successful)
+
+**Deliverable:** ✓ Booking model extended with activation fields
+
+**Files Created:**
+- ✓ `src/shared/Ticketing.Contracts/Bookings/TicketStatus.cs`
+
+**Files Modified:**
+- ✓ `src/shared/Ticketing.Contracts/Bookings/Booking.cs`
+
+**Backward Compatibility:**
+- All new fields are nullable (ActivatedAt, ValidFrom, ValidTo) or have defaults (Status = Created)
+- CosmosJsonSerializer already handles enum serialization as strings
+- Existing bookings in Cosmos DB will deserialize correctly (missing fields will be null/default)
+- Build and tests pass successfully
+
+---
+
+#### 3.1.2 Step 2: Add Activation API Endpoint and Logic
+**Time Estimate:** 1-2 hours  
+**Priority:** MEDIUM  
+**Dependencies:** 3.1.1 (activation fields)
+
+**Tasks:**
+- [ ] Create activation helper/service:
+  - [ ] `TicketActivationHelper` or add to `BookingService`
+  - [ ] Method to calculate validity period (e.g., 90 minutes from activation)
+  - [ ] Method to validate activation (booking belongs to user, not already activated, etc.)
+- [ ] Add API endpoint in `BookingsController`:
+  - [ ] `POST /api/bookings/{bookingId}/activate`
+  - [ ] Optional: Accept activation time from request body (for manual time selection)
+  - [ ] Validate booking belongs to authenticated user
+  - [ ] Set `ActivatedAt`, `ValidFrom`, `ValidTo`, and `Status`
+  - [ ] Update booking in Cosmos DB
+  - [ ] Return updated booking
+- [ ] Add error handling:
+  - [ ] Booking not found → 404
+  - [ ] Booking doesn't belong to user → 403
+  - [ ] Booking already activated → 400 with appropriate message
+- [ ] Test activation endpoint manually
+
+**Deliverable:** Activation API endpoint operational
+
+**Files to Create:**
+- `src/web/Ticketing.Web/Helpers/TicketActivationHelper.cs` (if needed)
+
+**Files to Modify:**
+- `src/web/Ticketing.Web/Controllers/BookingsController.cs`
+- `src/web/Ticketing.Web/Services/BookingService.cs` (if activation logic added here)
+
+---
+
+#### 3.1.3 Step 3: Add Activation UI to User Landing Page
+**Time Estimate:** 1-2 hours  
+**Priority:** MEDIUM  
+**Dependencies:** 3.1.2 (activation API)
+
+**Tasks:**
+- [ ] Update `UserLandingPage.razor`:
+  - [ ] Display ticket status for each booking (Created/Activated/Valid/Expired)
+  - [ ] Add "Activate Ticket" button for bookings with status `Created`
+  - [ ] Optional: Add time picker for manual activation time selection
+  - [ ] Show validity period for activated tickets (`ValidFrom` to `ValidTo`)
+  - [ ] Display countdown or "Expired" status for expired tickets
+  - [ ] Call activation API endpoint on button click
+  - [ ] Refresh booking list after activation
+  - [ ] Show success/error messages
+- [ ] Update booking display:
+  - [ ] Show status badge (color-coded: Created=gray, Activated=blue, Valid=green, Expired=red)
+  - [ ] Show activation time if activated
+  - [ ] Show validity period if valid
+- [ ] Test UI flow end-to-end
+
+**Deliverable:** User-facing activation UI operational
+
+**Files to Modify:**
+- `src/web/Ticketing.Web/Pages/UserLandingPage.razor`
+
+---
+
+#### 3.1.4 Step 4: Add Event-Driven Expiration (Optional)
+**Time Estimate:** 2-3 hours  
+**Priority:** LOW (Can be deferred)  
+**Dependencies:** 3.1.3 (activation UI), Event-driven infrastructure
+
+**Important:** This step integrates with existing Azure event-driven infrastructure for a minimalistic design.
+
+**Tasks:**
+- [ ] Create `TicketExpired` event contract:
+  - [ ] `src/shared/Ticketing.Contracts/Events/TicketExpired.cs`
+  - [ ] Include booking ID, customer ID, expired timestamp
+- [ ] Create Timer Function:
+  - [ ] `src/functions/Ticketing.Functions/Functions/CheckTicketExpirationFunction.cs`
+  - [ ] Timer trigger: cron `0 */5 * * * *` (every 5 minutes)
+  - [ ] Query Cosmos DB for tickets where `ValidTo < DateTime.UtcNow` and `Status != Expired`
+  - [ ] For each expired ticket:
+    - [ ] Update status to `Expired` in Cosmos DB
+    - [ ] Publish `TicketExpired` event to Service Bus (reuse `IEventPublisher`)
+    - [ ] Track expiration via Application Insights (reuse `ITelemetryService`)
+    - [ ] Optionally store expiration event in outbox for audit
+- [ ] Test timer function:
+  - [ ] Create test booking with past `ValidTo` date
+  - [ ] Run function manually or wait for timer
+  - [ ] Verify status updated, event published, telemetry tracked
+- [ ] Deploy function to Azure (if not already deployed)
+
+**Deliverable:** Event-driven ticket expiration operational
+
+**Files to Create:**
+- `src/shared/Ticketing.Contracts/Events/TicketExpired.cs`
+- `src/functions/Ticketing.Functions/Functions/CheckTicketExpirationFunction.cs`
+
+**Files to Modify:**
+- `src/functions/Ticketing.Functions/Program.cs` (if needed for DI setup)
+
+**Note:** This step can be deferred if time is limited. Steps 1-3 provide core activation functionality without expiration automation.
+
+---
+
+### 3.1 Summary
+**Total Time Estimate:** 4.5-7.75 hours (across 4 steps)  
+**Priority:** MEDIUM  
+**Dependencies:** None (Step 1), then sequential
+
+**Implementation Order:**
+1. Step 1: Add activation fields (30-45 min) - Foundation
+2. Step 2: Add activation API (1-2 hours) - Backend logic
+3. Step 3: Add activation UI (1-2 hours) - User interface
+4. Step 4: Event-driven expiration (2-3 hours) - Optional automation
+
+**Benefits of Incremental Approach:**
+- Each step is testable independently
+- Can stop after Step 3 if time is limited (manual expiration checking)
+- Step 4 adds automation but isn't required for basic functionality
+- Easier to review and debug smaller changes
 
 **Event-Driven Architecture Integration:**
 - **Azure Functions with Timer Trigger** - Use cron-based timer function to periodically check for expired tickets (e.g., every 5 minutes)
@@ -248,38 +404,39 @@
 
 ---
 
-## Priority 3.4: Price Configuration (Quick Win)
+## Priority 3.4: Price Configuration (Quick Win) ✓ COMPLETE
 
 ### 3.4 Move Base Price to Configuration
 **Time Estimate:** 1-2 hours  
 **Priority:** MEDIUM (Quick win, high value)  
-**Dependencies:** None
+**Dependencies:** None  
+**Status:** ✓ Complete (2025-12-02)
 
 **Context:** Base price per zone (currently 20 SEK) is hardcoded in `PriceCalculationHelper` and `BookingsController`. ADR-011 identifies this as a disadvantage and recommends moving to configuration for runtime adjustment without code deployment.
 
 **Tasks:**
-- [ ] Add base price configuration to `appsettings.json`:
-  - [ ] `"Pricing:BasePricePerZone": 20.0`
+- [x] Add base price configuration to `appsettings.json`:
+  - [x] `"Pricing:BasePricePerZone": 20.0`
 - [ ] Add configuration to Azure App Configuration (if using):
-  - [ ] Add pricing settings to App Configuration
+  - [ ] Add pricing settings to App Configuration (future enhancement)
   - [ ] Update sentinel key if needed
-- [ ] Update `PriceCalculationHelper.CalculateTotalPrice()`:
-  - [ ] Accept `IConfiguration` or inject pricing service
-  - [ ] Read base price from configuration with fallback to default
-- [ ] Update `BookingsController`:
-  - [ ] Read base price from configuration instead of hardcoded value
-  - [ ] Pass to `PriceCalculationHelper` method
-- [ ] Test price calculation with different configuration values
-- [ ] Document configuration key in ADR-011 or configuration documentation
+- [x] Update `PriceCalculationHelper.CalculateTotalPrice()`:
+  - [x] Keep method signature (uses default parameter, configuration read in controller)
+- [x] Update `BookingsController`:
+  - [x] Inject `IConfiguration`
+  - [x] Read base price from configuration instead of hardcoded value
+  - [x] Pass to `PriceCalculationHelper` method
+- [x] Test price calculation with different configuration values (verified via booking creation)
+- [x] Document configuration key in ADR-011
 
-**Deliverable:** Base price configurable via appsettings.json/App Configuration
+**Deliverable:** ✓ Base price configurable via appsettings.json (Azure App Configuration can be added later for hot-reload)
 
-**Files to Modify:**
-- `src/web/Ticketing.Web/Helpers/PriceCalculationHelper.cs`
-- `src/web/Ticketing.Web/Controllers/BookingsController.cs`
-- `src/web/Ticketing.Web/appsettings.json` (or `appsettings.Development.json`)
+**Files Modified:**
+- ✓ `src/web/Ticketing.Web/Controllers/BookingsController.cs`
+- ✓ `src/web/Ticketing.Web/appsettings.json`
+- ✓ `docs/adr/ADR-011-price-calculation-system.md` (updated)
 
-**Note:** This is a quick win that adds value without significant complexity. Can be done in parallel with other tasks.
+**Note:** ✓ Quick win completed. Base price is now configurable. Azure App Configuration integration can be added later for runtime adjustment without code deployment.
 
 ---
 
@@ -390,34 +547,40 @@
 
 ## Implementation Order (Recommended)
 
-1. **Bugfixes Review** (Priority 1.1) - Start immediately, identify issues early
-2. **Unit Tests - Price Calculations** (Priority 2.1) - Quick win, establishes test infrastructure
-3. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
-4. **Price Configuration** (Priority 3.4) - Quick win, high value, can be done in parallel
-5. **Ticket Activation Timer** (Priority 3.1) - Core feature, enables QR codes
-6. **QR Code Generation** (Priority 3.2) - Depends on activation
+1. ✓ **Price Configuration** (Priority 3.4) - ✓ COMPLETE
+2. ✓ **Unit Tests - Price Calculations** (Priority 2.1) - ✓ COMPLETE
+3. **Ticket Activation - Step 1** (Priority 3.1.1) - Add activation fields to model
+4. **Ticket Activation - Step 2** (Priority 3.1.2) - Add activation API endpoint
+5. **Ticket Activation - Step 3** (Priority 3.1.3) - Add activation UI
+6. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
 7. **Error Handling Review** (Priority 4.1) - Important for demo quality
-7. **Integration Tests** (Priority 2.2) - If time permits
-8. **Shopping Cart** (Priority 3.3) - Nice to have, low priority
-9. **Documentation Cleanup** (Priority 5.2) - Final step before demo
+8. **Ticket Activation - Step 4** (Priority 3.1.4) - Event-driven expiration (optional, can defer)
+9. **QR Code Generation** (Priority 3.2) - Depends on activation (Step 3 complete)
+10. **Integration Tests** (Priority 2.2) - If time permits
+11. **Shopping Cart** (Priority 3.3) - Nice to have, low priority
+12. **Bugfixes Review** (Priority 1.1) - Do last to catch any new bugs from changes
+13. **Documentation Cleanup** (Priority 5.2) - Final step before demo
 
 ---
 
 ## Time Estimates Summary
 
-| Task | Time Estimate | Priority |
-|------|---------------|----------|
-| Bugfixes Review | 2-4 hours | HIGH |
-| Unit Tests (Price) | 3-4 hours | HIGH |
-| Integration Tests | 4-6 hours | MEDIUM |
-| Ticket Activation | 4-6 hours | MEDIUM |
-| QR Code Generation | 2-3 hours | MEDIUM |
-| Price Configuration | 1-2 hours | MEDIUM |
-| Shopping Cart | 4-6 hours | LOW |
-| Error Handling Review | 2-3 hours | MEDIUM |
-| Code Cleanup | 4-6 hours | HIGH |
-| Documentation Cleanup | 3-4 hours | HIGH |
-| **Total** | **29-44 hours** | |
+| Task | Time Estimate | Priority | Status |
+|------|---------------|----------|--------|
+| Price Configuration | 1-2 hours | MEDIUM | ✓ COMPLETE |
+| Unit Tests (Price) | 3-4 hours | HIGH | ✓ COMPLETE |
+| Ticket Activation - Step 1 | 30-45 min | MEDIUM | ⏳ Next |
+| Ticket Activation - Step 2 | 1-2 hours | MEDIUM | ⏳ Pending |
+| Ticket Activation - Step 3 | 1-2 hours | MEDIUM | ⏳ Pending |
+| Ticket Activation - Step 4 | 2-3 hours | LOW | ⏳ Optional |
+| QR Code Generation | 2-3 hours | MEDIUM | ⏳ Pending |
+| Integration Tests | 4-6 hours | MEDIUM | ⏳ Pending |
+| Shopping Cart | 4-6 hours | LOW | ⏳ Pending |
+| Error Handling Review | 2-3 hours | MEDIUM | ⏳ Pending |
+| Code Cleanup | 4-6 hours | HIGH | ⏳ Pending |
+| Bugfixes Review | 2-4 hours | HIGH | ⏳ Pending |
+| Documentation Cleanup | 3-4 hours | HIGH | ⏳ Pending |
+| **Total Remaining** | **22-35 hours** | | |
 
 **Note:** Focus on HIGH priority items first. MEDIUM and LOW priority items can be deferred if time is limited.
 
@@ -552,8 +715,16 @@
 
 **Progress:**
 - [ ] Priority 1: Bugfixes
-- [ ] Priority 2: Testing
-- [ ] Priority 3: Features
+- [x] Priority 2: Testing (Unit Tests - ✓ Complete)
+- [ ] Priority 2: Testing (Integration Tests - ⏳ Pending)
+- [x] Priority 3: Features (Price Configuration - ✓ Complete)
+- [ ] Priority 3: Features (Ticket Activation - ⏳ In Progress: Step 1 next)
+- [ ] Priority 3: Features (QR Code Generation - ⏳ Pending)
+- [ ] Priority 3: Features (Shopping Cart - ⏳ Pending)
 - [ ] Priority 4: Error Handling
 - [ ] Priority 5: Cleanup
+
+**Completed:**
+- ✓ Price Configuration (Priority 3.4) - 2025-12-02
+- ✓ Unit Tests - Price Calculations (Priority 2.1) - 2025-12-02
 

@@ -33,5 +33,17 @@ public class Booking
     
     [JsonPropertyName("bookingDate")]
     public DateTime BookingDate { get; set; } = DateTime.UtcNow;
+    
+    [JsonPropertyName("activatedAt")]
+    public DateTime? ActivatedAt { get; set; } // When ticket was activated by user (nullable for backward compatibility)
+    
+    [JsonPropertyName("validFrom")]
+    public DateTime? ValidFrom { get; set; } // Start of validity period (nullable for backward compatibility)
+    
+    [JsonPropertyName("validTo")]
+    public DateTime? ValidTo { get; set; } // End of validity period (nullable for backward compatibility)
+    
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = TicketStatus.Created; // Default to Created for backward compatibility
 }
 
