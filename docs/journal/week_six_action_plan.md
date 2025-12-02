@@ -161,6 +161,7 @@
   - [ ] `TicketActivationHelper` or add to `BookingService`
   - [ ] Method to calculate validity period (e.g., 90 minutes from activation)
   - [ ] Method to validate activation (booking belongs to user, not already activated, etc.)
+  - [ ] Use `TicketStatus.IsValid()` for status validation (already created in Step 1)
 - [ ] Add API endpoint in `BookingsController`:
   - [ ] `POST /api/bookings/{bookingId}/activate`
   - [ ] Optional: Accept activation time from request body (for manual time selection)
@@ -313,9 +314,10 @@
   - [ ] Add new Azure Function with Timer Trigger (`CheckTicketExpirationFunction`)
   - [ ] Function queries Cosmos DB for expired tickets
   - [ ] Publish `TicketExpired` events to Service Bus (reuse existing `IEventPublisher`)
-  - [ ] Update ticket status to `Expired` in Cosmos DB
+  - [ ] Update ticket status to `Expired` in Cosmos DB (use `TicketStatus.Expired` constant)
   - [ ] Track expiration events via Application Insights (reuse `ITelemetryService`)
   - [ ] Optionally store expiration events in outbox for audit
+  - [ ] Use `TicketStatus.IsValid()` for status validation if needed
 
 **Deliverable:** Ticket activation functionality with manual timer + optional event-driven expiration
 
