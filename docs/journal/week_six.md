@@ -6,27 +6,25 @@
 1. **Ticket activation timer** - dual triggers:
    - Manual start time selection (user landing page interface under "active tickets")
    - Secondary trigger on "activation" (QR code scan when boarding transportation)
-2. **Event triggers API functionality** - implement event-driven ticket validation
+2. **Event triggers API functionality** - implement event-driven ticket validation **completed**
 3. **QR code generation** for ticket scanning
 
 ### Bonus Features
 - **Bonus A:** Task Completion Source pattern for booking API (Railway-oriented programming)
 - **Bonus B:** Deployment staging slots for zero-downtime deployments
-- **Bonus C:** Feature flags (evaluate Bicep vs Config-based approach, document in ADR)
+- **Bonus C:** Feature flags (evaluate Bicep vs Config-based approach, document in ADR) **completed**
 - **Bonus D:** Railway-oriented build patterns (Task/Result) - can complement Bonus A
 - **Bonus E:** Add unit and/or integration testing
 - **Bonus F:** Shopping cart functionality - allow users to add (one or multiple) tickets before payment
-- **Bonus G:** Multi-zone ticket selection - select multiple zones for a single ticket purchase
+- **Bonus G:** Multi-zone ticket selection - select multiple zones for a single ticket purchase **completed**
 
 ### Additional Considerations & Suggestions
 - **Ticket validation service** - separate service/endpoint for QR code validation with rate limiting
-- **Price calculation service** - centralized logic for discount calculations (student/child/pensioner)
 - **Region/Zone data model** - define data structure for transportation zones and regions
 - **Ticket state machine** - states: Created → Activated → Valid → Expired (with timestamps)
 - **Audit logging** - track ticket activations, scans, and state changes for compliance
 - **Rate limiting** - protect QR code validation endpoint from abuse
 - **Ticket expiration logic** - time-based expiration after activation (e.g., 90 minutes for single-use tickets)
-- **User role management** - complete Inspector role implementation and User role creation
 - **Error handling** - user-friendly messages for expired/invalid tickets, network issues during scanning
 - **Testing strategy** - unit tests for price calculations, integration tests for ticket lifecycle
 
@@ -35,6 +33,17 @@
 ## Overview
 
 During week 6, work focused on simplifying the demo page and removing over-engineered features. The goal was to create a clean, maintainable MVP that focuses on core functionality: event-driven architecture status and booking management.
+
+### Scope Clarification - Users & Inspectors
+
+**Users & Inspectors are COMPLETE for demo purposes:**
+- **User Role Management:** Complete implementation of Admin, Inspector, and User roles
+- **User Functionality:** Users can book tickets today - booking system is fully operational
+- **Inspector Role:** Inspector role implemented with ability to view bookings and manage users
+- **Out of Scope:** User registration flow (users are created by Admin only for demo purposes)
+- **Out of Scope:** QR code scanning system for Inspectors (no physical QR readers available for demo)
+
+**Rationale:** The core functionality for Users and Inspectors is complete and sufficient for demonstration. Registration and scanning systems would add complexity without proportional value for the MVP demo. These features can be added in future iterations if needed.
 
 ---
 

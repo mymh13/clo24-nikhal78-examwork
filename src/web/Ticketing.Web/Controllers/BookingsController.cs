@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Ticketing.Contracts.Bookings;
 using Ticketing.Contracts.Events;
 using Ticketing.Contracts.Users;
@@ -20,6 +21,7 @@ public class BookingsController : ControllerBase
     private readonly IOutboxService _outboxService;
     private readonly IFeatureFlagService _featureFlagService;
     private readonly ITelemetryService _telemetryService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<BookingsController> _logger;
 
     public BookingsController(
@@ -28,6 +30,7 @@ public class BookingsController : ControllerBase
         IOutboxService outboxService,
         IFeatureFlagService featureFlagService,
         ITelemetryService telemetryService,
+        IConfiguration configuration,
         ILogger<BookingsController> logger)
     {
         _bookingService = bookingService ?? throw new ArgumentNullException(nameof(bookingService));
@@ -35,6 +38,7 @@ public class BookingsController : ControllerBase
         _outboxService = outboxService ?? throw new ArgumentNullException(nameof(outboxService));
         _featureFlagService = featureFlagService ?? throw new ArgumentNullException(nameof(featureFlagService));
         _telemetryService = telemetryService ?? throw new ArgumentNullException(nameof(telemetryService));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -104,8 +108,11 @@ public class BookingsController : ControllerBase
             int numberOfZones = string.IsNullOrEmpty(booking.Zone) 
                 ? 0 
                 : booking.Zone.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
-            booking.BasePrice = 20.0m * numberOfZones;
-            booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones, 20.0m);
+            
+            // Get base price from configuration with fallback to default
+            var basePricePerZone = _configuration.GetValue<decimal>("Pricing:BasePricePerZone", 20.0m);
+            booking.BasePrice = basePricePerZone * numberOfZones;
+            booking.TotalPrice = PriceCalculationHelper.CalculateTotalPrice(booking.PriceModifier, numberOfZones, basePricePerZone);
             
             var createdBooking = await _bookingService.CreateBookingAsync(booking, cancellationToken);
             

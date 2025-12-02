@@ -34,7 +34,7 @@ We implement a **price modifier system** with centralized calculation logic. The
   - `Zone` (string) – Zone selection (Zone A, B, C, D)
   - `Region` (string) – Reserved for future use (empty for now)
   - `PriceModifier` (decimal) – Calculated modifier stored with booking
-  - `BasePrice` (decimal) – Base price per zone (25 SEK)
+  - `BasePrice` (decimal) – Base price per zone (configurable, default: 20 SEK)
   - `TotalPrice` (decimal) – Final calculated price (BasePrice × PriceModifier)
 - **Calculation Logic:**
   - `PriceCalculationHelper` – Static helper class with centralized calculation methods
@@ -61,7 +61,7 @@ We implement a **price modifier system** with centralized calculation logic. The
 - **GDPR-Friendly** – Age information is optional, reducing data collection requirements while still enabling discounts for users who provide it.
 
 **Disadvantages:**
-- **Base Price Hardcoded** – Base price per zone (25 SEK) is currently hardcoded in the calculation. Should be moved to configuration for easier adjustment.
+- **Base Price Configuration** – Base price per zone is configurable via `appsettings.json` (`Pricing:BasePricePerZone`, default: 20 SEK). Can be moved to Azure App Configuration for runtime adjustment without code deployment (future enhancement).
 - **Single Zone Per Ticket** – Current implementation assumes one zone per ticket. Multiple zones per ticket requires additional logic (future enhancement).
 - **No Price History** – If base prices change, existing bookings retain their original prices (may be desired behavior for audit purposes).
 - **Age Calculation Edge Cases** – Age calculation based on date of birth may have edge cases around leap years and time zones (currently uses UTC dates).
@@ -71,7 +71,7 @@ We implement a **price modifier system** with centralized calculation logic. The
 ## Risks / Mitigations
 
 - **Risk:** Base price changes require code deployment.  
-  **Mitigation:** Move base price to configuration (appsettings.json or Azure App Configuration) for runtime adjustment without code changes.
+  **Mitigation:** Base price is configurable via `appsettings.json` (`Pricing:BasePricePerZone`). For runtime adjustment without code deployment, can be moved to Azure App Configuration with sentinel key pattern for hot-reload (future enhancement).
 
 - **Risk:** Age calculation may be inaccurate for users near age boundaries (e.g., turning 12 or 65).  
   **Mitigation:** Current implementation uses precise date calculation. Consider adding explicit age verification for critical discounts if required by business rules.
