@@ -1,8 +1,9 @@
-# ADR-008 – Deployment Strategy: Docker Containers via GHCR
+# ADR-008 – Deployment Strategy: Docker Containers via GHCR & CI/CD Pipeline
 
 **Status:** Accepted  
 **Date:** 2025-11-13  
-**Author:** Niklas Häll
+**Author:** Niklas Häll  
+**Updated:** 2025-12-01 (Added CI/CD Pipeline Strategy section)
 
 ---
 
@@ -265,9 +266,130 @@ When platform auto-detection fails despite explicit configuration, switching to 
 
 ---
 
+## CI/CD Pipeline Strategy
+
+### Why GitHub Actions
+
+The project uses **GitHub Actions** as the CI/CD platform for the following reasons:
+
+**Advantages:**
+- **Native GitHub Integration** - Built into GitHub, no external service setup required
+- **Free for Public Repositories** - No cost for public repos with generous free tier
+- **YAML-Based Configuration** - Version-controlled workflows alongside code
+- **Rich Marketplace** - Extensive ecosystem of pre-built actions (Docker, Azure, .NET)
+- **OIDC Authentication** - Secure Azure authentication without storing credentials
+- **Workflow Triggers** - Flexible triggers (push, PR, manual, workflow_run)
+- **Environment Protection** - Environment-level secrets and approval gates
+
+**Alternatives Considered:**
+- **Azure DevOps Pipelines** - Rejected: Requires separate Azure DevOps organization, adds complexity
+- **Jenkins** - Rejected: Requires self-hosting infrastructure, maintenance overhead
+- **GitLab CI/CD** - Rejected: Project uses GitHub, migration unnecessary
+- **Azure Pipelines (GitHub Integration)** - Rejected: GitHub Actions provides sufficient functionality without external dependency
+
+### Pipeline Architecture
+
+The CI/CD pipeline follows a **separated CI/CD pattern** with distinct workflows:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ CI Workflow (ci-build.yaml)                                 │
+│ - Triggered on: push to main, PR, manual                    │
+│ - Builds: Docker image for Web App                          │
+│ - Outputs: Container image to GHCR (web:latest + :sha)      │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ (workflow_run trigger)
+                          ▼
+        ┌─────────────────────────────────────┐
+        │ CD Workflows (triggered by CI)     │
+        ├─────────────────────────────────────┤
+        │ cd-web-dev.yaml                    │
+        │ - Deploys Web App to Azure         │
+        │ - Updates App Service settings     │
+        │                                     │
+        │ cd-functions-dev.yaml              │
+        │ - Deploys Function App to Azure    │
+        │ - Uses zip deploy (not Docker)     │
+        └─────────────────────────────────────┘
+```
+
+**Key Design Decisions:**
+1. **Separated CI and CD** - CI builds artifacts, CD deploys them (allows independent execution)
+2. **Workflow Run Triggers** - CD workflows trigger on successful CI completion
+3. **Environment-Based Deployment** - Uses GitHub Environments (`dev`) for environment-specific configuration
+4. **Idempotent Deployments** - Deployments can be run multiple times safely
+5. **Conditional Deployment** - CD workflows check if target resources exist before deploying
+
+### Workflow Structure
+
+**CI Workflow (`ci-build.yaml`):**
+- **Triggers:** Push to `main`, Pull Requests, Manual dispatch
+- **Path Filters:** Only runs on changes to `src/**`, `.github/workflows/**`, solution files, Dockerfiles
+- **Concurrency:** Cancels in-progress runs for same branch
+- **Steps:**
+  1. Checkout code
+  2. Extract Git SHA for versioning
+  3. Login to GHCR
+  4. Build and push Docker image with tags: `web:latest` and `web:<sha>`
+
+**CD Workflows (`cd-web-dev.yaml`, `cd-functions-dev.yaml`):**
+- **Triggers:** `workflow_run` - triggered when CI workflow completes successfully
+- **Environment:** `dev` (GitHub Environment with protected secrets)
+- **Authentication:** Azure OIDC (no stored credentials)
+- **Steps:**
+  1. Azure CLI login via OIDC
+  2. Verify target resource exists (skip if not found)
+  3. Deploy application (Docker for Web, zip for Functions)
+  4. Update App Settings (Application Insights, subscription ID, etc.)
+  5. Restart service
+
+### Environment Management
+
+**GitHub Environments:**
+- **`dev`** - Development environment
+  - Protected secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
+  - Variables: `WEBAPP_NAME`, `WEBAPP_RG`, `FUNCTIONAPP_NAME`, `FUNCTIONAPP_RG`
+  - Repository secrets: `APPLICATIONINSIGHTS_CONNECTION_STRING`
+
+**Secret Management:**
+- **Azure Credentials:** Stored as GitHub Environment secrets (OIDC client ID, tenant, subscription)
+- **Application Secrets:** Stored as GitHub Repository secrets (Application Insights connection string)
+- **No Secrets in Code:** All sensitive values injected at deployment time via Azure CLI
+
+**Deployment Strategy:**
+- **Automatic on Push:** CI runs on every push to `main`, CD runs after successful CI
+- **Manual Trigger:** CI can be triggered manually via `workflow_dispatch`
+- **Pull Request Validation:** CI runs on PRs to validate builds (no deployment)
+- **Environment Isolation:** Single `dev` environment (production would be separate environment)
+
+### Deployment Methods
+
+**Web App (Docker):**
+- Container image built in CI
+- Pushed to GHCR with version tags
+- CD workflow updates App Service `linuxFxVersion` to point to new image
+- App Service pulls and runs container
+
+**Function App (Zip Deploy):**
+- .NET publish in CD workflow
+- Zipped and deployed via `az functionapp deployment source config-zip`
+- Faster than Docker for Functions (no container overhead needed)
+
+### Security Considerations
+
+- **OIDC Authentication:** No stored Azure credentials, uses federated identity
+- **Least Privilege:** GitHub Actions service principal has minimal required permissions
+- **Secret Rotation:** Secrets can be rotated in GitHub without code changes
+- **Audit Trail:** All deployments logged in GitHub Actions and Azure Activity Log
+- **No Secrets in Images:** Docker images contain no secrets or connection strings
+
 ## References
 
+- [ADR-003 - Infrastructure as Code](./ADR-003-iac.md) - Bicep IaC tool choice
 - [Microsoft Docs – Deploy ASP.NET Core to Azure App Service](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/azure-apps/)
 - [GitHub Container Registry Documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 - [Docker Multi-stage Builds](https://docs.docker.com/build/building/multi-stage/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Azure OIDC Authentication](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure)
 

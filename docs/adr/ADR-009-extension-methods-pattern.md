@@ -161,6 +161,7 @@ public static class WebApplicationExtensions
 
 ## References
 
+- [ADR-017 - Service/Component Organization Pattern](./ADR-017-service-component-organization-pattern.md) - Overall code organization structure, including Extensions directory
 - [Microsoft Docs – ASP.NET Core Extension Methods](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods)
 - [ASP.NET Core Minimal Hosting Model](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/overview)
 - [Clean Code: Separation of Concerns](https://en.wikipedia.org/wiki/Separation_of_concerns)

@@ -26,7 +26,7 @@ The following Azure services are used in MVP and future expansion:
 | **App Service**           | Run Blazor Server and API application in the same App Service plan.  | Basic B1 (dev) |
 | **App Configuration**     | Centralized management of settings and feature flags between environments. Hot-reload via sentinel key pattern. | Free (dev) |
 | **Key Vault**             | Secure storage of secrets and connection strings. Managed identity access via RBAC. | Standard |
-| **Application Insights**  | Logging, monitoring, and performance measurement via KQL. Used by both App Service and Function App. | Pay-as-you-go |
+| **Application Insights**  | Logging, monitoring, and performance measurement via KQL. Used by both App Service and Function App. Custom events track dual-system architecture flows. | Pay-as-you-go |
 | **API Management (APIM)** | Gateway for public GET endpoints, caching, and rate limiting. | (Future) |
 | **Cosmos DB**             | Serverless NoSQL database for bookings, users, and outbox events. Partition key strategy for efficient querying. | Serverless |
 | **Service Bus**           | Message queue for event-driven architecture. `booking-events` queue with dead letter queue support. | Basic (dev) |
@@ -46,6 +46,7 @@ The following Azure services are used in MVP and future expansion:
 - **Managed identity everywhere** - All services use RBAC with managed identity, eliminating connection strings in code.
 - **Unified monitoring** - Application Insights collects telemetry from both App Service and Functions.
 - **Dual-system coexistence** - Feature flags in App Configuration enable runtime switching between synchronous and event-driven modes.
+- **Custom telemetry events** - Application Insights custom events clearly differentiate between Synchronous and Event-Driven architectures for visualization and monitoring (see [ADR-015](./ADR-015-application-insights-telemetry-strategy.md)).
 
 **Disadvantages:**
 - Locked into the Azure ecosystem.  
@@ -108,6 +109,8 @@ All services use **managed identity** with **RBAC** for secure access:
 - Function App has "DocumentDB Account Contributor" role for Cosmos DB
 - No connection strings stored in code or configuration files
 
+**See [ADR-016 - Managed Identity & RBAC Strategy](./ADR-016-managed-identity-rbac-strategy.md) for detailed implementation and rationale.**
+
 ### Service Integration
 - **App Service** → App Configuration (feature flags), Key Vault (secrets), Application Insights (telemetry)
 - **Function App** → Service Bus (event triggers), Cosmos DB (data access), Application Insights (telemetry)
@@ -121,6 +124,8 @@ All services use **managed identity** with **RBAC** for secure access:
 - [ADR-006 - Event-Driven Architecture](./ADR-006-eventdriven.md)
 - [ADR-012 - Azure App Configuration](./ADR-012-azure-app-configuration.md)
 - [ADR-013 - Outbox Pattern](./ADR-013-outbox-pattern.md)
+- [ADR-015 - Application Insights Telemetry Strategy](./ADR-015-application-insights-telemetry-strategy.md)
+- [ADR-016 - Managed Identity & RBAC Strategy](./ADR-016-managed-identity-rbac-strategy.md)
 - [Microsoft Docs – Azure App Service](https://learn.microsoft.com/en-us/azure/app-service/overview)  
 - [Microsoft Docs – Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/overview)  
 - [Microsoft Docs – Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/basic-concepts)  

@@ -3,13 +3,11 @@
 ## Brainstorming & Planned Progression
 
 ### Core Features (Priority Order)
-1. **Complete login options** for users and inspectors (staff)
-2. **Ticket attributes** - regions, zones, age, price (with student/child/pensioner discounts via percentage adjustments)
-3. **Ticket activation timer** - dual triggers:
+1. **Ticket activation timer** - dual triggers:
    - Manual start time selection (user landing page interface under "active tickets")
    - Secondary trigger on "activation" (QR code scan when boarding transportation)
-4. **Event triggers API functionality** - implement event-driven ticket validation
-5. **QR code generation** for ticket scanning
+2. **Event triggers API functionality** - implement event-driven ticket validation
+3. **QR code generation** for ticket scanning
 
 ### Bonus Features
 - **Bonus A:** Task Completion Source pattern for booking API (Railway-oriented programming)
@@ -36,101 +34,61 @@
 
 ## Overview
 
-During week 6, work focused on refining the demo page user experience and improving the Application Insights integration. The goal was to enhance the demo page's usability for live demonstrations by addressing container sizing issues, implementing text truncation for long values, and adding functionality to view and copy full data.
+During week 6, work focused on simplifying the demo page and removing over-engineered features. The goal was to create a clean, maintainable MVP that focuses on core functionality: event-driven architecture status and booking management.
 
 ---
 
 ## Completed Activities
 
-### Demo Page UX Improvements
-- **Layout Reorganization:** Reorganized page layout to optimize space usage:
-  - **Event-Driven Architecture Status** moved to top (full width) for quick visibility
-  - **Application Insights Query Results** positioned below (full width) to maximize horizontal space for tables
-  - This layout provides better use of screen real estate and improves readability
-- **Container Width Constraints:** Added `demo-page-container` class with `max-width: 95vw` to prevent horizontal scrolling on wide screens. Applied to main container to ensure page fits within viewport without requiring horizontal scrollbars.
-- **Metadata Table Filtering:** Implemented filtering to exclude Application Insights metadata tables that contain raw JSON configuration:
-  - Filters out `Visualization` table (contains visualization config JSON)
-  - Filters out `QueryProperties` table (contains query metadata)
-  - Filters out `QueryStatus` table (contains status info)
-  - Filters out tables starting with `@` (extended properties)
-  - Only displays `PrimaryResult` and other data tables with actual query results
-  - Prevents raw JSON code from appearing as table fields
-- **Fixed Table Layout with Column Constraints:**
-  - Implemented `table-layout: fixed` with `<colgroup>` to enforce column widths
-  - Data columns set to 200px width via colgroup
-  - Actions column set to 140px fixed width
-  - Prevents columns from expanding beyond defined widths regardless of content
-- **Text Truncation:** Implemented automatic truncation for table cell values longer than 15 characters:
-  - Long values display with ellipsis (`...`) and show full text on hover via `title` attribute
-  - All cells use `text-truncate-cell` class with `white-space: nowrap` and `text-overflow: ellipsis`
-  - CSS rules use `!important` flags to ensure truncation overrides any conflicting styles
-  - Headers also truncate with same rules for consistency
-  - Column width enforced at 200px with `width: 200px !important` (not just max-width)
-- **Column Headers:** Enhanced table headers with proper truncation. Added clear "Actions" column header for row operations. Headers respect same width constraints as cells.
-- **Copy Functionality:** 
-  - Added "📋 Copy" button for each row to copy individual row data as formatted JSON
-  - Added "📋 Copy Table Data" button for entire tables to copy all table data as JSON
-  - Data copied to clipboard using browser Clipboard API with user feedback via alerts
-- **Modal Popup for Full Data:** 
-  - Added "👁️ View" button for each row to open modal popup
-  - Modal displays data in two formats:
-    - **Table View:** All columns and values in a readable table format
-    - **JSON Format:** Properly formatted JSON with indentation for technical users
-  - Modal includes "📋 Copy All Data" button to copy JSON to clipboard
-  - Modal is responsive, scrollable, and can be closed via close button or clicking outside
-- **Table Styling Improvements:**
-  - Switched from custom `insights-table` to `bookings-table` class for consistency
-  - Added `insights-fixed-table` class with `table-layout: fixed !important`
-  - Cell width: 200px enforced with `!important` flags
-  - Word-break: normal to prevent breaking in middle of words
-  - Position: relative on cells to ensure truncation works properly
-  - Colgroup CSS rules to enforce column widths
+### Demo Page Simplification
+- **Removed Application Insights Integration:** Removed the Application Insights query section from the demo page to reduce complexity and improve maintainability.
+  - **Rationale:**
+    - **A) Code Complexity:** The Application Insights integration added over 800 lines of code, making the MVP unsustainable and difficult to maintain. The demo page grew from ~280 lines to over 1,100 lines with complex KQL query handling, table rendering, modal popups, and data transformation logic.
+    - **B) Visualization Limitations:** Application Insights queries return JSON strings that are difficult to visualize effectively in a web page. Displaying query results as tables feels more like reading logs than a proper demo visualization, making it unsuitable for live demonstrations.
+    - **Better Alternative:** The Azure Portal's Application Insights interface provides superior graphical visualization with charts, graphs, and interactive dashboards that are much more suitable for live demos. Using the portal side-by-side with the demo page provides a better demonstration experience.
+- **Simplified Page Structure:** 
+  - **Event-Driven Architecture Status** section at the top (full width) - shows current mode and allows toggling
+  - **Booking Management** section below (full width) - create, view, and manage bookings
+  - Removed all Application Insights query code, KQL handling, table rendering, and modal popups
+  - File size reduced from 1,130 lines to ~280 lines (75% reduction)
+- **Maintained Core Functionality:**
+  - Feature flag toggle with propagation polling
+  - Health status display
+  - Booking creation and management
+  - Clean, focused user interface
 
-**Status:** Demo page UX significantly improved and fully operational. Layout optimized for better space usage, metadata tables filtered out, tables properly constrained with fixed layout, long values truncated correctly, and users can easily view and copy full data via modal. Ready for professional live demonstrations.
+**Status:** Demo page simplified and streamlined. Core functionality maintained while removing over-engineered features. Page is now maintainable, focused, and suitable for MVP demonstrations. Application Insights can be viewed in Azure Portal for better visualization during demos.
 
 ---
 
 ## Reflection
 
 ### What Went Well
-- **Container Constraints:** Adding max-width constraints immediately resolved horizontal scrolling issues on wide screens, making the page more professional and easier to use.
-- **Text Truncation:** Automatic truncation with hover tooltips provides clean table display while maintaining access to full data.
-- **Modal Implementation:** Modal popup provides excellent user experience for viewing full data without leaving the page context.
-- **Copy Functionality:** Clipboard API integration makes it easy to share data for debugging or documentation purposes.
+- **Simplification:** Removing the Application Insights integration immediately reduced code complexity and made the page much more maintainable. The file size reduction from 1,130 lines to 280 lines (75% reduction) makes the codebase more sustainable for an MVP.
+- **Focus on Core Functionality:** The simplified page now focuses on the two essential features: event-driven architecture status and booking management. This makes the demo clearer and easier to follow.
+- **Better Demo Strategy:** Using Azure Portal's Application Insights interface for visualization provides a superior demonstration experience with proper charts and graphs, rather than trying to display JSON query results in a web table.
 
 ### Challenges Encountered
-- **Container Overflow:** Initial implementation allowed tables to expand beyond viewport width, causing horizontal scrolling. Solution: Added `max-width: 95vw` to main container and enforced fixed table layout with colgroup column widths.
-- **Long Value Display:** Long GUIDs and JSON strings (especially query execution statistics) made tables hard to read and broke layout. Solution: Implemented truncation with ellipsis, enforced with `!important` CSS flags, and modal for full data viewing. Used `table-layout: fixed` with colgroup to prevent column expansion.
-- **Metadata Tables:** Application Insights API returns multiple tables including metadata tables (Visualization, QueryProperties, QueryStatus) that contain raw JSON configuration. These appeared as broken table displays with raw code. Solution: Added filtering logic to exclude metadata tables and only display actual data tables (PrimaryResult and similar).
-- **Truncation Not Working:** Initial truncation CSS wasn't being applied due to table layout allowing columns to expand. Solution: Implemented `table-layout: fixed` with `<colgroup>` to enforce column widths, added `width: 200px !important` (not just max-width), and used `!important` flags on all truncation rules to override conflicting styles.
-- **Column Header Clarity:** Without clear headers, it was difficult to understand what each column represented. Solution: Enhanced headers with proper truncation and clear labeling, matching cell truncation behavior.
+- **Over-Engineering:** The Application Insights integration grew too complex, adding over 800 lines of code for KQL query handling, table rendering, modal popups, and data transformation. This made the codebase difficult to maintain and unsustainable for an MVP.
+- **Visualization Limitations:** Application Insights queries return JSON strings that are difficult to visualize effectively. Displaying query results as tables feels like reading logs rather than a proper demo visualization, making it unsuitable for live demonstrations.
+- **KQL Query Complexity:** The KQL queries required complex joins and data transformation, making them error-prone and difficult to debug. Syntax errors in KQL queries were hard to troubleshoot.
 
 ### Lessons Learned
-- **Viewport Constraints:** Always consider viewport width when designing tables with dynamic data. Use `max-width` constraints and overflow handling to prevent horizontal scrolling.
-- **Fixed Table Layout:** For tables with dynamic content, use `table-layout: fixed` with `<colgroup>` to enforce column widths. This prevents columns from expanding beyond defined widths regardless of content length. Essential for truncation to work properly.
-- **CSS Specificity and !important:** When dealing with table layouts and truncation, sometimes `!important` flags are necessary to override default browser table rendering behavior. Use `width` (not just `max-width`) with `!important` to truly enforce column constraints.
-- **API Response Filtering:** When consuming APIs that return multiple result sets (like Application Insights), always filter out metadata/configuration tables that aren't meant for user display. Check table names and content before rendering.
-- **Text Truncation:** For tables with potentially long values, implement truncation with tooltips or modals to maintain readability while preserving access to full data. Use `white-space: nowrap` and `text-overflow: ellipsis` together for proper truncation.
-- **User Feedback:** Copy operations should provide immediate feedback (alerts, toasts) so users know the action succeeded.
-- **Modal Design:** Modals should display data in multiple formats (table for readability, JSON for technical users) to accommodate different use cases.
-- **CSS Organization:** Dedicated CSS classes for specific components (e.g., `insights-fixed-table`, `modal-*`) improve maintainability and consistency. Reusing existing classes (like `bookings-table`) when appropriate maintains visual consistency.
-- **Layout Optimization:** Reorganizing page layout (moving status to top, giving data tables full width) can significantly improve usability and make better use of screen space.
+- **MVP Philosophy:** For an MVP, it's important to focus on core functionality and avoid over-engineering. Features that add significant complexity without proportional value should be reconsidered or removed.
+- **Right Tool for the Job:** Some features are better suited for specialized tools (like Azure Portal for Application Insights visualization) rather than trying to replicate them in a web application. Using the right tool provides a better user experience.
+- **Code Maintainability:** Code complexity should be carefully managed. A feature that adds 800+ lines of code needs to provide significant value to justify its inclusion in an MVP.
+- **Demo Strategy:** For live demonstrations, it's often better to use multiple tools side-by-side (e.g., demo page + Azure Portal) rather than trying to integrate everything into a single page. This provides better visualization and a clearer demonstration flow.
+- **Simplicity Over Features:** A simple, focused page is often more effective than a complex page with many features. Removing features can improve the overall user experience.
 
 ### Key Achievements
-- **Improved Demo Page UX:** Layout reorganization, container constraints, metadata filtering, fixed table layout, text truncation, and modal popup make the demo page professional and easy to use for live demonstrations.
-- **Enhanced Data Accessibility:** Copy functionality and modal viewing make it easy to access and share full data without cluttering the main view.
-- **Proper Table Rendering:** Fixed table layout with colgroup ensures columns respect defined widths, preventing layout breaks from long content.
-- **Metadata Filtering:** Successfully filtered out Application Insights metadata tables, preventing raw JSON code from appearing in the UI.
-- **Reliable Truncation:** Long strings (including complex JSON query statistics) are now properly truncated at 200px with ellipsis, maintaining table layout integrity.
-- **Responsive Design:** Page now works well on different screen sizes without horizontal scrolling issues.
-- **Professional Appearance:** Clean table styling with proper overflow handling and consistent formatting creates a polished user experience.
+- **Simplified Codebase:** Reduced demo page from 1,130 lines to 280 lines (75% reduction), making it much more maintainable and sustainable for an MVP.
+- **Focused Functionality:** Page now focuses on core features: event-driven architecture status and booking management, making the demo clearer and easier to follow.
+- **Better Demo Strategy:** Established a better approach for demonstrations using Azure Portal's Application Insights interface for visualization, providing superior charts and graphs.
+- **Maintainable MVP:** Created a clean, focused demo page that is sustainable and easy to maintain.
 
 ### What Could Be Improved
-- **Toast Notifications:** Replace alert dialogs with toast notifications for copy operations to provide less intrusive feedback.
-- **Export Functionality:** Add CSV/Excel export options for table data in addition to JSON copy.
-- **Column Resizing:** Allow users to resize columns in the table for better customization.
-- **Filtering/Sorting:** Add client-side filtering and sorting capabilities to tables for better data exploration.
-- **Pagination:** For large result sets, implement pagination to improve performance and usability.
+- **Future Enhancements:** If Application Insights integration is needed in the future, consider using Azure Portal dashboards or Power BI for visualization rather than building custom table rendering in the web application.
+- **Documentation:** Document the decision to use Azure Portal for Application Insights visualization in architecture documentation for future reference.
 
 ---
 
@@ -148,7 +106,7 @@ During week 6, work focused on refining the demo page user experience and improv
 
 ### Phase 8: Monitoring & Observability (In Progress - Phase 8.1 & 8.2 Complete)
 
-**Phase 8.2 Enhancements (Week 6):** Improved demo page user experience with container constraints, text truncation, copy functionality, and modal popup for viewing full data. All improvements focused on making the demo page more professional and easier to use for live demonstrations.
+**Phase 8.2 Enhancements (Week 6):** Simplified demo page by removing Application Insights integration. The integration added too much complexity (800+ lines of code) and the JSON query results were difficult to visualize effectively. Decided to use Azure Portal's Application Insights interface for visualization during demos, which provides superior charts and graphs. Demo page now focuses on core functionality: event-driven architecture status and booking management.
 
 **Remaining Work:**
 - **Phase 8.3:** Set up Application Insights alerts (dead letter queue messages, function failures, outbox processing delays)

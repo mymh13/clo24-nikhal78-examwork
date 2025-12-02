@@ -18,6 +18,14 @@ We use **Bicep** as the tool for Infrastructure as Code.
 Bicep provides a declarative syntax with high readability and has **built-in support in Azure CLI and Azure DevOps**, which makes integration with existing pipelines and resources smooth.  
 Since the project already utilizes several Azure services (App Service, Cosmos DB, Key Vault, etc.), Bicep provides a natural fit and requires no extra runtime or external dependencies.
 
+### CI/CD Integration
+Bicep integrates seamlessly with **GitHub Actions** workflows for infrastructure deployment:
+- Infrastructure is deployed manually via Azure CLI using Bicep templates (not automated in CI/CD)
+- Bicep modules are organized in `infra/modules/` for reusability
+- Application deployments (via Docker containers) are automated through GitHub Actions workflows
+- Bicep defines the infrastructure foundation that applications deploy into
+- No separate infrastructure pipeline needed - infrastructure changes are infrequent and require manual review
+
 ---
 
 ## Consequences
@@ -50,6 +58,14 @@ Since the project already utilizes several Azure services (App Service, Cosmos D
 
 ---
 
+## CI/CD Pipeline Context
+While Bicep handles infrastructure definition, the project uses **GitHub Actions** for application CI/CD:
+- **CI Workflow:** Builds Docker images and pushes to GitHub Container Registry (GHCR)
+- **CD Workflows:** Deploy applications to Azure App Service and Function App
+- Infrastructure deployment remains manual (via `az deployment group create`) to ensure controlled infrastructure changes
+- See [ADR-008 - Deployment Strategy](./ADR-008-docker-deployment.md) for detailed CI/CD pipeline architecture
+
 ## References
 - [System overview](../system_overview.md)  
+- [ADR-008 - Deployment Strategy](./ADR-008-docker-deployment.md) - CI/CD pipeline and Docker deployment
 - [Microsoft Learn – Bicep documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)

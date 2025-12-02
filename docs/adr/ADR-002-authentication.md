@@ -56,5 +56,6 @@ The model can easily be extended to federated login (e.g., Entra External ID) wh
 
 ## References
 - [System overview](../system_overview.md)  
+- [ADR-016 - Managed Identity & RBAC Strategy](./ADR-016-managed-identity-rbac-strategy.md) - Azure service authentication strategy
 - [Microsoft Docs – ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)  
 - [Microsoft Docs – Entra ID integration](https://learn.microsoft.com/en-us/azure/active-directory/develop/)
