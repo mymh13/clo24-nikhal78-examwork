@@ -59,6 +59,30 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 **Status:** Demo page simplified and streamlined. Core functionality maintained while removing over-engineered features. Page is now maintainable, focused, and suitable for MVP demonstrations. Application Insights can be viewed in Azure Portal for better visualization during demos.
 
+### Application Insights Workbook Setup
+
+- **Created Custom Workbook:** Set up an Application Insights Workbook in Azure Portal to visualize the dual-system architecture (Synchronous vs Event-Driven modes) during live demonstrations.
+  - **Workbook Purpose:** Visualize two distinct processing paths:
+    - **Synchronous mode:** Direct API execution
+    - **Event-Driven mode:** Outbox → Service Bus → Azure Function pipeline
+  - **Workbook Sections:**
+    1. **Current Mode Indicator** - Shows active architecture mode (Synchronous/Event-Driven) using latest `ModeSwitch` or `FeatureFlagToggled` event with 24h time window
+    2. **Latest Booking Flow Timeline** - Time chart showing chronological flow of booking-related events (1h time window), visually distinguishing between Synchronous path (minimal events) and Event-Driven path (full pipeline)
+    3. **Events by Type (with Mode Encoding)** - Bar chart showing event counts grouped by event type and mode, with mode encoded in category name (e.g., "BookingCreated (Synchronous)" vs "BookingCreated (Event-Driven)")
+  - **Workbook Configuration:**
+    - Time range: Last 15 minutes (adjustable per query)
+    - Auto-refresh: 1 minute (accounts for 2-5 minute ingestion delay)
+    - All visuals consume `customEvents` from the same Application Insights resource
+  - **Telemetry Events Used:**
+    - `ModeSwitch`, `FeatureFlagToggled` (for mode detection)
+    - `BookingCreated`, `OutboxEventCreated`, `OutboxEventProcessed`, `ServiceBusEventPublished`, `FunctionBookingCreatedProcessed` (for flow visualization)
+  - **Custom Dimensions:**
+    - `ToMode` - Architecture mode ("Synchronous" or "Event-Driven")
+    - `SystemType` - System type for filtering and categorization
+  - **Demo Strategy:** Workbook displayed side-by-side with demo page during presentations, providing superior graphical visualization compared to JSON query results in web tables.
+
+**Status:** Application Insights Workbook configured and ready for live demonstrations. Provides clear visual distinction between Synchronous and Event-Driven architectures with near real-time updates.
+
 ---
 
 ## Reflection
@@ -106,7 +130,14 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 ### Phase 8: Monitoring & Observability (In Progress - Phase 8.1 & 8.2 Complete)
 
-**Phase 8.2 Enhancements (Week 6):** Simplified demo page by removing Application Insights integration. The integration added too much complexity (800+ lines of code) and the JSON query results were difficult to visualize effectively. Decided to use Azure Portal's Application Insights interface for visualization during demos, which provides superior charts and graphs. Demo page now focuses on core functionality: event-driven architecture status and booking management.
+**Phase 8.2 Enhancements (Week 6):** 
+- **Demo Page Simplification:** Removed Application Insights integration from demo page. The integration added too much complexity (800+ lines of code) and the JSON query results were difficult to visualize effectively. Decided to use Azure Portal's Application Insights interface for visualization during demos, which provides superior charts and graphs. Demo page now focuses on core functionality: event-driven architecture status and booking management.
+- **Application Insights Workbook:** Created custom Application Insights Workbook in Azure Portal with three key sections:
+  1. **Current Mode Indicator** - Shows active architecture mode using latest mode switch events
+  2. **Latest Booking Flow Timeline** - Time chart showing chronological event flow, distinguishing Synchronous vs Event-Driven paths
+  3. **Events by Type** - Bar chart with mode-encoded categories showing event frequency comparison
+  - Workbook configured with 1-minute auto-refresh and appropriate time windows for each section
+  - Provides superior visualization for live demonstrations compared to web-based query results
 
 **Remaining Work:**
 - **Phase 8.3:** Set up Application Insights alerts (dead letter queue messages, function failures, outbox processing delays)

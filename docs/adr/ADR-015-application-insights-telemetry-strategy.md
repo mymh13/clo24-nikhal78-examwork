@@ -109,18 +109,129 @@ The system implements a **custom telemetry abstraction layer** using Application
 
 ## Visualization Strategy
 
-For live demonstrations, Application Insights **Workbooks** are used with three key sections:
+For live demonstrations, Application Insights **Workbooks** are used with three key sections that visualize the dual-system architecture:
 
-1. **Current Mode Indicator** - Shows active architecture mode (Synchronous or Event-Driven) using latest `ModeSwitch` or `BookingCreated` event
-2. **Latest Booking Flow Timeline** - Displays complete event flow for most recent booking, showing full chain in Event-Driven mode vs minimal events in Synchronous mode
-3. **Events by Type** - Column chart showing event counts, visually demonstrating which events appear in each mode
+### Workbook Configuration
 
-Workbooks are configured with:
-- **Time range:** Last 15 minutes
-- **Auto-refresh:** 1 minute (accounts for ingestion delay)
+**Overall Setup:**
+- **Time range:** Last 15 minutes (adjustable per query)
+- **Auto-refresh:** 1 minute (accounts for 2-5 minute ingestion delay)
 - **Real-time updates:** Events propagate within 30-120 seconds after creation
+- **Single AI Resource:** All visuals consume `customEvents` from the same Application Insights resource
 
-This setup enables live demonstrations where mode switching and booking creation are visible in near real-time, clearly showing the architectural difference between Synchronous and Event-Driven flows.
+### Workbook Sections
+
+#### 1. Current Mode Indicator
+
+**Purpose:** Identify the most recent architecture mode ("Synchronous" or "Event-Driven") at a glance.
+
+**Query:**
+```kql
+let timeWindow = 24h;
+
+customEvents
+| where timestamp > ago(timeWindow)
+| where name in ("ModeSwitch", "FeatureFlagToggled")
+| extend Mode = tostring(customDimensions["ToMode"])
+| top 1 by timestamp desc
+| project timestamp, Source = name, Mode
+```
+
+**Visualization:** Grid (single row)  
+**Columns:** `timestamp`, `Source`, `Mode`
+
+**Logic:** Uses event precedence - latest `ModeSwitch` or `FeatureFlagToggled` event determines current mode. Mode is extracted from `customDimensions["ToMode"]`.
+
+#### 2. Latest Booking Flow Timeline
+
+**Purpose:** Show chronological flow of booking-related events, visually distinguishing between Synchronous and Event-Driven paths.
+
+**Query:**
+```kql
+let timeWindow = 1h;
+
+customEvents
+| where timestamp > ago(timeWindow)
+| where name in (
+    "BookingCreated",
+    "OutboxEventCreated",
+    "OutboxEventProcessed",
+    "ServiceBusEventPublished",
+    "FunctionBookingCreatedProcessed"
+)
+| extend EventName = name
+| summarize Events = count() by bin(timestamp, 1m), EventName
+| order by timestamp asc
+```
+
+**Visualization:** Time chart  
+**X-axis:** `timestamp` (binned by 1 minute)  
+**Y-axis:** `Events` (count)  
+**Series:** One line per `EventName`
+
+**Visual Distinction:**
+- **Synchronous path:** `BookingCreated` (+ optional `OutboxEventCreated`)
+- **Event-Driven path:** Full pipeline: `BookingCreated` → `OutboxEventCreated` → `OutboxEventProcessed` → `ServiceBusEventPublished` → `FunctionBookingCreatedProcessed`
+
+#### 3. Events by Type (with Mode Encoding)
+
+**Purpose:** Visual comparison of event frequency across modes. Since Workbooks cannot split bar-chart series by two dimensions, mode is encoded directly into the category name.
+
+**Query:**
+```kql
+let timeWindow = 24h;
+
+customEvents
+| where timestamp > ago(timeWindow)
+| where name in (
+    "BookingCreated",
+    "OutboxEventCreated",
+    "OutboxEventProcessed",
+    "ServiceBusEventPublished",
+    "FunctionBookingCreatedProcessed"
+)
+| extend
+    SystemType = tostring(customDimensions["SystemType"]),
+    Category = strcat(name, " (", iif(isempty(SystemType), "Unknown", SystemType), ")")
+| summarize Count = count() by Category
+| order by Category asc
+```
+
+**Visualization:** Bar Chart (categorical)  
+**Category:** `Category` (event name + mode in parentheses)  
+**Metric:** `Count`
+
+**Example Categories:**
+- `BookingCreated (Synchronous)`
+- `BookingCreated (Event-Driven)`
+- `OutboxEventProcessed (Event-Driven)`
+- `ServiceBusEventPublished (Event-Driven)`
+
+### Telemetry Schema Used
+
+**Events Tracked:**
+- `ModeSwitch`
+- `FeatureFlagToggled`
+- `BookingCreated`
+- `OutboxEventCreated`
+- `OutboxEventProcessed`
+- `ServiceBusEventPublished`
+- `FunctionBookingCreatedProcessed`
+
+**Custom Dimensions Accessed:**
+- `ToMode` - Architecture mode ("Synchronous" or "Event-Driven")
+- `SystemType` - System type for filtering and categorization
+
+**Metrics Aggregated:**
+- `count()` - Event counts for visualization
+
+### Workbook Logical Flow
+
+1. **Determine Active Mode** - Current Mode Indicator shows which architecture is active
+2. **Display Real-Time Activity** - Latest Booking Flow Timeline shows near-real-time booking pipeline activity by event type
+3. **Provide Aggregated Comparison** - Events by Type provides aggregated per-mode counts to contrast synchronous vs event-driven behavior
+
+This setup enables live demonstrations where mode switching and booking creation are visible in near real-time, clearly showing the architectural difference between Synchronous and Event-Driven flows. The workbook can be displayed side-by-side with the demo page during presentations.
 
 ---
 
