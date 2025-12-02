@@ -244,6 +244,72 @@ public class BookingsController : ControllerBase
         }
     }
 
+    [HttpPost("{bookingId}/activate")]
+    [Authorize(Roles = "Admin,Inspector,User")]
+    public async Task<ActionResult<Booking>> ActivateBooking(string bookingId, [FromBody] ActivateBookingRequest? request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(bookingId))
+            {
+                return BadRequest(new { error = "Booking ID is required." });
+            }
+
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(ClaimTypes.Email);
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(new { error = "User ID not found in claims." });
+            }
+
+            var customerId = userRole == "User" ? userId : request?.CustomerId;
+            if (string.IsNullOrEmpty(customerId))
+            {
+                return BadRequest(new { error = "Customer ID is required." });
+            }
+
+            var booking = await _bookingService.GetBookingByIdAsync(bookingId, customerId, cancellationToken);
+            if (booking == null)
+            {
+                return NotFound(new { error = "Booking not found." });
+            }
+
+            var validationError = TicketActivationHelper.ValidateActivation(booking, userId, userRole ?? string.Empty);
+            if (validationError != null)
+            {
+                return BadRequest(new { error = validationError });
+            }
+
+            var activationTime = request?.ActivationTime ?? DateTime.UtcNow;
+            var validityMinutes = request?.ValidityMinutes ?? 90;
+            
+            var (validFrom, validTo) = TicketActivationHelper.CalculateValidityPeriod(activationTime, validityMinutes);
+            
+            booking.ActivatedAt = activationTime;
+            booking.ValidFrom = validFrom;
+            booking.ValidTo = validTo;
+            booking.Status = TicketStatus.Activated;
+            
+            var updatedBooking = await _bookingService.UpdateBookingAsync(booking, cancellationToken);
+            
+            _logger.LogInformation("Booking activated: {BookingId} for customer {CustomerId} by user {UserId} with role {Role}. Activation time: {ActivationTime}, Valid until: {ValidTo}",
+                bookingId, customerId, userId, userRole, activationTime, validTo);
+            
+            return Ok(updatedBooking);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Booking activation failed: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error activating booking {BookingId}", bookingId);
+            return BadRequest(new { error = "An unexpected error occurred." });
+        }
+    }
+
     [HttpDelete("{bookingId}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteBooking(string bookingId, [FromQuery] string customerId, CancellationToken cancellationToken)
@@ -281,5 +347,12 @@ public class BookingsController : ControllerBase
             return BadRequest(new { error = "An unexpected error occurred." });
         }
     }
+}
+
+public class ActivateBookingRequest
+{
+    public DateTime? ActivationTime { get; set; }
+    public int? ValidityMinutes { get; set; }
+    public string? CustomerId { get; set; }
 }
 

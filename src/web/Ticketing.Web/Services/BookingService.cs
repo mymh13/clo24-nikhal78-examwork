@@ -89,6 +89,53 @@ public class BookingService : IBookingService
         return bookings;
     }
 
+    public async Task<Booking?> GetBookingByIdAsync(string bookingId, string customerId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(bookingId))
+            throw new ArgumentException("BookingId is required", nameof(bookingId));
+
+        if (string.IsNullOrEmpty(customerId))
+            throw new ArgumentException("CustomerId is required", nameof(customerId));
+
+        try
+        {
+            var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
+
+            var response = await container.ReadItemAsync<Booking>(
+                bookingId,
+                new PartitionKey(customerId),
+                cancellationToken: cancellationToken);
+
+            return response.Resource;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<Booking> UpdateBookingAsync(Booking booking, CancellationToken cancellationToken = default)
+    {
+        if (booking == null)
+            throw new ArgumentNullException(nameof(booking));
+
+        if (string.IsNullOrEmpty(booking.Id))
+            throw new ArgumentException("Booking Id is required", nameof(booking));
+
+        if (string.IsNullOrEmpty(booking.CustomerId))
+            throw new ArgumentException("CustomerId is required", nameof(booking));
+
+        var container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
+
+        var response = await container.ReplaceItemAsync(
+            booking,
+            booking.Id,
+            new PartitionKey(booking.CustomerId),
+            cancellationToken: cancellationToken);
+
+        return response.Resource;
+    }
+
     public async Task DeleteBookingAsync(string bookingId, string customerId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(bookingId))
