@@ -37,6 +37,9 @@ clo24-nikhal78-examwork/
 │  ├─ functions/                   # Azure Functions (event-driven)
 │  │  └─ Ticketing.Functions/      # .NET 8 isolated worker Functions
 │  │     ├─ Functions/            # Function implementations
+│  ├─ tests/                       # Test projects
+│  │  └─ Ticketing.Web.Tests/      # xUnit test project for Ticketing.Web
+│  │     └─ Helpers/               # Test classes organized by source directory
 │  │     │  └─ OnBookingCreatedFunction.cs
 │  │     ├─ Program.cs            # Function app startup
 │  │     ├─ host.json             # Function app configuration (retry, logging)

@@ -29,6 +29,11 @@ docs/
 │  ├─ ADR-012-azure-app-configuration.md        # Decision: Azure App Configuration for feature flags
 │  ├─ ADR-013-outbox-pattern.md                 # Decision: Outbox Pattern for data integrity in dual writes
 │  ├─ ADR-014-sentinel-key-pattern.md           # Decision: Sentinel Key Pattern for hot-reload configuration
+│  ├─ ADR-015-application-insights-telemetry-strategy.md # Decision: Application Insights custom events for dual-system architecture
+│  ├─ ADR-016-managed-identity-rbac-strategy.md # Decision: Managed Identity & RBAC for secure Azure service access
+│  ├─ ADR-017-service-component-organization-pattern.md # Decision: Code organization and separation of concerns
+│  ├─ ADR-018-error-handling-logging-strategy.md # Decision: Error handling and structured logging strategy
+│  ├─ ADR-019-api-design-pattern-controller-based-rest.md # Decision: Controller-based REST API design pattern
 │  └─ archive/                                  # Archive for older or replaced ADR documents (currently empty)
 │
 ├─ initial_outtakes/                            # Early drafts and plans that defined the project's direction
@@ -43,6 +48,8 @@ docs/
 │  ├─ week_three.md                             # Week 3 – infrastructure and CI/CD foundation
 │  ├─ week_four.md                              # Week 4 – infrastructure expansion and application integration
 │  ├─ week_five.md                              # Week 5 – feature development and ticket management
+│  ├─ week_six.md                               # Week 6 – event-driven architecture refinement & demo enhancements
+│  ├─ week_six_action_plan.md                   # Week 6 action plan – pre-demo preparation tasks
 │  └─ eventdriven_roadmap.md                    # Detailed roadmap for event-driven architecture refactoring
 │
 └─ school_related/                              # School-related documents (thesis, presentations)
@@ -86,6 +93,11 @@ Documents design and architectural decisions following the ADR format.
 | **ADR-012-azure-app-configuration.md** | Decision: Azure App Configuration for feature flags to support permanent dual-system coexistence |
 | **ADR-013-outbox-pattern.md** | Decision: Outbox Pattern for securing data integrity in dual write operations (Cosmos DB + Service Bus) |
 | **ADR-014-sentinel-key-pattern.md** | Decision: Sentinel Key Pattern for hot-reloading configuration without service restart |
+| **ADR-015-application-insights-telemetry-strategy.md** | Decision: Application Insights custom events for dual-system architecture visualization |
+| **ADR-016-managed-identity-rbac-strategy.md** | Decision: Managed Identity & RBAC for secure Azure service access without connection strings |
+| **ADR-017-service-component-organization-pattern.md** | Decision: Code organization pattern with clear separation of concerns (Services, Controllers, Helpers, Components, Pages, Extensions) |
+| **ADR-018-error-handling-logging-strategy.md** | Decision: Layered error handling and structured logging strategy with Application Insights integration |
+| **ADR-019-api-design-pattern-controller-based-rest.md** | Decision: Controller-based REST API design pattern with RESTful conventions |
 | **archive/**             | Archive for older or replaced ADR documents (currently empty) |
 
 ---
@@ -114,12 +126,9 @@ Weekly logs for project progress and timeline tracking.
 | **week_three.md**        | Week 3 – infrastructure and CI/CD foundation |
 | **week_four.md**         | Week 4 – infrastructure expansion and application integration |
 | **week_five.md**         | Week 5 – feature development and ticket management |
+| **week_six.md**          | Week 6 – event-driven architecture refinement & demo enhancements |
+| **week_six_action_plan.md** | Week 6 action plan – pre-demo preparation tasks and priorities |
 | **eventdriven_roadmap.md** | Detailed roadmap for event-driven architecture refactoring (phases 1-10) |
-| **phase7_testing_guide.md** | Testing guide for Phase 7.1 (synchronous flow validation) |
-| **phase7_2_testing_guide.md** | Testing guide for Phase 7.2 (event-driven flow validation) |
-| **phase7_3_testing_guide.md** | Testing guide for Phase 7.3 (switching between modes) |
-| **phase7_validation.md** | Test results and validation documentation for Phase 7 |
-| **app_insights_refresh_query.kql** | KQL query for Application Insights to check App Configuration refresh activity |
 | **phase7_testing_guide.md** | Testing guide for Phase 7.1 (synchronous flow validation) |
 | **phase7_2_testing_guide.md** | Testing guide for Phase 7.2 (event-driven flow validation) |
 | **phase7_3_testing_guide.md** | Testing guide for Phase 7.3 (switching between modes) |
@@ -136,6 +145,38 @@ Documents related to the academic thesis and presentations.
 |--------------------------|--------------|
 | **teknisk_dokumentation_clo24nikhal.docx** | Technical documentation (Word document) |
 | **verktygspresentation_clo24nikhal.docx** | Tool presentation (Word document) |
+
+---
+
+## Project Structure
+
+The project has a clear separation between production code, tests, and infrastructure:
+
+```bash
+clo24-nikhal78-examwork/
+├─ src/                             # Production code
+│  ├─ web/                          # Blazor Server (UI)
+│  │  └─ Ticketing.Web/            # .NET 8 Blazor Server project
+│  ├─ api/                         # Controller-based Web API
+│  │  └─ Ticketing.Api/            # .NET 8 Web API project
+│  ├─ functions/                   # Azure Functions (event-driven)
+│  │  └─ Ticketing.Functions/      # .NET 8 Azure Functions project
+│  ├─ shared/                      # Shared libraries
+│  │  └─ Ticketing.Contracts/     # Shared contracts and data models
+│  └─ tests/                       # Test projects
+│     └─ Ticketing.Web.Tests/      # xUnit test project for Ticketing.Web
+│        └─ Helpers/               # Test classes organized by source directory
+├─ infra/                          # Infrastructure as Code (Bicep)
+├─ docs/                           # Documentation (this directory)
+└─ letsencrypt/                    # SSL certificate management
+```
+
+**Test Project Structure:**
+- **Location:** `src/tests/Ticketing.Web.Tests/`
+- **Framework:** xUnit
+- **Mocking:** NSubstitute
+- **Organization:** Test classes mirror source directory structure (e.g., `Helpers/PriceCalculationHelperTests.cs` for `Helpers/PriceCalculationHelper.cs`)
+- **Coverage:** Unit tests for price calculations
 
 ---
 
