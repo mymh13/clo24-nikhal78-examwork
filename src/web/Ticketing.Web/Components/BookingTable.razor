@@ -1,0 +1,189 @@
+@namespace Ticketing.Web.Components
+@using Ticketing.Contracts.Bookings
+@using System.Security.Claims
+@inject HttpClient Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@if (Bookings == null)
+{
+    <p>Loading tickets...</p>
+}
+else if (Bookings.Any())
+{
+    <div class="bookings-table-container" style="margin-bottom: var(--spacing-xl);">
+        <table class="bookings-table">
+            <thead>
+                <tr>
+                    @if (ShowCustomerInfo)
+                    {
+                        <th>Customer ID</th>
+                        <th>Customer Email</th>
+                    }
+                    <th>Booking ID</th>
+                    <th>Zone</th>
+                    <th>Status</th>
+                    <th>Price Modifier</th>
+                    <th>Total Price</th>
+                    <th>Booking Date</th>
+                    <th>Validity Period</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Bookings)
+                {
+                    <tr>
+                        @if (ShowCustomerInfo)
+                        {
+                            <td>@booking.CustomerId</td>
+                            <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
+                        }
+                        <td>@booking.Id</td>
+                        <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
+                        <td>
+                            @{
+                                var statusClass = booking.Status switch
+                                {
+                                    "Created" => "status-badge status-created",
+                                    "Activated" => "status-badge status-activated",
+                                    "Valid" => "status-badge status-valid",
+                                    "Expired" => "status-badge status-expired",
+                                    _ => "status-badge"
+                                };
+                            }
+                            <span class="@statusClass">@booking.Status</span>
+                        </td>
+                        <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
+                        <td>@booking.TotalPrice.ToString("F2") SEK (@booking.BasePrice.ToString("F2") SEK base)</td>
+                        <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>
+                            @if (booking.ActivatedAt.HasValue && booking.ValidTo.HasValue)
+                            {
+                                <div style="font-size: 0.9em;">
+                                    <div><strong>Activated:</strong> @booking.ActivatedAt.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    <div><strong>Valid until:</strong> @booking.ValidTo.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                    @if (booking.ValidTo.Value < DateTime.UtcNow)
+                                    {
+                                        <div style="color: #f44336; font-weight: bold;">Expired</div>
+                                    }
+                                    else
+                                    {
+                                        var timeRemaining = booking.ValidTo.Value - DateTime.UtcNow;
+                                        <div style="color: #4caf50;">@((int)timeRemaining.TotalMinutes) minutes remaining</div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="color: var(--color-text-muted);">Not activated</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: var(--spacing-xs); flex-wrap: wrap;">
+                                @if (booking.Status == TicketStatus.Created && CanActivate)
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => ActivateTicket(booking.Id, booking.CustomerId)" disabled="@(activatingBookingId == booking.Id)">
+                                        @if (activatingBookingId == booking.Id)
+                                        {
+                                            <text>Activating...</text>
+                                        }
+                                        else
+                                        {
+                                            <text>Activate</text>
+                                        }
+                                    </button>
+                                }
+                                @if (ShowDeleteButton)
+                                {
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">
+                                        Delete
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="info-message" style="margin-bottom: var(--spacing-xl);">
+        <p>No bookings found.</p>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(activationResult))
+{
+    <div class="@(activationResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-md);">
+        <p>@activationResult</p>
+    </div>
+}
+
+@code {
+    [Parameter] public List<Booking>? Bookings { get; set; }
+    [Parameter] public bool ShowCustomerInfo { get; set; } = false;
+    [Parameter] public bool ShowDeleteButton { get; set; } = false;
+    [Parameter] public bool CanActivate { get; set; } = true;
+    [Parameter] public EventCallback OnBookingUpdated { get; set; }
+    [Parameter] public EventCallback<Booking> OnBookingDeleted { get; set; }
+
+    private string activationResult = string.Empty;
+    private string? activatingBookingId = null;
+
+    private async Task ActivateTicket(string bookingId, string customerId)
+    {
+        activationResult = string.Empty;
+        activatingBookingId = bookingId;
+
+        try
+        {
+            var user = HttpContextAccessor.HttpContext?.User;
+            var userRole = user?.FindFirstValue(ClaimTypes.Role);
+
+            object requestBody;
+            if (userRole != "User" && !string.IsNullOrEmpty(customerId))
+            {
+                requestBody = new { CustomerId = customerId };
+            }
+            else
+            {
+                requestBody = new { };
+            }
+
+            var response = await Http.PostAsJsonAsync($"/api/bookings/{bookingId}/activate", requestBody);
+
+            if (response.IsSuccessStatusCode)
+            {
+                activationResult = "Success: Ticket activated successfully!";
+                if (OnBookingUpdated.HasDelegate)
+                {
+                    await OnBookingUpdated.InvokeAsync();
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                activationResult = $"Error: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            activationResult = $"Error: An error occurred when trying to activate the ticket. {ex.Message}";
+        }
+        finally
+        {
+            activatingBookingId = null;
+        }
+    }
+
+    private async Task DeleteBooking(string bookingId, string customerId)
+    {
+        if (OnBookingDeleted.HasDelegate)
+        {
+            await OnBookingDeleted.InvokeAsync(new Booking { Id = bookingId, CustomerId = customerId });
+        }
+    }
+}
+

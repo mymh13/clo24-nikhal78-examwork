@@ -2,6 +2,7 @@
 @using System.Net.Http.Json
 @using System.Security.Claims
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Components
 @using Ticketing.Web.Helpers
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.JSInterop
@@ -94,48 +95,13 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Get Bookings</button>
             </form>
-            @if (bookings != null && bookings.Any())
-            {
-                <div class="bookings-table-container">
-                    <table class="bookings-table">
-                        <thead>
-                            <tr>
-                                <th>Customer ID</th>
-                                <th>Customer Email</th>
-                                <th>Zone</th>
-                                <th>Price Modifier</th>
-                                <th>Total Price</th>
-                                <th>Booking ID</th>
-                                <th>Booking Date</th>
-                                @if (user?.IsInRole("Admin") == true)
-                                {
-                                    <th>Actions</th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var booking in bookings)
-                            {
-                                <tr>
-                                    <td>@booking.CustomerId</td>
-                                    <td>@(string.IsNullOrEmpty(booking.CustomerEmail) ? booking.CustomerId : booking.CustomerEmail)</td>
-                                    <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
-                                    <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
-                                    <td>@booking.TotalPrice.ToString("F2") SEK (@booking.BasePrice.ToString("F2") SEK base)</td>
-                                    <td>@booking.Id</td>
-                                    <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                    @if (user?.IsInRole("Admin") == true)
-                                    {
-                                        <td>
-                                            <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85em;" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">Delete</button>
-                                        </td>
-                                    }
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+            <BookingTable 
+                Bookings="bookings" 
+                ShowCustomerInfo="true"
+                ShowDeleteButton="@(user?.IsInRole("Admin") == true)"
+                CanActivate="true"
+                OnBookingUpdated="GetBookings"
+                OnBookingDeleted="HandleBookingDeleted" />
             else if (!string.IsNullOrEmpty(getResult) && getResult.StartsWith("Error"))
             {
                 <div class="error-message">
@@ -261,12 +227,12 @@
         }
     }
 
-    private async Task DeleteBooking(string bookingId, string customerId)
+    private async Task HandleBookingDeleted(Booking booking)
     {
         deleteResult = string.Empty;
         
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Are you sure you want to delete booking {bookingId}? This action cannot be undone.");
+            $"Are you sure you want to delete booking {booking.Id}? This action cannot be undone.");
         
         if (!confirmed)
         {
@@ -275,7 +241,7 @@
 
         try
         {
-            var response = await Http.DeleteAsync($"/api/bookings/{bookingId}?customerId={Uri.EscapeDataString(customerId)}");
+            var response = await Http.DeleteAsync($"/api/bookings/{booking.Id}?customerId={Uri.EscapeDataString(booking.CustomerId)}");
             
             if (response.IsSuccessStatusCode)
             {

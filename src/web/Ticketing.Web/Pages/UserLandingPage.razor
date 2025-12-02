@@ -2,6 +2,7 @@
 @using System.Net.Http.Json
 @using System.Security.Claims
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Components
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "User")]
 @inject IHttpContextAccessor HttpContextAccessor
@@ -48,96 +49,13 @@
                 
                 <div style="margin-top: var(--spacing-lg);">
                     <h3 style="font-size: 1.2em; margin-bottom: var(--spacing-md);">My Existing Tickets</h3>
-                    @if (myBookings == null)
-                    {
-                        <p>Loading tickets...</p>
-                    }
-                    else if (myBookings.Any())
-                    {
-                        <div class="bookings-table-container" style="margin-bottom: var(--spacing-xl);">
-                            <table class="bookings-table">
-                                <thead>
-                                    <tr>
-                                        <th>Booking ID</th>
-                                        <th>Zone</th>
-                                        <th>Status</th>
-                                        <th>Price Modifier</th>
-                                        <th>Total Price</th>
-                                        <th>Booking Date</th>
-                                        <th>Validity Period</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var booking in myBookings)
-                                    {
-                                        <tr>
-                                            <td>@booking.Id</td>
-                                            <td>@(string.IsNullOrEmpty(booking.Zone) ? "-" : booking.Zone)</td>
-                                            <td>
-                                                @{
-                                                    var statusClass = booking.Status switch
-                                                    {
-                                                        "Created" => "status-badge status-created",
-                                                        "Activated" => "status-badge status-activated",
-                                                        "Valid" => "status-badge status-valid",
-                                                        "Expired" => "status-badge status-expired",
-                                                        _ => "status-badge"
-                                                    };
-                                                }
-                                                <span class="@statusClass">@booking.Status</span>
-                                            </td>
-                                            <td>@(booking.PriceModifier == 0.0m ? "Free (Child)" : booking.PriceModifier == 0.5m ? "50% (Student/Pensioner)" : "100% (Standard)")</td>
-                                            <td>@booking.TotalPrice.ToString("F2") SEK (@booking.BasePrice.ToString("F2") SEK base)</td>
-                                            <td>@booking.BookingDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                            <td>
-                                                @if (booking.ActivatedAt.HasValue && booking.ValidTo.HasValue)
-                                                {
-                                                    <div style="font-size: 0.9em;">
-                                                        <div><strong>Activated:</strong> @booking.ActivatedAt.Value.ToString("yyyy-MM-dd HH:mm")</div>
-                                                        <div><strong>Valid until:</strong> @booking.ValidTo.Value.ToString("yyyy-MM-dd HH:mm")</div>
-                                                        @if (booking.ValidTo.Value < DateTime.UtcNow)
-                                                        {
-                                                            <div style="color: #f44336; font-weight: bold;">Expired</div>
-                                                        }
-                                                        else
-                                                        {
-                                                            var timeRemaining = booking.ValidTo.Value - DateTime.UtcNow;
-                                                            <div style="color: #4caf50;">@((int)timeRemaining.TotalMinutes) minutes remaining</div>
-                                                        }
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <span style="color: var(--color-text-muted);">Not activated</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (booking.Status == TicketStatus.Created)
-                                                {
-                                                    <button class="btn btn-primary btn-sm" @onclick="() => ActivateTicket(booking.Id)" disabled="@(activatingBookingId == booking.Id)">
-                                                        @if (activatingBookingId == booking.Id)
-                                                        {
-                                                            <text>Activating...</text>
-                                                        }
-                                                        else
-                                                        {
-                                                            <text>Activate Ticket</text>
-                                                        }
-                                                    </button>
-                                                }
-                                                else
-                                                {
-                                                    <span style="color: var(--color-text-muted); font-size: 0.9em;">-</span>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
+                    <BookingTable 
+                        Bookings="myBookings" 
+                        ShowCustomerInfo="false"
+                        ShowDeleteButton="false"
+                        CanActivate="true"
+                        OnBookingUpdated="LoadMyBookings" />
+                    @if (myBookings != null && !myBookings.Any())
                     {
                         <div class="info-message" style="margin-bottom: var(--spacing-xl);">
                             <p>You don't have any tickets yet. Create your first ticket below.</p>
@@ -185,12 +103,6 @@
                             <p>@ticketResult</p>
                         </div>
                     }
-                    @if (!string.IsNullOrEmpty(activationResult))
-                    {
-                        <div class="@(activationResult.StartsWith("Success") ? "success-message" : "error-message")" style="margin-top: var(--spacing-md);">
-                            <p>@activationResult</p>
-                        </div>
-                    }
                 </div>
             </div>
         </div>
@@ -205,9 +117,7 @@
     private Booking newTicket = new();
     private List<string> userSelectedZones = new();
     private string ticketResult = string.Empty;
-    private string activationResult = string.Empty;
     private List<Booking>? myBookings = null;
-    private string? activatingBookingId = null;
 
     private void ToggleZone(string zone)
     {
@@ -288,34 +198,5 @@
         }
     }
 
-    private async Task ActivateTicket(string bookingId)
-    {
-        activationResult = string.Empty;
-        activatingBookingId = bookingId;
-
-        try
-        {
-            var response = await Http.PostAsJsonAsync($"/api/bookings/{bookingId}/activate", new { });
-
-            if (response.IsSuccessStatusCode)
-            {
-                activationResult = "Success: Ticket activated successfully!";
-                await LoadMyBookings(); // Refresh ticket list to show updated status
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                activationResult = $"Error: {errorContent}";
-            }
-        }
-        catch (Exception ex)
-        {
-            activationResult = $"Error: An error occurred when trying to activate the ticket. {ex.Message}";
-        }
-        finally
-        {
-            activatingBookingId = null;
-        }
-    }
 }
 
