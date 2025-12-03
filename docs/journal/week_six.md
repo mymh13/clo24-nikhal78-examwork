@@ -395,17 +395,51 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 ---
 
-## Next Steps
+## Remaining To-Dos
 
-1. **Event-Driven Architecture:** Complete Phase 8.3 (Application Insights alerts setup), then Phase 9 (Documentation & Cleanup).
-2. **Ticket Activation - Step 4:** Implement event-driven ticket expiration (Azure Functions with Timer Trigger to check and expire tickets automatically).
-3. ~~**QR Code Generation:** Generate QR codes for tickets to enable scanning functionality (secondary activation trigger).~~ ✓ **COMPLETE**
-4. ~~**Integration Tests:** Implement integration tests for ticket lifecycle (create, activate, expire, delete).~~ ✓ **COMPLETE**
-5. ~~**Bug Fixes Review:** Review and fix bugs from bug backlog (login redirect, integration test database pollution).~~ ✓ **COMPLETE**
-6. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
-7. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.
-8. ~~**Error Handling Review:** Review error handling across the application and ensure user-friendly error messages.~~ ✓ **COMPLETE**
-9. **Code & Documentation Cleanup:** Final cleanup of code and documentation before demo handover.
+### Code Cleanup
+- [ ] Remove unused code (using statements, methods, classes, commented code)
+- [ ] Run code formatter (`dotnet format`)
+- [ ] Fix all compiler warnings and nullable reference warnings
+- [ ] Add XML comments to public APIs
+- [ ] Verify file structure follows ADR-017
+
+### Documentation Cleanup
+- [ ] Review all journal entries for consistency and typos
+- [ ] Create demo preparation notes (key features, limitations, demo flow)
+- [ ] Update `Index.razor` status if needed
+
+### Event-Driven Ticket Expiration (Optional)
+**Note:** If implementing ticket expiration automation, it should be tied to the event-driven Azure tools already in place for a minimalistic design.
+
+- [ ] Create `TicketExpired` event contract (`src/shared/Ticketing.Contracts/Events/TicketExpired.cs`)
+- [ ] Create Azure Function with Timer Trigger (`CheckTicketExpirationFunction.cs`, cron: `0 */5 * * * *`)
+- [ ] Function queries Cosmos DB for expired tickets (`ValidTo < DateTime.UtcNow` and `Status != Expired`)
+- [ ] Update status to `Expired` in Cosmos DB
+- [ ] Publish `TicketExpired` event to Service Bus (reuse existing `IEventPublisher`)
+- [ ] Track expiration via Application Insights (reuse `ITelemetryService`)
+- [ ] Optionally store expiration event in outbox for audit
+
+**Event-Driven Architecture Integration:**
+- Reuses existing Azure infrastructure (Service Bus, Functions, Application Insights)
+- No additional Azure services required
+- Consistent with existing event-driven architecture
+- Minimal code changes (extend existing Function App)
+
+**References:** See `docs/bugs_and_improvements/future_improvements.md` for detailed implementation considerations.
+
+---
+
+## Next Steps (Completed Items)
+
+1. ~~**Event-Driven Architecture:** Complete Phase 8.3 (Application Insights alerts setup), then Phase 9 (Documentation & Cleanup).~~ ⏳ Remaining work
+2. ~~**Ticket Activation - Step 4:** Implement event-driven ticket expiration.~~ ⏳ Optional (see to-dos above)
+3. ~~**QR Code Generation:** Generate QR codes for tickets.~~ ✓ **COMPLETE**
+4. ~~**Integration Tests:** Implement integration tests for ticket lifecycle.~~ ✓ **COMPLETE**
+5. ~~**Bug Fixes Review:** Review and fix bugs from bug backlog.~~ ✓ **COMPLETE**
+6. ~~**Error Handling Review:** Review error handling across the application.~~ ✓ **COMPLETE**
+7. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page. (See `docs/bugs_and_improvements/future_improvements.md`)
+8. **Shopping Cart:** ⏳ Moved to Future Improvements (see `docs/bugs_and_improvements/future_improvements.md`)
 
 ---
 
