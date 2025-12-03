@@ -122,17 +122,18 @@
 **Status:** ✓ Complete (2025-12-02)
 
 **Tasks:**
-- [x] Create `TicketStatus` enum:
+- [x] Create `TicketStatus` static class with string constants (changed from enum to avoid serialization issues):
   - [x] `Created` - Ticket booked but not activated
   - [x] `Activated` - Ticket activated by user
   - [x] `Valid` - Ticket is currently valid (within validity period)
   - [x] `Expired` - Ticket validity period has passed
+  - [x] Added validation helpers: `TicketIsValid()` and `GetAllTicketStatuses()`
 - [x] Add fields to `Booking` model:
   - [x] `ActivatedAt` (DateTime?, nullable) - When ticket was activated
   - [x] `ValidFrom` (DateTime?, nullable) - Start of validity period
   - [x] `ValidTo` (DateTime?, nullable) - End of validity period
-  - [x] `Status` (TicketStatus enum, default: Created)
-- [x] Update Cosmos DB serialization if needed (CosmosJsonSerializer already handles enum serialization)
+  - [x] `Status` (string, default: TicketStatus.Created)
+- [x] Update Cosmos DB serialization (using string constants avoids enum serialization issues)
 - [x] Verify existing bookings still work (backward compatibility - all new fields nullable/default, build successful)
 
 **Deliverable:** ✓ Booking model extended with activation fields
@@ -145,72 +146,82 @@
 
 **Backward Compatibility:**
 - All new fields are nullable (ActivatedAt, ValidFrom, ValidTo) or have defaults (Status = Created)
-- CosmosJsonSerializer already handles enum serialization as strings
+- Using string constants instead of enum avoids Cosmos DB serialization issues
 - Existing bookings in Cosmos DB will deserialize correctly (missing fields will be null/default)
 - Build and tests pass successfully
 
+**Design Decision:** Used string constants instead of enum to avoid past Cosmos DB serialization issues. Trade-off: less compile-time type safety but more flexibility and fewer serialization headaches.
+
 ---
 
-#### 3.1.2 Step 2: Add Activation API Endpoint and Logic
+#### 3.1.2 Step 2: Add Activation API Endpoint and Logic ✓ COMPLETE
 **Time Estimate:** 1-2 hours  
 **Priority:** MEDIUM  
 **Dependencies:** 3.1.1 (activation fields)
+**Status:** ✓ Complete (2025-12-02)
 
 **Tasks:**
-- [ ] Create activation helper/service:
-  - [ ] `TicketActivationHelper` or add to `BookingService`
-  - [ ] Method to calculate validity period (e.g., 90 minutes from activation)
-  - [ ] Method to validate activation (booking belongs to user, not already activated, etc.)
-  - [ ] Use `TicketStatus.TicketIsValid()` for status validation (already created in Step 1)
-- [ ] Add API endpoint in `BookingsController`:
-  - [ ] `POST /api/bookings/{bookingId}/activate`
-  - [ ] Optional: Accept activation time from request body (for manual time selection)
-  - [ ] Validate booking belongs to authenticated user
-  - [ ] Set `ActivatedAt`, `ValidFrom`, `ValidTo`, and `Status`
-  - [ ] Update booking in Cosmos DB
-  - [ ] Return updated booking
-- [ ] Add error handling:
-  - [ ] Booking not found → 404
-  - [ ] Booking doesn't belong to user → 403
-  - [ ] Booking already activated → 400 with appropriate message
-- [ ] Test activation endpoint manually
+- [x] Create activation helper/service:
+  - [x] `TicketActivationHelper` static class created
+  - [x] Method to calculate validity period (90 minutes from activation)
+  - [x] Method to validate activation (booking belongs to user, not already activated, etc.)
+  - [x] Use `TicketStatus.TicketIsValid()` for status validation
+- [x] Add API endpoint in `BookingsController`:
+  - [x] `POST /api/bookings/{bookingId}/activate`
+  - [x] Accept activation time from request body (optional, defaults to current time)
+  - [x] Validate booking belongs to authenticated user (or Admin/Inspector can activate any)
+  - [x] Set `ActivatedAt`, `ValidFrom`, `ValidTo`, and `Status`
+  - [x] Update booking in Cosmos DB via `BookingService.UpdateBookingAsync()`
+  - [x] Return updated booking
+- [x] Add error handling:
+  - [x] Booking not found → 404
+  - [x] Booking doesn't belong to user → 400 with appropriate message
+  - [x] Booking already activated → 400 with appropriate message
+- [x] Test activation endpoint manually (verified via UI)
 
-**Deliverable:** Activation API endpoint operational
+**Deliverable:** ✓ Activation API endpoint operational
 
-**Files to Create:**
-- `src/web/Ticketing.Web/Helpers/TicketActivationHelper.cs` (if needed)
+**Files Created:**
+- ✓ `src/web/Ticketing.Web/Helpers/TicketActivationHelper.cs`
 
-**Files to Modify:**
-- `src/web/Ticketing.Web/Controllers/BookingsController.cs`
-- `src/web/Ticketing.Web/Services/BookingService.cs` (if activation logic added here)
+**Files Modified:**
+- ✓ `src/web/Ticketing.Web/Controllers/BookingsController.cs`
+- ✓ `src/web/Ticketing.Web/Services/BookingService.cs` (added `GetBookingByIdAsync` and `UpdateBookingAsync`)
+- ✓ `src/web/Ticketing.Web/Services/IBookingService.cs` (added method signatures)
 
 ---
 
-#### 3.1.3 Step 3: Add Activation UI to User Landing Page
+#### 3.1.3 Step 3: Add Activation UI to User Landing Page ✓ COMPLETE
 **Time Estimate:** 1-2 hours  
 **Priority:** MEDIUM  
 **Dependencies:** 3.1.2 (activation API)
+**Status:** ✓ Complete (2025-12-02)
 
 **Tasks:**
-- [ ] Update `UserLandingPage.razor`:
-  - [ ] Display ticket status for each booking (Created/Activated/Valid/Expired)
-  - [ ] Add "Activate Ticket" button for bookings with status `Created`
-  - [ ] Optional: Add time picker for manual activation time selection
-  - [ ] Show validity period for activated tickets (`ValidFrom` to `ValidTo`)
-  - [ ] Display countdown or "Expired" status for expired tickets
-  - [ ] Call activation API endpoint on button click
-  - [ ] Refresh booking list after activation
-  - [ ] Show success/error messages
-- [ ] Update booking display:
-  - [ ] Show status badge (color-coded: Created=gray, Activated=blue, Valid=green, Expired=red)
-  - [ ] Show activation time if activated
-  - [ ] Show validity period if valid
-- [ ] Test UI flow end-to-end
+- [x] Update `UserLandingPage.razor`:
+  - [x] Display ticket status for each booking (Created/Activated/Valid/Expired)
+  - [x] Add "Activate Ticket" button for bookings with status `Created`
+  - [x] Show validity period for activated tickets (`ValidFrom` to `ValidTo`)
+  - [x] Display time remaining or "Expired" status for expired tickets
+  - [x] Call activation API endpoint on button click
+  - [x] Refresh booking list after activation
+  - [x] Show success/error messages
+- [x] Update booking display:
+  - [x] Show status badge (color-coded: Created=gray, Activated=blue, Valid=green, Expired=red)
+  - [x] Show activation time if activated
+  - [x] Show validity period if valid
+- [x] Test UI flow end-to-end (verified working)
 
-**Deliverable:** User-facing activation UI operational
+**Deliverable:** ✓ User-facing activation UI operational
 
-**Files to Modify:**
-- `src/web/Ticketing.Web/Pages/UserLandingPage.razor`
+**Files Created:**
+- ✓ `src/web/Ticketing.Web/Components/BookingTable.razor` (reusable component for booking display)
+
+**Files Modified:**
+- ✓ `src/web/Ticketing.Web/Pages/UserLandingPage.razor` (integrated BookingTable component)
+- ✓ `src/web/Ticketing.Web/Components/BookingManagement.razor` (integrated BookingTable component)
+- ✓ `src/web/Ticketing.Web/Pages/Bookings.razor` (integrated BookingTable component)
+- ✓ `src/web/Ticketing.Web/wwwroot/css/custom.css` (added status badge styles)
 
 ---
 
@@ -440,6 +451,8 @@
 
 **Note:** ✓ Quick win completed. Base price is now configurable. Azure App Configuration integration can be added later for runtime adjustment without code deployment.
 
+**Note on TicketStatus:** Changed from enum to string constants (`TicketStatus` static class) to avoid past Cosmos DB serialization issues. This provides more flexibility and fewer serialization headaches, though with slightly less type safety.
+
 ---
 
 ## Priority 4: Error Handling Review
@@ -551,14 +564,14 @@
 
 1. ✓ **Price Configuration** (Priority 3.4) - ✓ COMPLETE
 2. ✓ **Unit Tests - Price Calculations** (Priority 2.1) - ✓ COMPLETE
-3. **Ticket Activation - Step 1** (Priority 3.1.1) - Add activation fields to model
-4. **Ticket Activation - Step 2** (Priority 3.1.2) - Add activation API endpoint
-5. **Ticket Activation - Step 3** (Priority 3.1.3) - Add activation UI
-6. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
-7. **Error Handling Review** (Priority 4.1) - Important for demo quality
-8. **Ticket Activation - Step 4** (Priority 3.1.4) - Event-driven expiration (optional, can defer)
-9. **QR Code Generation** (Priority 3.2) - Depends on activation (Step 3 complete)
-10. **Integration Tests** (Priority 2.2) - If time permits
+3. ✓ **Ticket Activation - Step 1** (Priority 3.1.1) - ✓ COMPLETE
+4. ✓ **Ticket Activation - Step 2** (Priority 3.1.2) - ✓ COMPLETE
+5. ✓ **Ticket Activation - Step 3** (Priority 3.1.3) - ✓ COMPLETE
+6. **Integration Tests** (Priority 2.2) - ⏳ NEXT - Test ticket lifecycle
+7. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
+8. **Error Handling Review** (Priority 4.1) - Important for demo quality
+9. **Ticket Activation - Step 4** (Priority 3.1.4) - Event-driven expiration (optional, can defer)
+10. **QR Code Generation** (Priority 3.2) - Depends on activation (Step 3 complete)
 11. **Shopping Cart** (Priority 3.3) - Nice to have, low priority
 12. **Bugfixes Review** (Priority 1.1) - Do last to catch any new bugs from changes
 13. **Documentation Cleanup** (Priority 5.2) - Final step before demo
@@ -571,18 +584,18 @@
 |------|---------------|----------|--------|
 | Price Configuration | 1-2 hours | MEDIUM | ✓ COMPLETE |
 | Unit Tests (Price) | 3-4 hours | HIGH | ✓ COMPLETE |
-| Ticket Activation - Step 1 | 30-45 min | MEDIUM | ⏳ Next |
-| Ticket Activation - Step 2 | 1-2 hours | MEDIUM | ⏳ Pending |
-| Ticket Activation - Step 3 | 1-2 hours | MEDIUM | ⏳ Pending |
+| Ticket Activation - Step 1 | 30-45 min | MEDIUM | ✓ COMPLETE |
+| Ticket Activation - Step 2 | 1-2 hours | MEDIUM | ✓ COMPLETE |
+| Ticket Activation - Step 3 | 1-2 hours | MEDIUM | ✓ COMPLETE |
+| Integration Tests | 4-6 hours | MEDIUM | ⏳ NEXT |
 | Ticket Activation - Step 4 | 2-3 hours | LOW | ⏳ Optional |
 | QR Code Generation | 2-3 hours | MEDIUM | ⏳ Pending |
-| Integration Tests | 4-6 hours | MEDIUM | ⏳ Pending |
 | Shopping Cart | 4-6 hours | LOW | ⏳ Pending |
 | Error Handling Review | 2-3 hours | MEDIUM | ⏳ Pending |
 | Code Cleanup | 4-6 hours | HIGH | ⏳ Pending |
 | Bugfixes Review | 2-4 hours | HIGH | ⏳ Pending |
 | Documentation Cleanup | 3-4 hours | HIGH | ⏳ Pending |
-| **Total Remaining** | **22-35 hours** | | |
+| **Total Remaining** | **19-31 hours** | | |
 
 **Note:** Focus on HIGH priority items first. MEDIUM and LOW priority items can be deferred if time is limited.
 
@@ -718,9 +731,9 @@
 **Progress:**
 - [ ] Priority 1: Bugfixes
 - [x] Priority 2: Testing (Unit Tests - ✓ Complete)
-- [ ] Priority 2: Testing (Integration Tests - ⏳ Pending)
+- [ ] Priority 2: Testing (Integration Tests - ⏳ NEXT)
 - [x] Priority 3: Features (Price Configuration - ✓ Complete)
-- [ ] Priority 3: Features (Ticket Activation - ⏳ In Progress: Step 1 next)
+- [x] Priority 3: Features (Ticket Activation - Steps 1-3 ✓ Complete, Step 4 optional)
 - [ ] Priority 3: Features (QR Code Generation - ⏳ Pending)
 - [ ] Priority 3: Features (Shopping Cart - ⏳ Pending)
 - [ ] Priority 4: Error Handling
@@ -729,4 +742,7 @@
 **Completed:**
 - ✓ Price Configuration (Priority 3.4) - 2025-12-02
 - ✓ Unit Tests - Price Calculations (Priority 2.1) - 2025-12-02
+- ✓ Ticket Activation - Step 1 (Priority 3.1.1) - 2025-12-02
+- ✓ Ticket Activation - Step 2 (Priority 3.1.2) - 2025-12-02
+- ✓ Ticket Activation - Step 3 (Priority 3.1.3) - 2025-12-02
 
