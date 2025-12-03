@@ -239,8 +239,44 @@ During week 6, work focused on simplifying the demo page and removing over-engin
     - Admin/Inspector pages: Show nothing until "Get Bookings" is clicked
     - Demo page: Shows nothing until "Get Bookings" is clicked
     - No more error messages on page load for Admin/Inspector roles
+- **Login Page Redirect Bug Fix (2025-12-03):**
+  - **Problem:** When User or Inspector users visited certain pages (like `/health`) and then returned to the login page, they were incorrectly redirected to the Admin Dashboard instead of their role-specific landing page
+  - **Root Cause:** `Login.razor` had a hardcoded link to `/admin` instead of using `NavigationHelper.GetLandingPageUrl()` to determine the correct landing page based on user role
+  - **Solution:**
+    - Added `@using Ticketing.Web.Helpers` to import `NavigationHelper`
+    - Updated login page to use `NavigationHelper.GetLandingPageUrl()` to get the correct landing page URL based on user role
+    - Changed button text from "Go to Admin Dashboard" to "Go to Dashboard" (more generic)
+  - **Result:**
+    - Admin users correctly redirected to `/admin`
+    - Inspector users correctly redirected to `/inspector`
+    - User users correctly redirected to `/user`
+    - Unauthenticated users remain on `/login`
+- **Integration Test Database Bug Fix (2025-12-03):**
+  - **Problem:** Integration tests were creating real users in Cosmos DB during test execution, polluting the production database with test data
+  - **Root Cause:** Tests were using real Cosmos DB services (`UserService`, `BookingService`, `OutboxService`) that persisted data to the actual database
+  - **Solution:**
+    - Created in-memory mock implementations of services:
+      - `InMemoryUserService` - stores users in memory using `ConcurrentDictionary`
+      - `InMemoryBookingService` - stores bookings in memory using `ConcurrentDictionary`
+      - `InMemoryOutboxService` - stores outbox events in memory using `ConcurrentDictionary`
+    - Created `InMemoryStorage` singleton class to share data across HTTP requests in tests
+    - Updated `WebApplicationFactoryFixture` to:
+      - Remove real Cosmos DB service registrations
+      - Register in-memory mock services with shared singleton storage
+      - Remove Cosmos DB connection requirements
+    - Updated test documentation to reflect that no external dependencies are needed
+  - **Benefits:**
+    - Tests no longer require Cosmos DB (emulator or real instance)
+    - No real data is created in Cosmos DB during testing
+    - Tests run faster and are more isolated
+    - All 7 integration tests continue to pass with mocked services
+  - **Files Created:**
+    - `src/tests/Ticketing.Web.Tests/Integration/Mocks/InMemoryUserService.cs`
+    - `src/tests/Ticketing.Web.Tests/Integration/Mocks/InMemoryBookingService.cs`
+    - `src/tests/Ticketing.Web.Tests/Integration/Mocks/InMemoryOutboxService.cs`
+    - `src/tests/Ticketing.Web.Tests/Integration/Mocks/InMemoryStorage.cs`
 
-**Status:** Code refactoring complete. Booking display logic centralized, and booking loading bug fixed. All pages now behave correctly based on user role.
+**Status:** Code refactoring complete. Booking display logic centralized, booking loading bug fixed, login redirect bug fixed, and integration test database pollution bug fixed. All pages now behave correctly based on user role, and tests no longer create real data in Cosmos DB.
 
 ---
 
@@ -283,6 +319,7 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 - **QR Code Generation:** Implemented QR code generation at activation time with Cosmos DB storage. QR codes include validity period information and can be displayed via modal popup for activated tickets.
 - **Code Quality:** Eliminated code duplication through component extraction and fixed role-based loading bugs. Improved maintainability across booking-related pages.
 - **Test Coverage:** Comprehensive test suite with 22 unit tests and 7 integration tests covering price calculations and full booking lifecycle. All tests passing and ready for CI/CD integration.
+- **Bug Fixes:** Fixed critical bugs including login page redirect issue (all users redirected to correct role-specific landing pages) and integration test database pollution (tests now use in-memory mocks instead of real Cosmos DB).
 
 ### What Could Be Improved
 - **Future Enhancements:** If Application Insights integration is needed in the future, consider using Azure Portal dashboards or Power BI for visualization rather than building custom table rendering in the web application.
@@ -325,10 +362,11 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 2. **Ticket Activation - Step 4:** Implement event-driven ticket expiration (Azure Functions with Timer Trigger to check and expire tickets automatically).
 3. ~~**QR Code Generation:** Generate QR codes for tickets to enable scanning functionality (secondary activation trigger).~~ ✓ **COMPLETE**
 4. ~~**Integration Tests:** Implement integration tests for ticket lifecycle (create, activate, expire, delete).~~ ✓ **COMPLETE**
-5. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
-6. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.
-7. **Error Handling Review:** Review error handling across the application and ensure user-friendly error messages.
-8. **Code & Documentation Cleanup:** Final cleanup of code and documentation before demo handover.
+5. ~~**Bug Fixes Review:** Review and fix bugs from bug backlog (login redirect, integration test database pollution).~~ ✓ **COMPLETE**
+6. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
+7. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.
+8. **Error Handling Review:** Review error handling across the application and ensure user-friendly error messages.
+9. **Code & Documentation Cleanup:** Final cleanup of code and documentation before demo handover.
 
 ---
 
