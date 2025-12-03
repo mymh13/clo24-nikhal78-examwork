@@ -45,5 +45,8 @@ public class Booking
     
     [JsonPropertyName("status")]
     public string Status { get; set; } = TicketStatus.Created; // Default to Created for backward compatibility
+    
+    [JsonPropertyName("qrCodeData")]
+    public string? QrCodeData { get; set; } // Base64-encoded QR code image (generated on activation, null for unactivated tickets)
 }
 

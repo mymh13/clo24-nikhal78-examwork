@@ -10,7 +10,7 @@ Status indicates where in the lifecycle the decision is: `Proposed`, `Accepted`,
  
 ## ADR Index 
 
-Last updated: 2025-12-01  
+Last updated: 2025-12-03  
 
 |    Nr   |                       Title                                     | Status   | Date      | Comment  |
 |---------|-----------------------------------------------------------------|----------|------------|------------|
@@ -33,6 +33,7 @@ Last updated: 2025-12-01
 | ADR-017 | Service/Component Organization Pattern: Code Structure and Separation of Concerns | Accepted | 2025-12-01 | Directory structure (Services, Controllers, Helpers, Components, Extensions), separation of concerns, dependency injection patterns |
 | ADR-018 | Error Handling & Logging Strategy: Exception Management and Observability | Accepted | 2025-12-01 | Layered error handling (global, controller, service), structured logging with ILogger, user-friendly error messages, Application Insights integration |
 | ADR-019 | API Design Pattern: Controller-Based REST | Accepted | 2025-12-01 | Controller-based REST API with [ApiController], RESTful routing conventions, HTTP verb attributes, authorization integration, no API versioning |
+| ADR-020 | QR Code Implementation: Activation-Time Generation with Cosmos DB Storage | Accepted | 2025-12-03 | QR code generation at activation time, JSON-encoded data with validity period, base64 storage in Cosmos DB, instant retrieval for display |
  
 ---
  

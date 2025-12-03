@@ -1,5 +1,6 @@
 @namespace Ticketing.Web.Components
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Helpers
 @using System.Security.Claims
 @inject HttpClient Http
 @inject IHttpContextAccessor HttpContextAccessor
@@ -93,6 +94,12 @@ else if (Bookings.Any())
                                         }
                                     </button>
                                 }
+                                @if (booking.Status == TicketStatus.Activated && !string.IsNullOrEmpty(booking.QrCodeData))
+                                {
+                                    <button class="btn btn-primary btn-sm" @onclick="() => ShowQrCode(booking)">
+                                        Show QR Code
+                                    </button>
+                                }
                                 @if (ShowDeleteButton)
                                 {
                                     <button type="button" class="btn btn-danger btn-sm" @onclick="() => DeleteBooking(booking.Id, booking.CustomerId)">
@@ -115,6 +122,33 @@ else if (Bookings.Any())
     </div>
 }
 
+@* QR Code Modal *@
+@if (showQrCodeModal && selectedBooking != null)
+{
+    <div class="modal-overlay" @onclick="CloseQrCodeModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+        <div class="modal-content" @onclick:stopPropagation="true" style="background: white; padding: var(--spacing-xl); border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+                <h3 style="margin: 0;">Ticket QR Code</h3>
+                <button class="btn btn-sm" @onclick="CloseQrCodeModal" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--color-text);">&times;</button>
+            </div>
+            <div style="text-align: center; margin-bottom: var(--spacing-md);">
+                <p style="margin-bottom: var(--spacing-sm);"><strong>Booking ID:</strong> @selectedBooking.Id</p>
+                <p style="margin-bottom: var(--spacing-sm);"><strong>Zone:</strong> @selectedBooking.Zone</p>
+                @if (selectedBooking.ValidTo.HasValue)
+                {
+                    <p style="margin-bottom: var(--spacing-md);"><strong>Valid until:</strong> @selectedBooking.ValidTo.Value.ToString("yyyy-MM-dd HH:mm")</p>
+                }
+            </div>
+            <div style="text-align: center; margin-bottom: var(--spacing-lg);">
+                <img src="@QrCodeHelper.GetQrCodeDataUrl(selectedBooking.QrCodeData)" alt="QR Code" style="max-width: 100%; height: auto; border: 2px solid var(--color-border);" />
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-primary" @onclick="CloseQrCodeModal">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter] public List<Booking>? Bookings { get; set; }
     [Parameter] public bool ShowCustomerInfo { get; set; } = false;
@@ -125,6 +159,8 @@ else if (Bookings.Any())
 
     private string activationResult = string.Empty;
     private string? activatingBookingId = null;
+    private bool showQrCodeModal = false;
+    private Booking? selectedBooking = null;
 
     private async Task ActivateTicket(string bookingId, string customerId)
     {
@@ -178,6 +214,18 @@ else if (Bookings.Any())
         {
             await OnBookingDeleted.InvokeAsync(new Booking { Id = bookingId, CustomerId = customerId });
         }
+    }
+
+    private void ShowQrCode(Booking booking)
+    {
+        selectedBooking = booking;
+        showQrCodeModal = true;
+    }
+
+    private void CloseQrCodeModal()
+    {
+        showQrCodeModal = false;
+        selectedBooking = null;
     }
 }
 

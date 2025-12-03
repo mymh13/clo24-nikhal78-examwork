@@ -291,6 +291,8 @@ public class BookingsController : ControllerBase
             booking.ValidTo = validTo;
             booking.Status = TicketStatus.Activated;
             
+            booking.QrCodeData = QrCodeHelper.GenerateQrCode(booking);
+            
             var updatedBooking = await _bookingService.UpdateBookingAsync(booking, cancellationToken);
             
             _logger.LogInformation("Booking activated: {BookingId} for customer {CustomerId} by user {UserId} with role {Role}. Activation time: {ActivationTime}, Valid until: {ValidTo}",

@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.FeatureManagement" Version="4.3.0" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <PackageReference Include="Azure.Data.AppConfiguration" Version="1.6.1" />
+    <PackageReference Include="QRCoder" Version="1.7.0" />
   </ItemGroup>
 
 </Project>

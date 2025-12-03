@@ -76,32 +76,45 @@
 
 ---
 
-### 2.2 Integration Tests - Ticket Lifecycle
+### 2.2 Integration Tests - Ticket Lifecycle ✓ COMPLETE
 **Time Estimate:** 4-6 hours  
 **Priority:** MEDIUM  
 **Dependencies:** 2.1 (test project setup)
+**Status:** ✓ Complete (2025-12-03)
 
 **Tasks:**
-- [ ] Set up integration test infrastructure:
-  - [ ] Test database/container setup (Cosmos DB emulator or test container)
-  - [ ] Test HTTP client setup for API testing
-  - [ ] Test user authentication setup
-- [ ] Write integration tests for booking lifecycle:
-  - [ ] Create booking → verify stored in database
-  - [ ] Get booking by ID → verify data matches
-  - [ ] Get bookings by customer → verify filtering works
-  - [ ] Delete booking → verify removal from database
-  - [ ] Verify price calculation is applied correctly during creation
+- [x] Set up integration test infrastructure:
+  - [x] Test database/container setup (Cosmos DB emulator or test container)
+  - [x] Test HTTP client setup for API testing (`WebApplicationFactory`)
+  - [x] Test user authentication setup (test authentication handler with Admin role)
+- [x] Write integration tests for booking lifecycle:
+  - [x] Create booking → verify stored in database (`CreateBooking_WithValidData_ReturnsCreatedBooking`)
+  - [x] Get booking by ID → verify data matches (`GetBookingById_WithValidId_ReturnsBooking`)
+  - [x] Get bookings by customer → verify filtering works (`GetBookingsByCustomer_ReturnsOnlyCustomerBookings`)
+  - [x] Delete booking → verify removal from database (`DeleteBooking_WithValidId_RemovesBooking`)
+  - [x] Verify price calculation is applied correctly during creation (`CreateBooking_CalculatesPriceCorrectly`)
+  - [x] Activate booking → verify status and validity period (`ActivateBooking_WithValidBooking_UpdatesStatus`)
+  - [x] Prevent duplicate activation (`ActivateBooking_AlreadyActivated_ReturnsBadRequest`)
 - [ ] Test event-driven flow (if time permits):
   - [ ] Create booking in Event-Driven mode → verify outbox event created
   - [ ] Verify telemetry events are sent
-- [ ] Run tests and document results
+- [x] Run tests and document results (All 7 tests passing)
 
-**Deliverable:** Integration test suite for ticket lifecycle
+**Deliverable:** ✓ Integration test suite for ticket lifecycle
 
-**Files to Create:**
-- `src/tests/Ticketing.Web.Tests/Integration/BookingLifecycleTests.cs`
-- `src/tests/Ticketing.Web.Tests/TestHelpers/TestFixture.cs` (if needed)
+**Files Created:**
+- ✓ `src/tests/Ticketing.Web.Tests/Integration/BookingLifecycleTests.cs`
+- ✓ `src/tests/Ticketing.Web.Tests/Integration/WebApplicationFactoryFixture.cs`
+- ✓ `src/tests/Ticketing.Web.Tests/Integration/README.md`
+- ✓ `src/web/Ticketing.Web/ProgramReference.cs` (for WebApplicationFactory access)
+
+**Test Coverage:**
+- ✓ 7 integration tests covering full booking lifecycle
+- ✓ Tests use `WebApplicationFactory` to host the application
+- ✓ Test authentication bypasses Azure AD (uses test handler)
+- ✓ Cosmos DB configured for testing (emulator or test connection string)
+- ✓ External services disabled during tests (Application Insights, Service Bus, OutboxProcessor)
+- ✓ All tests passing successfully
 
 ---
 
@@ -567,7 +580,7 @@
 3. ✓ **Ticket Activation - Step 1** (Priority 3.1.1) - ✓ COMPLETE
 4. ✓ **Ticket Activation - Step 2** (Priority 3.1.2) - ✓ COMPLETE
 5. ✓ **Ticket Activation - Step 3** (Priority 3.1.3) - ✓ COMPLETE
-6. **Integration Tests** (Priority 2.2) - ⏳ NEXT - Test ticket lifecycle
+6. ✓ **Integration Tests** (Priority 2.2) - ✓ COMPLETE - Test ticket lifecycle
 7. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
 8. **Error Handling Review** (Priority 4.1) - Important for demo quality
 9. **Ticket Activation - Step 4** (Priority 3.1.4) - Event-driven expiration (optional, can defer)
@@ -587,7 +600,7 @@
 | Ticket Activation - Step 1 | 30-45 min | MEDIUM | ✓ COMPLETE |
 | Ticket Activation - Step 2 | 1-2 hours | MEDIUM | ✓ COMPLETE |
 | Ticket Activation - Step 3 | 1-2 hours | MEDIUM | ✓ COMPLETE |
-| Integration Tests | 4-6 hours | MEDIUM | ⏳ NEXT |
+| Integration Tests | 4-6 hours | MEDIUM | ✓ COMPLETE |
 | Ticket Activation - Step 4 | 2-3 hours | LOW | ⏳ Optional |
 | QR Code Generation | 2-3 hours | MEDIUM | ⏳ Pending |
 | Shopping Cart | 4-6 hours | LOW | ⏳ Pending |
@@ -595,7 +608,7 @@
 | Code Cleanup | 4-6 hours | HIGH | ⏳ Pending |
 | Bugfixes Review | 2-4 hours | HIGH | ⏳ Pending |
 | Documentation Cleanup | 3-4 hours | HIGH | ⏳ Pending |
-| **Total Remaining** | **19-31 hours** | | |
+| **Total Remaining** | **15-25 hours** | | |
 
 **Note:** Focus on HIGH priority items first. MEDIUM and LOW priority items can be deferred if time is limited.
 
@@ -731,7 +744,7 @@
 **Progress:**
 - [ ] Priority 1: Bugfixes
 - [x] Priority 2: Testing (Unit Tests - ✓ Complete)
-- [ ] Priority 2: Testing (Integration Tests - ⏳ NEXT)
+- [x] Priority 2: Testing (Integration Tests - ✓ COMPLETE)
 - [x] Priority 3: Features (Price Configuration - ✓ Complete)
 - [x] Priority 3: Features (Ticket Activation - Steps 1-3 ✓ Complete, Step 4 optional)
 - [ ] Priority 3: Features (QR Code Generation - ⏳ Pending)
