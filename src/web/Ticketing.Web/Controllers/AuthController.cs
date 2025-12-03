@@ -80,7 +80,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during login for email: {Email}", email);
+            ErrorHandlerHelper.HandleInternalError(ex, _logger, "User login", new { Email = email });
             return Redirect("/login?error=" + Uri.EscapeDataString("An error occurred during login. Please try again."));
         }
     }
@@ -92,7 +92,7 @@ public class AuthController : ControllerBase
         // Dummy implementation - password reset functionality not yet implemented
         if (string.IsNullOrWhiteSpace(email))
         {
-            return BadRequest(new { error = "Email is required." });
+            return ErrorHandlerHelper.HandleValidationError("Email is required.", _logger, "Password reset");
         }
 
         // In a real implementation, this would:
@@ -109,7 +109,7 @@ public class AuthController : ControllerBase
     {
         // Registration is currently disabled to prevent bot registrations.
         // User accounts will be managed by administrators in a later step.
-        return BadRequest(new { error = "Registration is currently disabled. User accounts are managed by administrators. Please contact support if you need an account." });
+        return ErrorHandlerHelper.HandleValidationError("Registration is currently disabled. User accounts are managed by administrators. Please contact support if you need an account.", _logger, "User registration");
     }
 
     [HttpPost("login-entra")]

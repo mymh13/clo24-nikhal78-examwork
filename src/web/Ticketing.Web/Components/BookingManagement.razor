@@ -1,5 +1,6 @@
 @namespace Ticketing.Web.Components
 @using Ticketing.Contracts.Bookings
+@using Ticketing.Web.Helpers
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JSRuntime
 @inject IHttpContextAccessor HttpContextAccessor
@@ -161,12 +162,13 @@
             }
             else
             {
-                createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                createResult = $"Error: {errorMessage}";
             }
         }
-        catch
+        catch (Exception ex)
         {
-            createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+            createResult = $"Error: {HttpErrorHelper.HandleException(ex, "creating booking")}";
         }
     }
 
@@ -205,13 +207,13 @@
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                getResult = $"Error: {errorContent}";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                getResult = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)
         {
-            getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
+            getResult = $"Error: {HttpErrorHelper.HandleException(ex, "retrieving bookings")}";
         }
     }
 
@@ -245,7 +247,7 @@
         }
         catch (Exception ex)
         {
-            deleteResult = $"Error: An error occurred when trying to delete the booking. {ex.Message}";
+            deleteResult = $"Error: {HttpErrorHelper.HandleException(ex, "deleting booking")}";
         }
     }
 }

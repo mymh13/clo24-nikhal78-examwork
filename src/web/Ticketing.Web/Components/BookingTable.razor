@@ -194,13 +194,13 @@ else if (Bookings.Any())
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                activationResult = $"Error: {errorContent}";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                activationResult = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)
         {
-            activationResult = $"Error: An error occurred when trying to activate the ticket. {ex.Message}";
+            activationResult = $"Error: {HttpErrorHelper.HandleException(ex, "activating ticket")}";
         }
         finally
         {

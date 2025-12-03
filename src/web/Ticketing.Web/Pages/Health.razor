@@ -1,5 +1,6 @@
 @page "/health"
 @using System.Net.Http.Json
+@using Ticketing.Web.Helpers
 @inject HttpClient Http
 
 <PageTitle>System Health</PageTitle>
@@ -177,12 +178,12 @@
             }
             else
             {
-                errorMessage = $"API returned status {response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+                errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading health status: {ex.Message}";
+            errorMessage = HttpErrorHelper.HandleException(ex, "loading health status");
         }
     }
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ticketing.Contracts.Users;
 using Ticketing.Web.Services;
+using Ticketing.Web.Helpers;
 
 namespace Ticketing.Web.Controllers;
 
@@ -35,13 +36,11 @@ public class UsersController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Failed to create user {Email} by admin {AdminId}", user?.Email, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return Conflict(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Creating user", new { Email = user?.Email, AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating user by admin {AdminId}", User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Creating user", new { Email = user?.Email, AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -61,8 +60,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving users by admin {AdminId}", User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Retrieving all users", new { AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -74,7 +72,7 @@ public class UsersController : ControllerBase
             var user = await _userService.GetUserByIdAsync(id, cancellationToken);
             if (user == null)
             {
-                return NotFound(new { error = $"User with id {id} not found" });
+                return ErrorHandlerHelper.HandleNotFound("User", id, _logger);
             }
             
             // Don't return password hash
@@ -84,8 +82,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving user {UserId} by admin {AdminId}", id, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Retrieving user", new { UserId = id, AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -96,7 +93,7 @@ public class UsersController : ControllerBase
         {
             if (user.Id != id)
             {
-                return BadRequest(new { error = "User ID mismatch" });
+                return ErrorHandlerHelper.HandleValidationError("User ID mismatch.", _logger, "Updating user");
             }
 
             var updatedUser = await _userService.UpdateUserAsync(user, cancellationToken);
@@ -108,13 +105,11 @@ public class UsersController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Failed to update user {UserId} by admin {AdminId}", id, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return NotFound(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleNotFound("User", id, _logger);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating user {UserId} by admin {AdminId}", id, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Updating user", new { UserId = id, AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -129,13 +124,11 @@ public class UsersController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Failed to delete user {UserId} by admin {AdminId}", id, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return NotFound(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleNotFound("User", id, _logger);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting user {UserId} by admin {AdminId}", id, User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Deleting user", new { UserId = id, AdminId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 }

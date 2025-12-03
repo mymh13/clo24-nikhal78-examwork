@@ -5,6 +5,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.FeatureManagement;
 using Ticketing.Web.Services;
+using Ticketing.Web.Helpers;
 
 namespace Ticketing.Web.Controllers;
 
@@ -160,8 +161,7 @@ public class HealthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in health check endpoint");
-            return StatusCode(500, new { error = ex.Message, details = ex.ToString() });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Health check", null);
         }
     }
 }

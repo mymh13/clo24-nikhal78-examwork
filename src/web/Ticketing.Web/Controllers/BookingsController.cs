@@ -60,13 +60,13 @@ public class BookingsController : ControllerBase
                 customerEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
                 if (string.IsNullOrEmpty(customerEmail))
                 {
-                    return BadRequest(new { error = "User email not found in claims." });
+                    return ErrorHandlerHelper.HandleValidationError("User email not found in claims.", _logger, "Creating booking");
                 }
                 
                 targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
                 if (targetUser == null)
                 {
-                    return BadRequest(new { error = "User account not found." });
+                    return ErrorHandlerHelper.HandleNotFound("User account", customerEmail, _logger);
                 }
             }
             else
@@ -75,12 +75,12 @@ public class BookingsController : ControllerBase
                 customerEmail = booking.CustomerEmail ?? booking.CustomerId;
                 if (string.IsNullOrEmpty(customerEmail))
                 {
-                    return BadRequest(new { error = "Customer email is required." });
+                    return ErrorHandlerHelper.HandleValidationError("Customer email is required.", _logger, "Creating booking");
                 }
 
                 if (!System.Text.RegularExpressions.Regex.IsMatch(customerEmail, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
                 {
-                    return BadRequest(new { error = "Invalid email format." });
+                    return ErrorHandlerHelper.HandleValidationError("Invalid email format.", _logger, "Creating booking");
                 }
 
                 targetUser = await _userService.GetUserByEmailAsync(customerEmail, cancellationToken);
@@ -170,8 +170,8 @@ public class BookingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating booking for customer {CustomerEmail}", booking?.CustomerEmail);
-            return BadRequest(new { error = ex.Message });
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(ClaimTypes.Email);
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Creating booking", new { CustomerEmail = booking?.CustomerEmail, UserId = userId });
         }
     }
 
@@ -192,8 +192,7 @@ public class BookingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving bookings for customer {CustomerId}", customerId);
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Retrieving bookings", new { CustomerId = customerId });
         }
     }
 
@@ -213,8 +212,7 @@ public class BookingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all bookings");
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Retrieving all bookings", new { UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -229,7 +227,7 @@ public class BookingsController : ControllerBase
             
             if (string.IsNullOrEmpty(userId))
             {
-                return BadRequest(new { error = "User ID not found in claims." });
+                return ErrorHandlerHelper.HandleValidationError("User ID not found in claims.", _logger, "Retrieving user bookings");
             }
             
             _logger.LogInformation("Bookings retrieved for user {UserId} ({UserEmail})", userId, userEmail);
@@ -239,8 +237,7 @@ public class BookingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving bookings for user {UserId}", User.FindFirstValue(ClaimTypes.NameIdentifier));
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Retrieving user bookings", new { UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) });
         }
     }
 
@@ -252,7 +249,7 @@ public class BookingsController : ControllerBase
         {
             if (string.IsNullOrEmpty(bookingId))
             {
-                return BadRequest(new { error = "Booking ID is required." });
+                return ErrorHandlerHelper.HandleValidationError("Booking ID is required.", _logger, "Activating booking");
             }
 
             var userRole = User.FindFirstValue(ClaimTypes.Role);
@@ -260,25 +257,25 @@ public class BookingsController : ControllerBase
             
             if (string.IsNullOrEmpty(userId))
             {
-                return BadRequest(new { error = "User ID not found in claims." });
+                return ErrorHandlerHelper.HandleValidationError("User ID not found in claims.", _logger, "Activating booking");
             }
 
             var customerId = userRole == "User" ? userId : request?.CustomerId;
             if (string.IsNullOrEmpty(customerId))
             {
-                return BadRequest(new { error = "Customer ID is required." });
+                return ErrorHandlerHelper.HandleValidationError("Customer ID is required.", _logger, "Activating booking");
             }
 
             var booking = await _bookingService.GetBookingByIdAsync(bookingId, customerId, cancellationToken);
             if (booking == null)
             {
-                return NotFound(new { error = "Booking not found." });
+                return ErrorHandlerHelper.HandleNotFound("Booking", bookingId, _logger);
             }
 
             var validationError = TicketActivationHelper.ValidateActivation(booking, userId, userRole ?? string.Empty);
             if (validationError != null)
             {
-                return BadRequest(new { error = validationError });
+                return ErrorHandlerHelper.HandleValidationError(validationError, _logger, "Activating booking");
             }
 
             var activationTime = request?.ActivationTime ?? DateTime.UtcNow;
@@ -302,13 +299,11 @@ public class BookingsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning("Booking activation failed: {Message}", ex.Message);
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Activating booking", new { BookingId = bookingId });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error activating booking {BookingId}", bookingId);
-            return BadRequest(new { error = "An unexpected error occurred." });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Activating booking", new { BookingId = bookingId });
         }
     }
 
@@ -320,12 +315,12 @@ public class BookingsController : ControllerBase
         {
             if (string.IsNullOrEmpty(bookingId))
             {
-                return BadRequest(new { error = "Booking ID is required." });
+                return ErrorHandlerHelper.HandleValidationError("Booking ID is required.", _logger, "Deleting booking");
             }
 
             if (string.IsNullOrEmpty(customerId))
             {
-                return BadRequest(new { error = "Customer ID is required." });
+                return ErrorHandlerHelper.HandleValidationError("Customer ID is required.", _logger, "Deleting booking");
             }
 
             var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -340,13 +335,11 @@ public class BookingsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning("Booking deletion failed: {Message}", ex.Message);
-            return BadRequest(new { error = ex.Message });
+            return ErrorHandlerHelper.HandleException(ex, _logger, "Deleting booking", new { BookingId = bookingId, CustomerId = customerId });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting booking {BookingId}", bookingId);
-            return BadRequest(new { error = "An unexpected error occurred." });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Deleting booking", new { BookingId = bookingId, CustomerId = customerId });
         }
     }
 }

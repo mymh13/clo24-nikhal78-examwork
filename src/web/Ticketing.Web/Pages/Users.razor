@@ -288,13 +288,13 @@
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                createResult = $"Error: {errorContent}";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                createResult = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)
         {
-            createResult = $"Error: An error occurred when trying to create the user. {ex.Message}";
+            createResult = $"Error: {HttpErrorHelper.HandleException(ex, "creating user")}";
         }
     }
     
@@ -342,7 +342,7 @@
         }
         catch (Exception ex)
         {
-            getResult = $"Error: Unable to retrieve users. {ex.Message}";
+            getResult = $"Error: {HttpErrorHelper.HandleException(ex, "retrieving users")}";
         }
     }
 
@@ -435,7 +435,7 @@
         }
         catch (Exception ex)
         {
-            editResult = $"Error: An error occurred when trying to update the user. {ex.Message}";
+            editResult = $"Error: {HttpErrorHelper.HandleException(ex, "updating user")}";
         }
     }
 
@@ -468,7 +468,7 @@
         }
         catch (Exception ex)
         {
-            createResult = $"Error: An error occurred when trying to delete the user. {ex.Message}";
+            createResult = $"Error: {HttpErrorHelper.HandleException(ex, "deleting user")}";
         }
     }
 }

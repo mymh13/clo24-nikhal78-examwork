@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.FeatureManagement;
 using System.Text.Json;
 using Ticketing.Web.Services;
+using Ticketing.Web.Helpers;
 
 namespace Ticketing.Web.Controllers;
 
@@ -85,8 +86,7 @@ public class FeatureFlagController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in mini health check endpoint");
-            return StatusCode(500, new { error = ex.Message });
+            return ErrorHandlerHelper.HandleInternalError(ex, _logger, "Mini health check", null);
         }
     }
 
@@ -100,7 +100,7 @@ public class FeatureFlagController : ControllerBase
             
             if (string.IsNullOrEmpty(appConfigEndpoint) || appConfigEndpoint == "Not configured")
             {
-                return BadRequest(new { error = "App Configuration endpoint not configured" });
+                return ErrorHandlerHelper.HandleValidationError("App Configuration endpoint not configured", _logger, "Toggling feature flag");
             }
 
             var client = new ConfigurationClient(
@@ -130,7 +130,7 @@ public class FeatureFlagController : ControllerBase
                     var featureFlag = await client.GetConfigurationSettingAsync(featureFlagKey);
                     if (featureFlag.Value == null)
                     {
-                        return NotFound(new { error = "Feature flag not found" });
+                        return ErrorHandlerHelper.HandleNotFound("Feature flag", featureFlagKey, _logger);
                     }
 
                     var featureFlagContent = JsonSerializer.Deserialize<FeatureFlagContent>(
@@ -138,7 +138,7 @@ public class FeatureFlagController : ControllerBase
 
                     if (featureFlagContent == null)
                     {
-                        return BadRequest(new { error = "Invalid feature flag format" });
+                        return ErrorHandlerHelper.HandleValidationError("Invalid feature flag format", _logger, "Toggling feature flag");
                     }
 
                     // Get current value from App Configuration (source of truth, not cached)
@@ -253,7 +253,7 @@ public class FeatureFlagController : ControllerBase
                 return StatusCode(403, new ToggleResult
                 {
                     Success = false,
-                    Message = $"Access denied (403 Forbidden). This may be due to rate limiting or token refresh. Please wait a moment and try again."
+                    Message = "Access denied (403 Forbidden). This may be due to rate limiting or token refresh. Please wait a moment and try again."
                 });
             }
             
@@ -265,11 +265,11 @@ public class FeatureFlagController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error toggling feature flag");
+            ErrorHandlerHelper.HandleInternalError(ex, _logger, "Toggling feature flag", null);
             return StatusCode(500, new ToggleResult
             {
                 Success = false,
-                Message = $"Error: {ex.Message}"
+                Message = "An unexpected error occurred. Please try again later."
             });
         }
     }

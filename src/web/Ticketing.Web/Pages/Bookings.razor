@@ -174,12 +174,13 @@
             }
             else
             {
-                createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                createResult = $"Error: {errorMessage}";
             }
         }
-        catch
+        catch (Exception ex)
         {
-            createResult = "Error: An error occurred when trying to book your ticket. Please try again.";
+            createResult = $"Error: {HttpErrorHelper.HandleException(ex, "creating booking")}";
         }
     }
 
@@ -223,7 +224,7 @@
         }
         catch (Exception ex)
         {
-            getResult = $"Error: Unable to retrieve bookings. {ex.Message}";
+            getResult = $"Error: {HttpErrorHelper.HandleException(ex, "retrieving bookings")}";
         }
     }
 
@@ -257,7 +258,7 @@
         }
         catch (Exception ex)
         {
-            deleteResult = $"Error: An error occurred when trying to delete the booking. {ex.Message}";
+            deleteResult = $"Error: {HttpErrorHelper.HandleException(ex, "deleting booking")}";
         }
     }
 }

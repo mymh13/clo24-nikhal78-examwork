@@ -3,6 +3,7 @@
 @using System.Security.Claims
 @using Ticketing.Contracts.Bookings
 @using Ticketing.Web.Components
+@using Ticketing.Web.Helpers
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "User")]
 @inject IHttpContextAccessor HttpContextAccessor
@@ -188,13 +189,13 @@
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ticketResult = $"Error: {errorContent}";
+                var errorMessage = await HttpErrorHelper.GetErrorMessageAsync(response);
+                ticketResult = $"Error: {errorMessage}";
             }
         }
         catch (Exception ex)
         {
-            ticketResult = $"Error: An error occurred when trying to create the ticket. {ex.Message}";
+            ticketResult = $"Error: {HttpErrorHelper.HandleException(ex, "creating ticket")}";
         }
     }
 
