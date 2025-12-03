@@ -278,6 +278,44 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 **Status:** Code refactoring complete. Booking display logic centralized, booking loading bug fixed, login redirect bug fixed, and integration test database pollution bug fixed. All pages now behave correctly based on user role, and tests no longer create real data in Cosmos DB.
 
+### Error Handling Implementation (2025-12-03)
+
+- **Centralized Error Handling System:** Implemented comprehensive error handling system with two helper classes for consistent error responses across the application.
+  - **ErrorHandlerHelper:** Centralized error handling for API controllers with methods for different error types:
+    - `HandleException()` - Handles exceptions with logging and user-friendly messages
+    - `HandleValidationError()` - For validation failures
+    - `HandleNotFound()` - For resource not found errors
+    - `HandleUnauthorized()` - For authorization failures
+    - `HandleInternalError()` - For server errors (hides sensitive details)
+    - `CreateErrorResponse()` - Generic error response creator
+  - **HttpErrorHelper:** Helper for Razor pages to extract error messages from HTTP responses:
+    - `GetErrorMessageAsync()` - Extracts error from JSON API responses
+    - `HandleException()` - Handles exceptions in HTTP calls
+    - Provides user-friendly messages based on HTTP status codes
+- **Controller Updates:** Updated all controllers to use ErrorHandlerHelper:
+  - BookingsController - All error handling routes through the helper
+  - UsersController - Consistent error responses
+  - AuthController - Improved error handling
+  - HealthController - Standardized error responses
+  - FeatureFlagController - Better error handling (kept ToggleResult structure where needed)
+- **Razor Page Updates:** Updated all Razor pages to use HttpErrorHelper:
+  - Bookings.razor
+  - UserLandingPage.razor
+  - Users.razor
+  - Health.razor
+  - Demo.razor
+  - AdminLandingPage.razor
+  - Components: BookingTable.razor, BookingManagement.razor
+- **Benefits:**
+  - Consistent error messages across the application
+  - No sensitive information exposed to users
+  - Centralized logging with context
+  - Easier maintenance (update error handling in one place)
+  - Better user experience with clear, actionable messages
+  - Proper HTTP status codes for different error types
+
+**Status:** Error handling system complete and operational. All controllers and pages now use centralized error handling helpers for consistent, user-friendly error messages.
+
 ---
 
 ## Reflection
@@ -320,6 +358,7 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 - **Code Quality:** Eliminated code duplication through component extraction and fixed role-based loading bugs. Improved maintainability across booking-related pages.
 - **Test Coverage:** Comprehensive test suite with 22 unit tests and 7 integration tests covering price calculations and full booking lifecycle. All tests passing and ready for CI/CD integration.
 - **Bug Fixes:** Fixed critical bugs including login page redirect issue (all users redirected to correct role-specific landing pages) and integration test database pollution (tests now use in-memory mocks instead of real Cosmos DB).
+- **Error Handling:** Implemented centralized error handling system with ErrorHandlerHelper and HttpErrorHelper. All controllers and Razor pages now use consistent error handling with user-friendly messages and proper logging.
 
 ### What Could Be Improved
 - **Future Enhancements:** If Application Insights integration is needed in the future, consider using Azure Portal dashboards or Power BI for visualization rather than building custom table rendering in the web application.
@@ -365,7 +404,7 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 5. ~~**Bug Fixes Review:** Review and fix bugs from bug backlog (login redirect, integration test database pollution).~~ ✓ **COMPLETE**
 6. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
 7. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.
-8. **Error Handling Review:** Review error handling across the application and ensure user-friendly error messages.
+8. ~~**Error Handling Review:** Review error handling across the application and ensure user-friendly error messages.~~ ✓ **COMPLETE**
 9. **Code & Documentation Cleanup:** Final cleanup of code and documentation before demo handover.
 
 ---
