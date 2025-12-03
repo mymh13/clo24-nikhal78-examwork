@@ -7,8 +7,8 @@ using Xunit;
 namespace Ticketing.Web.Tests.Integration;
 
 // Prerequisites:
-// - Cosmos DB Emulator must be running locally, OR
-// - Set TEST_COSMOS_CONNECTION_STRING environment variable to a test Cosmos DB account connection string
+// - No external dependencies required!
+// - Tests use in-memory mock services (InMemoryUserService, InMemoryBookingService, InMemoryOutboxService)
 public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
 {
     private readonly WebApplicationFactoryFixture _factory;

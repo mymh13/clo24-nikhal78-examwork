@@ -7,14 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using System.Text.Encodings.Web;
-using Ticketing.Web;
+using Ticketing.Web.Services;
+using Ticketing.Web.Tests.Integration.Mocks;
+using InMemoryStorage = Ticketing.Web.Tests.Integration.Mocks.InMemoryStorage;
 
 namespace Ticketing.Web.Tests.Integration;
 
 public class WebApplicationFactoryFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private const string TestCosmosConnectionString = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
     
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -23,9 +23,8 @@ public class WebApplicationFactoryFixture : WebApplicationFactory<Program>, IAsy
             // Override configuration for testing
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                // Use Cosmos DB Emulator connection string for local testing
-                // For CI/CD, this should be set via environment variable or use a test Cosmos DB account
-                { "CosmosDb:ConnectionString", GetCosmosConnectionString() },
+                // Disable Cosmos DB - we'll use in-memory mocks instead
+                { "CosmosDb:ConnectionString", "" },
                 
                 // Disable Application Insights for tests (or use a test AI resource)
                 { "APPLICATIONINSIGHTS_CONNECTION_STRING", "" },
@@ -51,41 +50,49 @@ public class WebApplicationFactoryFixture : WebApplicationFactory<Program>, IAsy
                 services.Remove(service);
             }
 
+            // Remove real Cosmos DB services if they were registered
+            var cosmosClientDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(Microsoft.Azure.Cosmos.CosmosClient));
+            if (cosmosClientDescriptor != null)
+            {
+                services.Remove(cosmosClientDescriptor);
+            }
+
+            var bookingServiceDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IBookingService));
+            if (bookingServiceDescriptor != null)
+            {
+                services.Remove(bookingServiceDescriptor);
+            }
+
+            var userServiceDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IUserService));
+            if (userServiceDescriptor != null)
+            {
+                services.Remove(userServiceDescriptor);
+            }
+
+            var outboxServiceDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IOutboxService));
+            if (outboxServiceDescriptor != null)
+            {
+                services.Remove(outboxServiceDescriptor);
+            }
+
+            // Register shared in-memory storage as singleton
+            services.AddSingleton<InMemoryStorage>();
+
+            // Register in-memory mock services (scoped, but they share the singleton storage)
+            services.AddScoped<IBookingService, InMemoryBookingService>();
+            services.AddScoped<IUserService, InMemoryUserService>();
+            services.AddScoped<IOutboxService, InMemoryOutboxService>();
+
             // Override authentication with test authentication
             services.AddAuthentication("Test")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
         });
     }
 
-    private static string GetCosmosConnectionString()
+    public Task InitializeAsync()
     {
-        // Check for environment variable first (for CI/CD)
-        var envConnectionString = Environment.GetEnvironmentVariable("TEST_COSMOS_CONNECTION_STRING");
-        if (!string.IsNullOrEmpty(envConnectionString))
-        {
-            return envConnectionString;
-        }
-
-        // Default to Cosmos DB Emulator (requires emulator to be running)
-        return TestCosmosConnectionString;
-    }
-
-    public async Task InitializeAsync()
-    {
-        // Verify Cosmos DB connection is available
-        // This will fail if Cosmos DB Emulator is not running
-        try
-        {
-            var client = Services.GetRequiredService<Microsoft.Azure.Cosmos.CosmosClient>();
-            var database = client.GetDatabase("ticketing");
-            await database.ReadAsync();
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                "Cosmos DB connection failed. Ensure Cosmos DB Emulator is running or set TEST_COSMOS_CONNECTION_STRING environment variable.",
-                ex);
-        }
+        // No initialization needed - we're using in-memory mocks instead of Cosmos DB
+        return Task.CompletedTask;
     }
 
     public new Task DisposeAsync()
