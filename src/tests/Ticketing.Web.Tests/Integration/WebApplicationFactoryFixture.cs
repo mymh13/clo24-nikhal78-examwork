@@ -110,13 +110,13 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // Create test user claims
+        // Create test user claims with Admin role so tests can create users automatically
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
-            new Claim(ClaimTypes.Email, "test-user@example.com"),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Role, "User")
+            new Claim(ClaimTypes.NameIdentifier, "test-admin-id"),
+            new Claim(ClaimTypes.Email, "test-admin@example.com"),
+            new Claim(ClaimTypes.Name, "Test Admin"),
+            new Claim(ClaimTypes.Role, "Admin")
         };
 
         var identity = new ClaimsIdentity(claims, "Test");

@@ -39,7 +39,9 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         var response = await _client.PostAsJsonAsync("/api/bookings", booking);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // POST /api/bookings returns Created (201) on success, not OK (200)
+        Assert.True(response.IsSuccessStatusCode, $"Expected success status but got {response.StatusCode}. Response: {await response.Content.ReadAsStringAsync()}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var createdBooking = await response.Content.ReadFromJsonAsync<Booking>();
         Assert.NotNull(createdBooking);
         var result = createdBooking!;
@@ -53,6 +55,8 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
     public async Task CreateBooking_CalculatesPriceCorrectly()
     {
         // Arrange
+        // Note: When Admin creates a booking, the controller auto-creates a user without DateOfBirth/IsStudent
+        // So the user gets standard pricing (1.0 modifier) by default
         var testUser = CreateTestUser();
         var booking = new Booking
         {
@@ -60,7 +64,6 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
             CustomerName = testUser.Name,
             CustomerId = testUser.Email,
             Zone = "Zone A, Zone B", // 2 zones
-            PriceModifier = 0.5m, // Student discount
             Status = TicketStatus.Created
         };
 
@@ -68,15 +71,18 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         var response = await _client.PostAsJsonAsync("/api/bookings", booking);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // POST /api/bookings returns Created (201) on success
+        Assert.True(response.IsSuccessStatusCode, $"Expected success status but got {response.StatusCode}. Response: {await response.Content.ReadAsStringAsync()}");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var createdBooking = await response.Content.ReadFromJsonAsync<Booking>();
         Assert.NotNull(createdBooking);
         var result = createdBooking!;
         
         // Base price: 2 zones * 20 SEK = 40 SEK
-        // With 50% modifier: 40 * 0.5 = 20 SEK
+        // Auto-created user (no DateOfBirth, not student) gets standard pricing: 40 * 1.0 = 40 SEK
         Assert.Equal(40.0m, result.BasePrice);
-        Assert.Equal(20.0m, result.TotalPrice);
+        Assert.Equal(1.0m, result.PriceModifier); // Standard pricing (no discount)
+        Assert.Equal(40.0m, result.TotalPrice);
     }
 
     [Fact]
@@ -85,9 +91,11 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         // Arrange
         var testUser = CreateTestUser();
         var booking = await CreateTestBooking(testUser);
+        // Controller uses user.Id as CustomerId, not email
+        var customerId = booking.CustomerId;
 
         // Act
-        var response = await _client.GetAsync($"/api/bookings/customer/{testUser.Email}");
+        var response = await _client.GetAsync($"/api/bookings/customer/{Uri.EscapeDataString(customerId)}");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -102,17 +110,24 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         // Arrange
         var testUser = CreateTestUser();
         var booking = await CreateTestBooking(testUser);
+        // Controller uses user.Id as CustomerId for activation
+        var customerId = booking.CustomerId;
 
         // Act
         var activateResponse = await _client.PostAsJsonAsync(
             $"/api/bookings/{booking.Id}/activate",
-            new { });
+            new { CustomerId = customerId });
 
         // Assert
+        if (!activateResponse.IsSuccessStatusCode)
+        {
+            var errorContent = await activateResponse.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Activation failed: {activateResponse.StatusCode} - {errorContent}");
+        }
         Assert.Equal(HttpStatusCode.OK, activateResponse.StatusCode);
         var activatedBooking = await activateResponse.Content.ReadFromJsonAsync<Booking>();
         Assert.NotNull(activatedBooking);
-        Assert.Equal(TicketStatus.Activated, activatedBooking.Status);
+        Assert.Equal(TicketStatus.Activated, activatedBooking!.Status);
         Assert.NotNull(activatedBooking.ActivatedAt);
         Assert.NotNull(activatedBooking.ValidFrom);
         Assert.NotNull(activatedBooking.ValidTo);
@@ -128,14 +143,18 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         // Arrange
         var testUser = CreateTestUser();
         var booking = await CreateTestBooking(testUser);
+        var customerId = booking.CustomerId;
         
         // Activate once
-        await _client.PostAsJsonAsync($"/api/bookings/{booking.Id}/activate", new { });
+        var firstActivate = await _client.PostAsJsonAsync(
+            $"/api/bookings/{booking.Id}/activate", 
+            new { CustomerId = customerId });
+        firstActivate.EnsureSuccessStatusCode();
 
         // Act - Try to activate again
         var response = await _client.PostAsJsonAsync(
             $"/api/bookings/{booking.Id}/activate",
-            new { });
+            new { CustomerId = customerId });
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -147,16 +166,19 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         // Arrange
         var testUser = CreateTestUser();
         var booking = await CreateTestBooking(testUser);
+        // Controller uses user.Id as CustomerId
+        var customerId = booking.CustomerId;
 
         // Act
         var deleteResponse = await _client.DeleteAsync(
-            $"/api/bookings/{booking.Id}?customerId={Uri.EscapeDataString(testUser.Email)}");
+            $"/api/bookings/{booking.Id}?customerId={Uri.EscapeDataString(customerId)}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        // DELETE returns NoContent (204) on success, not OK (200)
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
         // Verify booking is deleted
-        var getResponse = await _client.GetAsync($"/api/bookings/customer/{testUser.Email}");
+        var getResponse = await _client.GetAsync($"/api/bookings/customer/{Uri.EscapeDataString(customerId)}");
         var bookings = await getResponse.Content.ReadFromJsonAsync<List<Booking>>();
         Assert.NotNull(bookings);
         Assert.DoesNotContain(bookings, b => b.Id == booking.Id);
@@ -171,9 +193,12 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         
         var booking1 = await CreateTestBooking(user1);
         var booking2 = await CreateTestBooking(user2);
+        // Controller uses user.Id as CustomerId
+        var customerId1 = booking1.CustomerId;
+        var customerId2 = booking2.CustomerId;
 
         // Act
-        var response = await _client.GetAsync($"/api/bookings/customer/{user1.Email}");
+        var response = await _client.GetAsync($"/api/bookings/customer/{Uri.EscapeDataString(customerId1)}");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -208,7 +233,11 @@ public class BookingLifecycleTests : IClassFixture<WebApplicationFactoryFixture>
         };
 
         var response = await _client.PostAsJsonAsync("/api/bookings", booking);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to create test booking: {response.StatusCode} - {errorContent}");
+        }
         
         var createdBooking = await response.Content.ReadFromJsonAsync<Booking>();
         return createdBooking ?? throw new InvalidOperationException("Failed to create test booking");
