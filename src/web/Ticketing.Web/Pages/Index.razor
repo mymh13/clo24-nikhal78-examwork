@@ -1,4 +1,5 @@
 @page "/"
+@using Microsoft.AspNetCore.Components.Web
 
 <PageTitle>Ticketing System</PageTitle>
 
@@ -18,27 +19,14 @@
 
         <h3>Application Stack</h3>
         <p>
-            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) &nbsp;|&nbsp; <strong>API:</strong> ASP.NET Core Web API (Controller-based) &nbsp;|&nbsp; <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request, containers: bookings, users) &nbsp;|&nbsp; <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) &nbsp;|&nbsp; <strong>Registry:</strong> GHCR (public, no auth) &nbsp;|&nbsp; <strong>Auth:</strong> Azure Entra ID (OpenID Connect for admins) + Cookie-based (BCrypt password hashing for users/inspectors, ITicketStore for server-side ticket storage)
+            <strong>Frontend:</strong> Blazor Server (.NET 8, SSR, SignalR) &nbsp;|&nbsp; <strong>API:</strong> ASP.NET Core Web API (Controller-based) &nbsp;|&nbsp; <strong>Database:</strong> Cosmos DB Serverless (NoSQL, pay-per-request, containers: bookings, users, outbox) &nbsp;|&nbsp; <strong>Container:</strong> Docker multi-stage (SDK build, runtime production) &nbsp;|&nbsp; <strong>Registry:</strong> GHCR (public, no auth) &nbsp;|&nbsp; <strong>Auth:</strong> Azure Entra ID (OpenID Connect for admins) + Cookie-based (BCrypt password hashing for users/inspectors, ITicketStore for server-side ticket storage)
         </p>
 
         <h3>Architecture & Patterns</h3>
         <p>
-            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService, IOutboxService, IFeatureFlagService, IEventPublisher), Dependency Injection (scoped/singleton), Outbox Pattern (transactional event publishing), Background Services (OutboxProcessorService), Sentinel Key Pattern (hot-reload configuration) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email, outbox partition: /status) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin via Entra ID/OpenID Connect, Inspector/User via cookie-based with BCrypt) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (comprehensive status) + Admin Dashboard mini health check with feature flag toggle &nbsp;|&nbsp; <strong>Event-Driven:</strong> Phases 1-7 complete (Service Bus, Azure Functions, Outbox Pattern, Feature Flags, hot-reload, mode switching) - dual-system coexistence operational &nbsp;|&nbsp; <strong>Demo:</strong> Interactive demo page (/demo) with Application Insights queries, feature flag toggle, and booking management
+            <strong>Design Patterns:</strong> Extension Methods (startup config), HttpClient Factory, Repository/Service (IBookingService, IUserService, IOutboxService, IFeatureFlagService, IEventPublisher), Dependency Injection (scoped/singleton), Outbox Pattern (transactional event publishing), Background Services (OutboxProcessorService), Sentinel Key Pattern (hot-reload configuration) &nbsp;|&nbsp; <strong>Data:</strong> Cosmos DB (ticketing/bookings partition: /customerId, users partition: /email, outbox partition: /status) &nbsp;|&nbsp; <strong>Session:</strong> Server-side storage (GDPR-compliant, 30-min expiration, ITicketStore for auth tickets) &nbsp;|&nbsp; <strong>Authorization:</strong> Role-based access control (Admin via Entra ID/OpenID Connect, Inspector/User via cookie-based with BCrypt) &nbsp;|&nbsp; <strong>Health:</strong> /api/health endpoint (comprehensive status) + Admin Dashboard mini health check with feature flag toggle &nbsp;|&nbsp; <strong>Event-Driven:</strong> Service Bus, Azure Functions, Outbox Pattern, Feature Flags, hot-reload, mode switching - dual-system coexistence operational &nbsp;|&nbsp; <strong>Demo:</strong> Interactive demo page (/demo) with event-driven architecture status, feature flag toggle, and booking management
         </p>
     </div>
 
-    <p class="text-muted">Version status: Week 6 - User management, ticket management, multi-zone selection, price calculation system = complete.
-        <br>Event-driven architecture: Phases 1-7 complete (Infrastructure, Contracts, Outbox Pattern, Feature Flags, Service Bus, Azure Functions, Testing & Validation). Phase 8.1 & 8.2 complete - Application Insights integration with custom events tracking, demo page (/demo) operational with live KQL queries, feature flag toggle, and booking management all in one view. Remaining: Phase 8.3 (alerts setup) and Phase 9 (Documentation & Cleanup).</p>
-    
-    <div class="text-muted">
-        <strong>Next Steps:</strong>
-        <p style="margin-top: 0.5rem;">
-            1. <strong>Event-Driven Architecture:</strong> Complete Phase 8.3 (Application Insights alerts setup for dead letter queue, function failures, outbox processing delays), then Phase 9 (Documentation & Cleanup - update ADR-006, architecture.md, create developer guide, comparison documentation).<br>
-            2. <strong>Ticket Activation:</strong> Implement ticket activation timer with dual triggers (manual and QR code scan).<br>
-            3. <strong>QR Code Generation:</strong> Generate QR codes for tickets to enable scanning functionality.<br>
-            4. <strong>Ticket Search Functionality:</strong> Add search and filtering capabilities to the admin booking management page.<br>
-            5. <strong>Shopping Cart (Bonus F):</strong> Implement shopping cart functionality to allow users to add multiple tickets before payment.<br>
-            6. <strong>Price Configuration:</strong> Move base price to configuration for runtime adjustment without code deployment.
-        </p>
-    </div>
+    <p class="text-muted">Version status: Week 6 - Core features complete: User management, ticket booking, multi-zone selection, price calculation, ticket activation, QR code generation. Event-driven architecture: Phases 1-7 complete, Phase 8.1 & 8.2 complete (Application Insights custom events, demo page). Testing: Unit tests (price calculations) and integration tests (booking lifecycle) complete. Remaining: Phase 8.3 (alerts) and Phase 9 (Documentation & Cleanup).</p>
 </div>

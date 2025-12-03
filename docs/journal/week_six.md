@@ -191,6 +191,28 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 **Status:** Ticket activation functionality implemented (Steps 1-3). Users can now activate tickets manually, and the system tracks ticket status and validity periods. Step 4 (event-driven expiration) remains for future implementation.
 
+### QR Code Implementation ✓ COMPLETE
+
+- **QR Code Generation at Activation:** Implemented QR code generation during ticket activation for instant value and demo readiness.
+  - **Library:** QRCoder NuGet package (v1.7.0) for QR code generation
+  - **Generation Trigger:** QR code generated automatically when ticket is activated via `POST /api/bookings/{bookingId}/activate`
+  - **Data Encoding:** JSON-encoded data containing booking ID, customer ID, activation timestamp, validity period (ValidFrom, ValidTo), status, and version
+  - **Storage:** Base64-encoded PNG image stored in `Booking.QrCodeData` field in Cosmos DB for fast retrieval
+  - **UI Integration:** 
+    - "Show QR Code" button appears for activated tickets in `BookingTable` component
+    - Modal popup displays QR code with booking details (Booking ID, Zone, Valid until)
+    - QR code displayed as base64 data URL for instant rendering
+  - **Admin Support:** Admins and Inspectors can activate any ticket to generate QR codes (not restricted to own tickets)
+  - **Helper Classes:** Created `QrCodeHelper.cs` with `GenerateQrCode()` and `GetQrCodeDataUrl()` methods
+- **Benefits:**
+  - Instant display: QR code stored in Cosmos DB enables fast retrieval without regeneration
+  - Activation-time generation: Only activated tickets have QR codes, reducing unnecessary storage
+  - Validity embedded: QR code includes validity period information for validation
+  - Demo-ready: Visual feedback for activated tickets enhances demonstration experience
+- **Documentation:** Created ADR-020 documenting QR code implementation strategy and decisions
+
+**Status:** QR code generation complete and operational. QR codes are generated automatically on ticket activation and can be displayed via modal popup. All activated tickets now have QR codes stored in Cosmos DB for fast retrieval.
+
 ### Code Refactoring & Bug Fixes
 
 - **BookingTable Component Refactoring:**
@@ -258,6 +280,7 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 - **Maintainable MVP:** Created a clean, focused demo page that is sustainable and easy to maintain.
 - **Test Foundation:** Established test project with passing unit tests for price calculations and comprehensive integration tests for booking lifecycle. Full test coverage for core functionality.
 - **Ticket Activation:** Implemented manual ticket activation with status tracking and validity periods. Users can now activate tickets and see real-time status updates.
+- **QR Code Generation:** Implemented QR code generation at activation time with Cosmos DB storage. QR codes include validity period information and can be displayed via modal popup for activated tickets.
 - **Code Quality:** Eliminated code duplication through component extraction and fixed role-based loading bugs. Improved maintainability across booking-related pages.
 - **Test Coverage:** Comprehensive test suite with 22 unit tests and 7 integration tests covering price calculations and full booking lifecycle. All tests passing and ready for CI/CD integration.
 
@@ -300,7 +323,7 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 1. **Event-Driven Architecture:** Complete Phase 8.3 (Application Insights alerts setup), then Phase 9 (Documentation & Cleanup).
 2. **Ticket Activation - Step 4:** Implement event-driven ticket expiration (Azure Functions with Timer Trigger to check and expire tickets automatically).
-3. **QR Code Generation:** Generate QR codes for tickets to enable scanning functionality (secondary activation trigger).
+3. ~~**QR Code Generation:** Generate QR codes for tickets to enable scanning functionality (secondary activation trigger).~~ ✓ **COMPLETE**
 4. ~~**Integration Tests:** Implement integration tests for ticket lifecycle (create, activate, expire, delete).~~ ✓ **COMPLETE**
 5. **Ticket Search Functionality:** Add search and filtering capabilities to the admin booking management page.
 6. **Shopping Cart (Bonus F):** Implement shopping cart functionality to allow users to add multiple tickets before payment.

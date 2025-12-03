@@ -360,33 +360,45 @@
 
 ---
 
-### 3.2 QR Code Generation
+### 3.2 QR Code Generation ✓ COMPLETE
 **Time Estimate:** 2-3 hours  
 **Priority:** MEDIUM  
 **Dependencies:** 3.1 (ticket activation)
+**Status:** ✓ Complete (2025-12-03)
 
 **Tasks:**
-- [ ] Add QR code library (e.g., `QRCoder` NuGet package)
-- [ ] Generate QR code for booking:
-  - [ ] Include booking ID, customer ID, activation status
-  - [ ] Encode as JSON or simple string
-- [ ] Add QR code display to `UserLandingPage.razor`:
-  - [ ] Show QR code for activated tickets
-  - [ ] Allow download/print of QR code
-- [ ] Add QR code to booking details view
-- [ ] Store QR code data in booking (optional, for validation later)
+- [x] Add QR code library (`QRCoder` NuGet package v1.7.0)
+- [x] Generate QR code for booking:
+  - [x] Include booking ID, customer ID, activation timestamp, validity period
+  - [x] Encode as JSON with version information
+- [x] Add QR code display to `BookingTable` component:
+  - [x] "Show QR Code" button for activated tickets
+  - [x] Modal popup displaying QR code with booking details
+- [x] Store QR code data in booking (base64-encoded PNG in `Booking.QrCodeData`)
+- [x] Generate QR code during activation (automatic generation on ticket activation)
+- [x] Admin/Inspector activation support (can activate any ticket to generate QR codes)
 
-**Deliverable:** QR code generation and display for tickets
+**Deliverable:** ✓ QR code generation and display for tickets
 
-**Files to Modify:**
-- `src/web/Ticketing.Web/Pages/UserLandingPage.razor`
-- `src/web/Ticketing.Web/Controllers/BookingsController.cs` (add QR endpoint if needed)
+**Files Created:**
+- ✓ `src/web/Ticketing.Web/Helpers/QrCodeHelper.cs`
+- ✓ `docs/adr/ADR-020-qr-code-implementation.md`
 
-**Files to Create:**
-- `src/web/Ticketing.Web/Helpers/QrCodeHelper.cs`
+**Files Modified:**
+- ✓ `src/shared/Ticketing.Contracts/Bookings/Booking.cs` (added `QrCodeData` field)
+- ✓ `src/web/Ticketing.Web/Controllers/BookingsController.cs` (generate QR code on activation)
+- ✓ `src/web/Ticketing.Web/Components/BookingTable.razor` (added QR code button and modal)
+- ✓ `src/web/Ticketing.Web/Helpers/TicketActivationHelper.cs` (clarified Admin/Inspector activation support)
 
 **NuGet Package:**
-- `QRCoder` or `ZXing.Net`
+- ✓ `QRCoder` (v1.7.0)
+
+**Implementation Details:**
+- QR code generated at activation time (not before activation)
+- Base64-encoded PNG image stored in Cosmos DB for fast retrieval
+- JSON-encoded data includes booking ID, customer ID, activation time, validity period, status, version
+- Modal popup displays QR code with booking information
+- Text color fixed to black for better readability
 
 ---
 
@@ -584,7 +596,7 @@
 7. **Code Cleanup** (Priority 5.1) - Do incrementally as you work
 8. **Error Handling Review** (Priority 4.1) - Important for demo quality
 9. **Ticket Activation - Step 4** (Priority 3.1.4) - Event-driven expiration (optional, can defer)
-10. **QR Code Generation** (Priority 3.2) - Depends on activation (Step 3 complete)
+10. ✓ **QR Code Generation** (Priority 3.2) - ✓ COMPLETE
 11. **Shopping Cart** (Priority 3.3) - Nice to have, low priority
 12. **Bugfixes Review** (Priority 1.1) - Do last to catch any new bugs from changes
 13. **Documentation Cleanup** (Priority 5.2) - Final step before demo
@@ -602,13 +614,13 @@
 | Ticket Activation - Step 3 | 1-2 hours | MEDIUM | ✓ COMPLETE |
 | Integration Tests | 4-6 hours | MEDIUM | ✓ COMPLETE |
 | Ticket Activation - Step 4 | 2-3 hours | LOW | ⏳ Optional |
-| QR Code Generation | 2-3 hours | MEDIUM | ⏳ Pending |
+| QR Code Generation | 2-3 hours | MEDIUM | ✓ COMPLETE |
 | Shopping Cart | 4-6 hours | LOW | ⏳ Pending |
 | Error Handling Review | 2-3 hours | MEDIUM | ⏳ Pending |
 | Code Cleanup | 4-6 hours | HIGH | ⏳ Pending |
 | Bugfixes Review | 2-4 hours | HIGH | ⏳ Pending |
 | Documentation Cleanup | 3-4 hours | HIGH | ⏳ Pending |
-| **Total Remaining** | **15-25 hours** | | |
+| **Total Remaining** | **13-22 hours** | | |
 
 **Note:** Focus on HIGH priority items first. MEDIUM and LOW priority items can be deferred if time is limited.
 
@@ -747,7 +759,7 @@
 - [x] Priority 2: Testing (Integration Tests - ✓ COMPLETE)
 - [x] Priority 3: Features (Price Configuration - ✓ Complete)
 - [x] Priority 3: Features (Ticket Activation - Steps 1-3 ✓ Complete, Step 4 optional)
-- [ ] Priority 3: Features (QR Code Generation - ⏳ Pending)
+- [x] Priority 3: Features (QR Code Generation - ✓ COMPLETE)
 - [ ] Priority 3: Features (Shopping Cart - ⏳ Pending)
 - [ ] Priority 4: Error Handling
 - [ ] Priority 5: Cleanup
@@ -758,4 +770,6 @@
 - ✓ Ticket Activation - Step 1 (Priority 3.1.1) - 2025-12-02
 - ✓ Ticket Activation - Step 2 (Priority 3.1.2) - 2025-12-02
 - ✓ Ticket Activation - Step 3 (Priority 3.1.3) - 2025-12-02
+- ✓ Integration Tests (Priority 2.2) - 2025-12-03
+- ✓ QR Code Generation (Priority 3.2) - 2025-12-03
 
