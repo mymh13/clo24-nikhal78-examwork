@@ -21,17 +21,17 @@ Since the organization already uses Azure as the main platform, it is natural to
 ## Decision
 The following Azure services are used in MVP and future expansion:
 
-|          Service           |               Purpose                                                          | Tier/Plan |
-|---------------------------|------------------------------------------------------------------------------|-----------|
-| **App Service**           | Run Blazor Server and API application in the same App Service plan.  | Basic B1 (dev) |
-| **App Configuration**     | Centralized management of settings and feature flags between environments. Hot-reload via sentinel key pattern. | Free (dev) |
-| **Key Vault**             | Secure storage of secrets and connection strings. Managed identity access via RBAC. | Standard |
-| **Application Insights**  | Logging, monitoring, and performance measurement via KQL. Used by both App Service and Function App. Custom events track dual-system architecture flows. | Pay-as-you-go |
-| **API Management (APIM)** | Gateway for public GET endpoints, caching, and rate limiting. | (Future) |
-| **Cosmos DB**             | Serverless NoSQL database for bookings, users, and outbox events. Partition key strategy for efficient querying. | Serverless |
-| **Service Bus**           | Message queue for event-driven architecture. `booking-events` queue with dead letter queue support. | Basic (dev) |
-| **Azure Functions**       | Serverless event processing. Processes Service Bus messages for event-driven flow. | Basic B1 (dev) |
-| **Storage Account**       | Required for Azure Functions runtime and state management. | Standard LRS |
+|          Service           |               Purpose                                                          | Tier/Plan | Status |
+|---------------------------|------------------------------------------------------------------------------|-----------|--------|
+| **App Service**           | Run Blazor Server and API application in the same App Service plan.  | Basic B1 (dev) | ✓ Implemented |
+| **App Configuration**     | Centralized management of settings and feature flags between environments. Hot-reload via sentinel key pattern. | Free (dev) | ✓ Implemented |
+| **Key Vault**             | Secure storage of secrets and connection strings. Managed identity access via RBAC. | Standard | ✓ Implemented |
+| **Application Insights**  | Logging, monitoring, and performance measurement via KQL. Used by both App Service and Function App. Custom events track dual-system architecture flows. | Pay-as-you-go | ✓ Implemented |
+| **API Management (APIM)** | Gateway for public GET endpoints, caching, and rate limiting. | (Future) | ⏳ Not Implemented |
+| **Cosmos DB**             | Serverless NoSQL database for bookings, users, and outbox events. Partition key strategy for efficient querying. | Serverless | ✓ Implemented |
+| **Service Bus**           | Message queue for event-driven architecture. `booking-events` queue with dead letter queue support. | Basic (dev) | ✓ Implemented |
+| **Azure Functions**       | Serverless event processing. Processes Service Bus messages for event-driven flow. | Basic B1 (dev) | ✓ Implemented |
+| **Storage Account**       | Required for Azure Functions runtime and state management (used indirectly by Function App). | Standard LRS | ✓ Implemented |
 
 ---
 
