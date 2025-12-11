@@ -443,3 +443,9 @@ During week 6, work focused on simplifying the demo page and removing over-engin
 
 ---
 
+## Note: Remaining Items Moved to Week 7
+
+All items listed in "Remaining To-Dos" and remaining work from "Next Steps" have been moved to Week 7's backlog. These items will be addressed if time permits during the finalization phase. Otherwise, the project is considered complete with current functionality. See [Week 7 Journal](week_seven.md) for details.
+
+---
+

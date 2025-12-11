@@ -65,6 +65,12 @@ Användare → Blazor Server → API → Cosmos DB
 Användare → Blazor Server → API → Outbox → Service Bus → Azure Functions → Cosmos DB
 
 **Toggle-knappen:** Växlar mellan systemen via Azure App Configuration feature flags
+
+---
+
+**DEMO**
+
+---
   
 **Slide 3** - Demo (4 min)
 **Övergripande funktionalitet (1 min):**
@@ -78,6 +84,12 @@ Användare → Blazor Server → API → Outbox → Service Bus → Azure Functi
 - Visa i Application Insights: Service Bus-meddelanden, Functions-aktivering
 - Växla tillbaka till synkront system
 - Visa skillnaden i Insights
+
+---
+
+**SLUT PÅ DEMO**
+
+---
   
 **Slide 4** - Arbetsmetodik
 - Iterativt arbete i faser
@@ -135,7 +147,7 @@ clo24-nikhal78-examwork/
 - **Dependency Injection** - Inbyggd IoC-container
 
 **Arkitektur och mönster:**
-- **Controller-based REST API** - RESTful endpoints
+- **Controller-based JSON API** - RESTful endpoints
 - **Repository Pattern** - Dataåtkomst-abstraktion
 - **Service Layer** - Affärslogik-separation
 - **Extension Methods Pattern** - Startup-konfiguration (ADR-009)
@@ -176,9 +188,6 @@ clo24-nikhal78-examwork/
 - **Containers:** bookings, users, outbox
 - **Transactional consistency** - Atomiska operationer
 
-**Azure-tjänster (planerade):**
-- **API Management (APIM)** - Gateway för publika GET-endpoints (framtida)
-
 **Konfiguration och säkerhet:**
 - **Managed Identity** - RBAC-baserad autentisering
 - **Key Vault integration** - Secrets via managed identity
@@ -213,7 +222,6 @@ clo24-nikhal78-examwork/
 - **Zero breaking changes** - Synkront system fungerar som tidigare
   
 **Slide 7** - Lärdomar från projektet
-**Stora lärdomar:**
 - **Docker löste Oryx-problem** - Bypassade auto-detection genom containerisering
 - **Sentinel Key möjliggjorde live-demos** - Runtime-switching är kritiskt för presentationer
 - **Outbox Pattern säkrar data** - Dual write-problem kräver transaktionssäkerhet

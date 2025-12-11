@@ -36,8 +36,6 @@ clo24-nikhal78-examwork/
 │  │     ├─ wwwroot/                    # Static files (CSS, favicon)
 │  │     ├─ Dockerfile                  # Multi-stage Docker build
 │  │     └─ Program.cs                  # Application entry point
-│  ├─ api/                              # Controller-based Web API (legacy/unused)
-│  │  └─ Ticketing.Api/                 # .NET 8 Web API project
 │  ├─ functions/                        # Azure Functions (event-driven)
 │  │  └─ Ticketing.Functions/           # .NET 8 isolated worker Functions
 │  │     ├─ Functions/                  # Function implementations (OnBookingCreatedFunction)

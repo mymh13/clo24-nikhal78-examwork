@@ -7,3 +7,9 @@ Bugs found, added to a backlog to be corrected in the future
 2. ~~Integration tests created test-users into the real CosmosDB.~~ **FIXED**
 - ~~Medium prio error.~~
 - 251203: Fixed by implementing in-memory mock services (InMemoryUserService, InMemoryBookingService, InMemoryOutboxService) that use shared singleton storage. Tests now use mocked data instead of real Cosmos DB.
+
+3. Barely a bug but: The zones do not show up in alfabetical order, they show up in the order you ticked them on the tickets. That might be a small UX improvement to fix.
+- ~~Low prio error.~~
+
+4. Using UTC timer to have a standard across timezones, but this means the tickets display one hour offset from the local time. Tiny UX improvement but might actually impact the passenger if they read the wrong time. For the MVP this is a tiny error but in production it would be critical.
+- ~~Medium prio error.~~

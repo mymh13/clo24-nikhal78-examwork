@@ -17,7 +17,7 @@ public abstract class Event
     public string Version { get; set; } = "1.0";
     
     [JsonPropertyName("source")]
-    public string Source { get; set; } = "Ticketing.Api";
+    public string Source { get; set; } = "Ticketing.Web";
     
     protected Event()
     {
